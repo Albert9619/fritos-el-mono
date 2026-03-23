@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 // 🔴 CONTROL DE INVENTARIO: Escribe el nombre del sabor o producto agotado aquí
 // Ejemplo: const agotados = ["Carne", "Avena", "Grande"];
-const agotados = [carne]; 
+const agotados = [Carne]; 
 
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
