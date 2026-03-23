@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // 🔴 CONTROL DE INVENTARIO: Escribe el nombre del sabor o producto agotado aquí
-// Ejemplo: const agotados = ["Carne", "Avena", "Grande"];
-const agotados = [Carne]; 
+const agotados = []; 
 
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
@@ -27,34 +26,19 @@ export default function App() {
   const [pedido, setPedido] = useState([]);
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
-  const [metodoPago, setMetodoPago] = useState("");
   const [sabores, setSabores] = useState({});
-  const [cantidades, setCantidades] = useState({});
   const [tamanosJugo, setTamanosJugo] = useState({});
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
-  const [conHuevo, setConHuevo] = useState(false);
-
-  useEffect(() => {
-    const link = document.createElement('link');
-    link.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap';
-    link.rel = 'stylesheet';
-    document.head.appendChild(link);
-  }, []);
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
-  const esDiaPollo = ["lunes", "miércoles", "viernes"].includes(hoy);
-  const tipoArrozHoy = esDiaPollo ? "Pollo" : "Cerdo";
+  const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
   const agregarAlCarrito = (p) => {
-    const cant = cantidades[p.id] || 1;
     const sabor = sabores[p.id] || (p.tieneSabor ? p.opciones[0] : "");
     let precioFinal = p.precio;
     let nombreFinal = p.nombre;
 
-    if (p.esArroz) {
-      if (!acompañanteArroz) return alert("Elige Tajadas o Yuca");
-      if (conHuevo) precioFinal += 1000;
-    }
+    if (p.esArroz && !acompañanteArroz) return alert("Elige Tajadas o Yuca");
     if (p.esJugo) {
       const tamano = tamanosJugo[p.id] || "Mediano";
       precioFinal = p.precios[tamano];
@@ -66,67 +50,81 @@ export default function App() {
       nombre: nombreFinal,
       precio: precioFinal,
       saborElegido: sabor,
-      cantidad: cant,
-      subtotal: precioFinal * cant
+      cantidad: 1,
+      subtotal: precioFinal
     }]);
   };
 
   const total = pedido.reduce((acc, item) => acc + item.subtotal, 0);
 
   const enviarWhatsApp = () => {
-    if (pedido.length === 0) return alert("El carrito está vacío.");
-    const lista = pedido.map(i => `- ${i.cantidad} ${i.nombre} ${i.saborElegido ? '('+i.saborElegido+')' : ''}`).join('\n');
-    const mensaje = `¡Hola! Pedido de ${nombre}:\n\n${lista}\n\n*Total: $${total}*\n📍 Dir: ${direccion}\n💰 Pago: ${metodoPago}`;
+    if (!nombre || !direccion) return alert("Escribe tu nombre y dirección");
+    const lista = pedido.map(i => `- 1 ${i.nombre} ${i.saborElegido ? '('+i.saborElegido+')' : ''}`).join('\n');
+    const mensaje = `¡Hola Fritos El Mono! Pedido de ${nombre}:\n\n${lista}\n\n*Total: $${total}*\n📍 Dir: ${direccion}`;
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(mensaje)}`);
   };
 
   return (
-    <div style={{ fontFamily: "'Montserrat', sans-serif", backgroundColor: "#fffbeb", minHeight: '100vh', padding: '10px' }}>
-      <header style={{ textAlign: 'center', background: 'white', padding: '20px', borderRadius: '20px', marginBottom: '20px' }}>
+    <div style={{ fontFamily: 'sans-serif', backgroundColor: "#fffbeb", minHeight: '100vh', padding: '15px' }}>
+      <header style={{ textAlign: 'center', background: 'white', padding: '20px', borderRadius: '20px', marginBottom: '20px', border: '2px solid #f97316' }}>
         <h1 style={{ color: '#f97316', margin: 0 }}>Fritos El Mono 🐒</h1>
-        <p>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
+        <p style={{margin: '5px 0 0 0'}}>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', maxWidth: '1000px', margin: '0 auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
         {productosBase.map(p => (
-          <div key={p.id} style={{ background: 'white', borderRadius: '20px', padding: '15px', textAlign: 'left', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-            <img src={p.esArroz ? (esDiaPollo ? "/arroz-pollo.jpg" : "/arroz-cerdo.jpg") : p.imagen} style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '15px' }} alt={p.nombre} />
+          <div key={p.id} style={{ background: 'white', borderRadius: '20px', padding: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+            <img src={p.esArroz ? "/arroz-pollo.jpg" : p.imagen} style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '15px' }} alt={p.nombre} />
             <h3 style={{ margin: '10px 0' }}>{p.nombre}</h3>
-            <p style={{ color: '#f97316', fontWeight: 800, fontSize: '20px' }}>${p.precio}</p>
+            <p style={{ color: '#f97316', fontWeight: 'bold', fontSize: '20px', margin: '5px 0' }}>${p.esJugo ? p.precios[tamanosJugo[p.id] || "Mediano"] : p.precio}</p>
 
             {p.tieneSabor && (
-              <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px', marginBottom: '10px' }}>
+              <select 
+                value={sabores[p.id] || p.opciones[0]} 
+                onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} 
+                style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '10px' }}
+              >
                 {p.opciones.map(opt => (
                   <option key={opt} value={opt} disabled={agotados.includes(opt)}>
-                    {opt} {agotados.includes(opt) ? "--- (AGOTADO)" : ""}
+                    {opt} {agotados.includes(opt) ? " (AGOTADO)" : ""}
                   </option>
                 ))}
               </select>
             )}
 
             {p.esArroz && (
-              <select onChange={(e) => setAcompañanteArroz(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px' }}>
+              <select onChange={(e) => setAcompañanteArroz(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '10px' }}>
                 <option value="">¿Tajada o Yuca?</option>
                 <option value="Tajadas">Tajadas</option>
                 <option value="Yuca">Yuca</option>
               </select>
             )}
 
+            {p.esJugo && (
+              <select 
+                value={tamanosJugo[p.id] || "Mediano"} 
+                onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} 
+                style={{ width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '10px' }}
+              >
+                {Object.keys(p.precios).map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            )}
+
             <button onClick={() => agregarAlCarrito(p)} style={{ background: '#f97316', color: 'white', border: 'none', width: '100%', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
-              Añadir al Pedido
+              Añadir 🥟
             </button>
           </div>
         ))}
       </div>
 
       {pedido.length > 0 && (
-        <div style={{ maxWidth: '600px', margin: '30px auto', background: 'white', padding: '20px', borderRadius: '20px' }}>
+        <div style={{ marginTop: '30px', background: 'white', padding: '20px', borderRadius: '20px', border: '2px solid #f97316' }}>
           <h3>🛒 Tu Pedido</h3>
-          {pedido.map(item => <p key={item.idUnico}>{item.cantidad}x {item.nombre} - ${item.subtotal}</p>)}
+          {pedido.map(item => <p key={item.idUnico} style={{borderBottom: '1px solid #eee', paddingBottom: '5px'}}>{item.nombre} {item.saborElegido ? `(${item.saborElegido})` : ''} - ${item.precio}</p>)}
           <h2 style={{ textAlign: 'right' }}>Total: ${total}</h2>
-          <input type="text" placeholder="Tu Nombre" onChange={(e) => setNombre(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px' }} />
-          <input type="text" placeholder="Dirección" onChange={(e) => setDireccion(e.target.value)} style={{ width: '100%', padding: '10px', marginBottom: '10px' }} />
-          <button onClick={enviarWhatsApp} style={{ background: '#16a34a', color: 'white', border: 'none', width: '100%', padding: '15px', borderRadius: '10px', fontWeight: 'bold' }}>
+          <input type="text" placeholder="Tu Nombre" onChange={(e) => setNombre(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '10px', boxSizing: 'border-box' }} />
+          <input type="text" placeholder="Dirección exacta" onChange={(e) => setDireccion(e.target.value)} style={{ width: '100%', padding: '12px', marginBottom: '10px', boxSizing: 'border-box' }} />
+          <button onClick={enviarWhatsApp} style={{ background: '#16a34a', color: 'white', border: 'none', width: '100%', padding: '15px', borderRadius: '10px', fontWeight: 'bold', fontSize: '18px' }}>
             Pedir por WhatsApp 📲
           </button>
         </div>
