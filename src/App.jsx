@@ -4,30 +4,32 @@ import React, { useState, useEffect } from 'react';
 const agotados = [1]; 
 
 const productosBase = [
-  { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
-  { id: 2, nombre: "Papa Rellena de la Casa", precio: 2500, tieneSabor: true, opciones: ["Carne", "Huevo"], imagen: "/papa-rellena.jpg" },
+  // EMPANADAS (Separadas)
+  { id: 1, nombre: "Empanada de Carne", precio: 1500, imagen: "/empanada.jpg" },
+  { id: 9, nombre: "Empanada de Pollo", precio: 1500, imagen: "/empanada.jpg" },
+  { id: 10, nombre: "Empanada de Arroz", precio: 1500, imagen: "/empanada.jpg" },
+  
+  // PAPAS RELLENAS (Separadas)
+  { id: 2, nombre: "Papa Rellena de Carne", precio: 2500, imagen: "/papa-rellena.jpg" },
+  { id: 11, nombre: "Papa Rellena de Huevo", precio: 2500, imagen: "/papa-rellena.jpg" },
+  
+  // OTROS FRITOS
   { id: 3, nombre: "Pastel de Pollo Hojaldrado", precio: 2500, imagen: "/pastel-pollo.jpg" },
   { id: 4, nombre: "Arepa con Huevo y Carne", precio: 3500, imagen: "/arepa-huevo.jpg" },
-  { 
-    id: 5, 
-    nombre: "Arroz Especial del Día", 
-    precio: 6000, 
-    esArroz: true, 
-    // La imagen se define dinámicamente en el componente
-  },
-  { 
-    id: 6, 
-    nombre: "Jugo Natural Helado", 
-    esJugo: true, 
-    tieneSabor: true, 
-    opciones: ["Avena", "Maracuyá"], 
-    precios: { "Pequeño": 1000, "Mediano": 1500, "Grande": 2000 },
-    imagen: "/jugo-natural.jpg"
-  },
   { id: 7, nombre: "Palitos de Queso Costeño", precio: 2000, imagen: "/palito-queso.jpg" },
-  { id: 8, nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.jpg" }
-];
+  { id: 8, nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.jpg" },
 
+  // ARROZ (Se mantiene dinámico por día)
+  { id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true },
+
+  // JUGOS (Separados por sabor y tamaño para control total)
+  { id: 12, nombre: "Jugo de Avena (Pequeño)", precio: 1000, imagen: "/jugo-natural.jpg" },
+  { id: 13, nombre: "Jugo de Avena (Mediano)", precio: 1500, imagen: "/jugo-natural.jpg" },
+  { id: 14, nombre: "Jugo de Avena (Grande)", precio: 2000, imagen: "/jugo-natural.jpg" },
+  { id: 15, nombre: "Jugo de Maracuyá (Pequeño)", precio: 1000, imagen: "/jugo-natural.jpg" },
+  { id: 16, nombre: "Jugo de Maracuyá (Mediano)", precio: 1500, imagen: "/jugo-natural.jpg" },
+  { id: 17, nombre: "Jugo de Maracuyá (Grande)", precio: 2000, imagen: "/jugo-natural.jpg" }
+];
 export default function App() {
   const [pedido, setPedido] = useState([]);
   const [nombre, setNombre] = useState("");
