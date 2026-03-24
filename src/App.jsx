@@ -83,6 +83,11 @@ export default function App() {
   return (
     <div style={{ fontFamily: 'sans-serif', backgroundColor: "#fffbeb", minHeight: '100vh', padding: '15px' }}>
       <header style={{ textAlign: 'center', background: 'white', padding: '20px', borderRadius: '25px', marginBottom: '20px' }}>
+        <img
+          src="/logo-fritos-el-mono.jpg"
+          alt="Logo Fritos El Mono"
+          style={{ height: '80px', borderRadius: '50%', marginBottom: '10px' }}
+        />  
         <h1 style={{ color: '#f97316', margin: 0 }}>Fritos El Mono 🐒</h1>
         <p>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
       </header>
