@@ -86,12 +86,7 @@ export default function App() {
         <img
           src="/logo-fritos-el-mono.jpg"
           alt="Logo Fritos El Mono"
-          style={{  width: '120px',             // 👈 Más ancho (antes era height 80px)
-                    height: '120px',            // 👈 Mismo alto para que sea un círculo perfecto
-                    borderRadius: '50%', 
-                    marginBottom: '10px',
-                    objectFit: 'cover',         // 👈 Esto hace que la foto no se estire feo
-                    border: '4px solid #f97316' // 👈 Un borde naranja para que resalte }}
+          style={{  width: '120px',  height: '120px',  borderRadius: '50%', marginBottom: '10px', objectFit: 'cover', border: '4px solid #f97316' }}
         />  
         <h1 style={{ color: '#f97316', margin: 0 }}>Fritos El Mono 🐒</h1>
         <p>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
