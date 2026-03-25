@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 // 🔴 CONTROL DE INVENTARIO: Escribe el nombre entre comillas para agotar
-const agotados = ["Carne", "Pollo"]; 
+const agotados = ["Empanada Crujiente Carne", "Pollo"]; 
 
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
