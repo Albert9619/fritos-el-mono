@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 // 🔴 CONTROL DE INVENTARIO
 // - Si pones "Carne" -> Se agota en TODO.
 // - Si pones "Empanada Crujiente Carne" -> SOLO se agota esa empanada.
-const agotados = ["Empanada Crujiente Carne"]; 
+const agotados = ["Empanada Crujiente"]; 
 
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
