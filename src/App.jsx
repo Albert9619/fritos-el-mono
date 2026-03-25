@@ -92,48 +92,59 @@ export default function App() {
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', maxWidth: '1000px', margin: '0 auto' }}>
-        {productosBase.map(p => (
-          <div key={p.id} style={{ background: 'white', borderRadius: '20px', padding: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-            <img src={p.esArroz ? "/arroz-pollo.jpg" : p.imagen} style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '15px' }} alt={p.nombre} />
-            <h3>{p.nombre}</h3>
-            <p style={{ color: '#f97316', fontWeight: 'bold', fontSize: '20px' }}>${p.esJugo ? p.precios[tamanosJugo[p.id] || "Mediano"] : p.precio}</p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {p.esArroz && (
-                <div style={{ background: '#fef3c7', padding: '10px', borderRadius: '10px' }}>
-                  <select onChange={(e) => setAcompañanteArroz(e.target.value)} style={{width: '100%', padding: '8px', marginBottom: '5px'}}><option value="">¿Tajada o Yuca?</option><option value="Tajadas">Tajadas</option><option value="Yuca">Yuca</option></select>
-                  <label><input type="checkbox" onChange={(e) => setConHuevo(e.target.checked)} /> + Huevo ($1.000)</label>
+        {productosBase.map(p => {
+          // ✅ MEJORA AQUÍ: Detecta si el producto entero está agotado
+          const todoElProductoAgotado = agotados.includes(p.nombre.trim());
+
+          return (
+            <div key={p.id} style={{ background: 'white', borderRadius: '20px', padding: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', position: 'relative', opacity: todoElProductoAgotado ? 0.7 : 1 }}>
+              <img src={p.esArroz ? "/arroz-pollo.jpg" : p.imagen} style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '15px', filter: todoElProductoAgotado ? 'grayscale(1)' : 'none' }} alt={p.nombre} />
+              
+              {todoElProductoAgotado && (
+                <div style={{ position: 'absolute', top: '20px', left: '20px', background: 'red', color: 'white', padding: '5px 10px', borderRadius: '8px', fontWeight: 'bold', zIndex: 10 }}>PRODUCTO AGOTADO</div>
+              )}
+
+              <h3>{p.nombre}</h3>
+              <p style={{ color: '#f97316', fontWeight: 'bold', fontSize: '20px' }}>${p.esJugo ? p.precios[tamanosJugo[p.id] || "Mediano"] : p.precio}</p>
+              
+              {!todoElProductoAgotado && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {p.esArroz && (
+                    <div style={{ background: '#fef3c7', padding: '10px', borderRadius: '10px' }}>
+                      <select onChange={(e) => setAcompañanteArroz(e.target.value)} style={{width: '100%', padding: '8px', marginBottom: '5px'}}><option value="">¿Tajada o Yuca?</option><option value="Tajadas">Tajadas</option><option value="Yuca">Yuca</option></select>
+                      <label><input type="checkbox" onChange={(e) => setConHuevo(e.target.checked)} /> + Huevo ($1.000)</label>
+                    </div>
+                  )}
+                  {p.tieneSabor && (
+                    <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px' }}>
+                      <option value="">-- Elige el Sabor --</option>
+                      {p.opciones.map(opt => {
+                        const productoYSabor = `${p.nombre.trim()} ${opt.trim()}`;
+                        const saborAgotado = agotados.includes(opt.trim()) || agotados.includes(productoYSabor);
+                        
+                        return (
+                          <option key={opt} value={opt} disabled={saborAgotado}>
+                            {opt} {saborAgotado ? "(AGOTADO)" : ""}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  )}
+                  {p.esJugo && (
+                    <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px' }}>
+                      {Object.keys(p.precios).map(t => <option key={t} value={t}>{t} - ${p.precios[t]}</option>)}
+                    </select>
+                  )}
+                  <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
+                    <label>Cant:</label>
+                    <input type="number" min="1" defaultValue="1" onChange={(e) => setCantidades({...cantidades, [p.id]: parseInt(e.target.value) || 1})} style={{ width: '50px' }} />
+                  </div>
+                  <button onClick={() => agregarAlCarrito(p)} style={{ background: '#f97316', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>Añadir 🥟</button>
                 </div>
               )}
-              {p.tieneSabor && (
-                <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px' }}>
-                  <option value="">-- Elige el Sabor --</option>
-                  {p.opciones.map(opt => {
-                    // ✅ AQUÍ ESTÁ EL ARREGLO DEL TRIM()
-                    const productoYSabor = `${p.nombre.trim()} ${opt.trim()}`;
-                    const estaAgotado = agotados.includes(opt.trim()) || agotados.includes(productoYSabor);
-                    
-                    return (
-                      <option key={opt} value={opt} disabled={estaAgotado}>
-                        {opt} {estaAgotado ? " --- (AGOTADO)" : ""}
-                      </option>
-                    );
-                  })}
-                </select>
-              )}
-              {p.esJugo && (
-                <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px' }}>
-                  {Object.keys(p.precios).map(t => <option key={t} value={t}>{t} - ${p.precios[t]}</option>)}
-                </select>
-              )}
-              <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
-                <label>Cant:</label>
-                <input type="number" min="1" defaultValue="1" onChange={(e) => setCantidades({...cantidades, [p.id]: parseInt(e.target.value) || 1})} style={{ width: '50px' }} />
-              </div>
-              <button onClick={() => agregarAlCarrito(p)} style={{ background: '#f97316', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>Añadir 🥟</button>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div style={{ maxWidth: '800px', margin: '30px auto', background: 'white', padding: '20px', borderRadius: '20px' }}>
@@ -148,7 +159,7 @@ export default function App() {
       </div>
 
       {pedido.length > 0 && (
-        <div style={{ maxWidth: '600px', margin: '30px auto', background: 'white', padding: '20px', borderRadius: '20px', border: '2px solid #f97316' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto 100px', background: 'white', padding: '20px', borderRadius: '20px', border: '2px solid #f97316' }}>
           <h3>🛒 Tu Pedido</h3>
           {pedido.map(item => (
             <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '5px 0' }}>
