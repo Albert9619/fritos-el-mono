@@ -1,19 +1,10 @@
 import React, { useState, useEffect } from 'react';
-const agotados = ["Empanada Crujiente Carne"];
-{p.opciones.map(opt => {
-  // 💡 Creamos una combinación única, ej: "Empanada Crujiente Carne"
-  const productoYSabor = `${p.nombre} ${opt}`;
-  
-  // 🚫 Se bloquea si pones el sabor solo ("Carne") 
-  // O si pones la combinación exacta ("Empanada Crujiente Carne")
-  const estaAgotado = agotados.includes(opt) || agotados.includes(productoYSabor);
-  
-  return (
-    <option key={opt} value={opt} disabled={estaAgotado}>
-      {opt} {estaAgotado ? " --- (AGOTADO)" : ""}
-    </option>
-  );
-})}
+
+// 🔴 CONTROL DE INVENTARIO
+// - Si pones "Carne" -> Se agota en TODO.
+// - Si pones "Empanada Crujiente Carne" -> SOLO se agota esa empanada.
+const agotados = ["Empanada Crujiente Carne"]; 
+
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
   { id: 2, nombre: "Papa Rellena de la Casa", precio: 2500, tieneSabor: true, opciones: ["Carne", "Huevo"], imagen: "/papa-rellena.jpg" },
@@ -93,12 +84,8 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: 'sans-serif', backgroundColor: "#fffbeb", minHeight: '100vh', padding: '15px' }}>
-      <header style={{ textAlign: 'center', background: 'white', padding: '20px', borderRadius: '25px', marginBottom: '20px' }}>
-        <img
-          src="/logo-fritos-el-mono.jpg"
-          alt="Logo Fritos El Mono"
-          style={{  width: '120px',  height: '120px',  borderRadius: '50%', marginBottom: '10px', objectFit: 'cover', border: '4px solid #f97316' }}
-        />  
+      <header style={{ textAlign: 'center', background: 'white', padding: '25px', borderRadius: '25px', marginBottom: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
+        <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{ width: '130px', height: '130px', borderRadius: '50%', marginBottom: '10px', objectFit: 'cover', border: '5px solid #f97316' }} />
         <h1 style={{ color: '#f97316', margin: 0 }}>Fritos El Mono 🐒</h1>
         <p>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
       </header>
@@ -119,7 +106,18 @@ export default function App() {
               )}
               {p.tieneSabor && (
                 <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px' }}>
-                  {p.opciones.map(opt => <option key={opt} value={opt} disabled={agotados.includes(opt)}>{opt} {agotados.includes(opt) ? "(X)" : ""}</option>)}
+                  <option value="">-- Elige el Sabor --</option>
+                  {p.opciones.map(opt => {
+                    // ✅ AQUÍ ESTÁ EL ARREGLO DEL TRIM()
+                    const productoYSabor = `${p.nombre.trim()} ${opt.trim()}`;
+                    const estaAgotado = agotados.includes(opt.trim()) || agotados.includes(productoYSabor);
+                    
+                    return (
+                      <option key={opt} value={opt} disabled={estaAgotado}>
+                        {opt} {estaAgotado ? " --- (AGOTADO)" : ""}
+                      </option>
+                    );
+                  })}
                 </select>
               )}
               {p.esJugo && (
