@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 // 🔴 CONTROL DE INVENTARIO
 // Escribe aquí lo que se acabó: "Tajadas", "Yuca", "Huevo Arroz", "Carne", etc.
-const agotados = ["Tajadas", "Huevo Arroz"]; 
+const agotados = ["Tajadas", "Huevo Arroz", "Suero"]; 
 
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
