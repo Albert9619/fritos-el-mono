@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
 
 // 🔴 CONTROL DE INVENTARIO
-
-// 1. "Carne" -> Bloquea el sabor carne en todo.
-
-// 2. "Empanada Crujiente" -> Bloquea el cuadro completo de la empanada.
-
-// 3. "Empanada Crujiente Carne" -> Bloquea solo ese sabor en la empanada.
-// - ["Tajadas"] -> Bloquea solo tajadas.
-// - ["Yuca"] -> Bloquea solo yuca.
-// - ["Huevo Arroz"] -> Bloquea solo el huevo del arroz.
-
+// Escribe aquí lo que se acabó: "Tajadas", "Yuca", "Huevo Arroz", "Carne", etc.
 const agotados = ["Tajadas", "Huevo Arroz"]; 
 
 const productosBase = [
@@ -95,33 +86,37 @@ export default function App() {
     <div style={{ fontFamily: 'sans-serif', backgroundColor: "#fffbeb", minHeight: '100vh', padding: '15px', color: '#333' }}>
       <header style={{ textAlign: 'center', background: 'white', padding: '25px', borderRadius: '25px', marginBottom: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
         <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{ width: '130px', height: '130px', borderRadius: '50%', marginBottom: '10px', objectFit: 'cover', border: '5px solid #f97316' }} />
-        <h1 style={{ color: '#f97316', margin: 0, fontSize: '28px' }}>Fritos El Mono 🐒</h1>
+        <h1 style={{ color: '#f97316', margin: 0 }}>Fritos El Mono 🐒</h1>
         <p>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', maxWidth: '1000px', margin: '0 auto' }}>
         {productosBase.map(p => {
-          const todoElProductoAgotado = listaAgotadosLimpios.includes(p.nombre.toLowerCase().trim());
+          const todoAgotado = listaAgotadosLimpios.includes(p.nombre.toLowerCase().trim());
           return (
-            <div key={p.id} style={{ background: 'white', borderRadius: '20px', padding: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', position: 'relative', opacity: todoElProductoAgotado ? 0.6 : 1 }}>
-              <img src={p.esArroz ? "/arroz-pollo.jpg" : p.imagen} style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '15px', filter: todoElProductoAgotado ? 'grayscale(1)' : 'none' }} alt={p.nombre} />
-              {todoElProductoAgotado && (
-                <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', background: 'rgba(255,0,0,0.9)', color: 'white', padding: '10px', borderRadius: '10px', fontWeight: 'bold', zIndex: 10 }}>AGOTADO</div>
+            <div key={p.id} style={{ background: 'white', borderRadius: '20px', padding: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', position: 'relative', opacity: todoAgotado ? 0.6 : 1 }}>
+              <img src={p.esArroz ? "/arroz-pollo.jpg" : p.imagen} style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '15px', filter: todoAgotado ? 'grayscale(1)' : 'none' }} alt={p.nombre} />
+              
+              {todoAgotado && (
+                <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', background: 'red', color: 'white', padding: '10px', borderRadius: '10px', fontWeight: 'bold', zIndex: 10 }}>PRODUCTO AGOTADO</div>
               )}
+
               <h3>{p.nombre}</h3>
               <p style={{ color: '#f97316', fontWeight: 'bold', fontSize: '20px' }}>${p.esJugo ? (p.precios[tamanosJugo[p.id] || "Mediano"]).toLocaleString('es-CO') : p.precio.toLocaleString('es-CO')}</p>
               
-              {!todoElProductoAgotado && (
+              {!todoAgotado && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {p.esArroz && (
                     <div style={{ background: '#fef3c7', padding: '10px', borderRadius: '10px' }}>
                       <select onChange={(e) => setAcompañanteArroz(e.target.value)} style={{width: '100%', padding: '8px', marginBottom: '8px'}}>
                         <option value="">¿Tajada o Yuca?</option>
-                        <option value="Tajadas" disabled={listaAgotadosLimpios.includes("tajadas")}>Tajadas {listaAgotadosLimpios.includes("tajadas") ? "(X)" : ""}</option>
-                        <option value="Yuca" disabled={listaAgotadosLimpios.includes("yuca")}>Yuca {listaAgotadosLimpios.includes("yuca") ? "(X)" : ""}</option>
+                        {/* ✅ AQUÍ DICE AGOTADO AL LADO DE TAJADA/YUCA */}
+                        <option value="Tajadas" disabled={listaAgotadosLimpios.includes("tajadas")}>Tajadas {listaAgotadosLimpios.includes("tajadas") ? "(AGOTADO)" : ""}</option>
+                        <option value="Yuca" disabled={listaAgotadosLimpios.includes("yuca")}>Yuca {listaAgotadosLimpios.includes("yuca") ? "(AGOTADO)" : ""}</option>
                       </select>
+                      {/* ✅ AQUÍ DICE AGOTADO AL LADO DEL HUEVO */}
                       {listaAgotadosLimpios.includes("huevo arroz") || listaAgotadosLimpios.includes("huevo") ? (
-                        <p style={{ color: 'red', fontSize: '12px', margin: 0, fontWeight: 'bold' }}>🚫 Huevo Agotado</p>
+                        <p style={{ color: 'red', fontSize: '13px', margin: 0, fontWeight: 'bold' }}>🚫 Huevo de adición (AGOTADO)</p>
                       ) : (
                         <label style={{ fontSize: '14px' }}><input type="checkbox" onChange={(e) => setConHuevo(e.target.checked)} /> + Huevo ($1.000)</label>
                       )}
@@ -133,20 +128,20 @@ export default function App() {
                       {p.opciones.map(opt => {
                         const productoYSabor = `${p.nombre.toLowerCase().trim()} ${opt.toLowerCase().trim()}`;
                         const saborAgotado = listaAgotadosLimpios.includes(opt.toLowerCase().trim()) || listaAgotadosLimpios.includes(productoYSabor);
-                        return <option key={opt} value={opt} disabled={saborAgotado}>{opt} {saborAgotado ? "(X)" : ""}</option>;
+                        return <option key={opt} value={opt} disabled={saborAgotado}>{opt} {saborAgotado ? "(AGOTADO)" : ""}</option>;
                       })}
                     </select>
                   )}
                   {p.esJugo && (
                     <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '8px' }}>
-                      {Object.keys(p.precios).map(t => <option key={t} value={t}>{t} - ${p.precios[t]}</option>)}
+                      {Object.keys(p.precios).map(t => <option key={t} value={t}>{t} - ${p.precios[t].toLocaleString('es-CO')}</option>)}
                     </select>
                   )}
                   <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                     <label style={{fontSize: '14px'}}>Cantidad:</label>
                     <input type="number" min="1" defaultValue="1" onChange={(e) => setCantidades({...cantidades, [p.id]: parseInt(e.target.value) || 1})} style={{ width: '50px', padding: '5px' }} />
                   </div>
-                  <button onClick={() => agregarAlCarrito(p)} style={{ background: '#f97316', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>Añadir al Pedido</button>
+                  <button onClick={() => agregarAlCarrito(p)} style={{ background: '#f97316', color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>Añadir al Pedido 🥟</button>
                 </div>
               )}
             </div>
@@ -161,7 +156,7 @@ export default function App() {
             const salsaAgotada = listaAgotadosLimpios.includes(s.toLowerCase().trim());
             return (
               <label key={s} style={{ padding: '10px', background: salsaAgotada ? '#eee' : '#fff3e0', borderRadius: '10px', cursor: salsaAgotada ? 'not-allowed' : 'pointer', opacity: salsaAgotada ? 0.5 : 1 }}>
-                <input type="checkbox" disabled={salsaAgotada} onChange={() => manejarSalsa(s)} checked={salsasElegidas.includes(s)} /> {s} {salsaAgotada ? "(X)" : ""}
+                <input type="checkbox" disabled={salsaAgotada} onChange={() => manejarSalsa(s)} checked={salsasElegidas.includes(s)} /> {s} {salsaAgotada ? "(AGOTADO)" : ""}
               </label>
             );
           })}
