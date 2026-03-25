@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
 // 🔴 CONTROL DE INVENTARIO
-// - Si pones "Carne" -> Se agota en TODO.
-// - Si pones "Empanada Crujiente Carne" -> SOLO se agota esa empanada.
+// 1. "Carne" -> Bloquea el sabor carne en todo.
+// 2. "Empanada Crujiente" -> Bloquea el cuadro completo de la empanada.
+// 3. "Empanada Crujiente Carne" -> Bloquea solo ese sabor en la empanada.
 const agotados = ["Empanada Crujiente"]; 
 
 const productosBase = [
