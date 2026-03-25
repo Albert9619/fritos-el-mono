@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react';
-
-// 🔴 CONTROL DE INVENTARIO: Escribe el nombre entre comillas para agotar
-const agotados = ["Empanada Crujiente Carne", "Pollo"]; 
-
+const agotados = ["Empanada Crujiente Carne"];
+{p.opciones.map(opt => {
+  // 💡 Creamos una combinación única, ej: "Empanada Crujiente Carne"
+  const productoYSabor = `${p.nombre} ${opt}`;
+  
+  // 🚫 Se bloquea si pones el sabor solo ("Carne") 
+  // O si pones la combinación exacta ("Empanada Crujiente Carne")
+  const estaAgotado = agotados.includes(opt) || agotados.includes(productoYSabor);
+  
+  return (
+    <option key={opt} value={opt} disabled={estaAgotado}>
+      {opt} {estaAgotado ? " --- (AGOTADO)" : ""}
+    </option>
+  );
+})}
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
   { id: 2, nombre: "Papa Rellena de la Casa", precio: 2500, tieneSabor: true, opciones: ["Carne", "Huevo"], imagen: "/papa-rellena.jpg" },
