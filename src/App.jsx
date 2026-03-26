@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 // - ["Huevo Arroz"] -> Bloquea solo el huevo del arroz.
 // - ["Suero"] -> Bloquea el Chip de Suero.
 // - ["Empanada Crujiente Carne"] -> Bloquea solo ese sabor.
-const agotados = []; 
+const agotados = ["Tajadas", "Huevo Arroz", "Suero"]; 
 
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
@@ -31,13 +31,11 @@ const productosBase = [
 
 const listadoSalsas = ["Pique", "Salsa Roja", "Salsa Rosada", "Suero", "Suero Picante"];
 
-// ==========================================
-// 🎨 PALETA DE COLORES "mono"
-// ==========================================
-const MONO_NARANJA = "#f97316"; // Naranja apetito
-const MONO_AMARILLO = "#fef3c7"; // Amarillo suave arroz/chips
-const MONO_CREMA = "#fffbeb";    // Fondo página
-const MONO_VERDE = "#16a34a";   // Verde WhatsApp
+// 🎨 COLORES DE MARCA
+const MONO_NARANJA = "#f97316";
+const MONO_AMARILLO = "#fef3c7";
+const MONO_CREMA = "#fffbeb";
+const MONO_VERDE = "#16a34a";
 const MONO_TEXTO = "#333333";
 
 export default function App() {
@@ -51,18 +49,15 @@ export default function App() {
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
   const [conHuevo, setConHuevo] = useState(false);
   const [salsasElegidas, setSalsasElegidas] = useState([]);
-
-  // Estado para efecto hover en tarjetas (Desktop)
   const [hoveredCardId, setHoveredCardId] = useState(null);
 
   const listaAgotadosLimpios = agotados.map(a => a.toLowerCase().trim());
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // Manejar chip de salsa (alternar seleccion)
   const manejarSalsa = (salsa) => {
     const salsaLimpia = salsa.toLowerCase().trim();
-    if (listaAgotadosLimpios.includes(salsaLimpia)) return; // No hacer nada si esta agotada
+    if (listaAgotadosLimpios.includes(salsaLimpia)) return;
     setSalsasElegidas(prev => prev.includes(salsa) ? prev.filter(s => s !== salsa) : [...prev, salsa]);
   };
 
@@ -104,17 +99,41 @@ export default function App() {
   };
 
   return (
-    <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', padding: '15px 15px 100px 15px', color: MONO_TEXTO }}>
+    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '100px' }}>
       
-      {/* 1. HEADER MODERNO */}
-      <header style={{ textAlign: 'center', background: 'white', padding: '30px', borderRadius: '30px', marginBottom: '25px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', border: `1px solid rgba(249, 115, 22, 0.1)` }}>
-        <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{ width: '120px', height: '120px', borderRadius: '50%', marginBottom: '15px', objectFit: 'cover', border: `6px solid ${MONO_NARANJA}`, boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }} />
-        <h1 style={{ color: MONO_NARANJA, margin: 0, fontSize: '32px', fontWeight: '800', letterSpacing: '-1px' }}>Fritos El Mono 🐒</h1>
-        <p style={{ marginTop: '5px', fontSize: '18px' }}>Carepa - Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
+      {/* 🟢 NUEVO HEADER TIPO BANNER FULL WIDTH */}
+      <header style={{ 
+        textAlign: 'center', 
+        background: 'white', 
+        borderRadius: '0 0 40px 40px', 
+        marginBottom: '30px', 
+        boxShadow: '0 10px 30px rgba(0,0,0,0.1)', 
+        overflow: 'hidden',
+        position: 'relative'
+      }}>
+        <img 
+          src="/logo-fritos-el-mono.jpg" 
+          alt="Banner Fritos El Mono" 
+          style={{ 
+            width: '100%', 
+            height: '280px', 
+            objectFit: 'cover', 
+            display: 'block'
+          }} 
+        />
+        <div style={{
+          padding: '25px',
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          borderTop: `5px solid ${MONO_NARANJA}`
+        }}>
+          <h1 style={{ color: MONO_NARANJA, margin: 0, fontSize: '36px', fontWeight: '900', letterSpacing: '-1.5px' }}>Fritos El Mono 🐒</h1>
+          <p style={{ marginTop: '5px', fontSize: '18px', fontWeight: '600' }}>Hoy Arroz de <span style={{color: MONO_NARANJA}}>{tipoArrozHoy}</span></p>
+        </div>
       </header>
 
-      {/* PRODUCTOS GRID (App Effect cards) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto' }}>
+      {/* PRODUCTOS GRID */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
         {productosBase.map(p => {
           const todoAgotado = listaAgotadosLimpios.includes(p.nombre.toLowerCase().trim());
           const isHovered = hoveredCardId === p.id;
@@ -125,85 +144,61 @@ export default function App() {
               onMouseEnter={() => setHoveredCardId(p.id)}
               onMouseLeave={() => setHoveredCardId(null)}
               style={{ 
-                background: 'white', 
-                borderRadius: '24px', // ✅ Más redondeado
-                padding: '0', 
-                boxShadow: isHovered ? '0 20px 35px rgba(0,0,0,0.1)' : '0 10px 20px rgba(0,0,0,0.05)', // ✅ Sombra sutil
-                position: 'relative', 
-                overflow: 'hidden', 
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease', // ✅ Micro-interaccion hover
-                transform: isHovered ? 'translateY(-5px)' : 'translateY(0)',
-                border: isHovered ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`, // ✅ Resaltado hover
-                display: 'flex',
-                flexDirection: 'column'
+                background: 'white', borderRadius: '28px', padding: '0', 
+                boxShadow: isHovered ? '0 20px 40px rgba(0,0,0,0.12)' : '0 10px 20px rgba(0,0,0,0.05)',
+                position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease',
+                transform: isHovered ? 'translateY(-8px)' : 'translateY(0)',
+                border: isHovered ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`,
+                display: 'flex', flexDirection: 'column'
               }}
             >
-              <img src={p.esArroz ? "/arroz-pollo.jpg" : p.imagen} style={{ width: '100%', height: '200px', objectFit: 'cover', borderBottom: '1px solid #eee', filter: todoAgotado ? 'grayscale(1)' : 'none' }} alt={p.nombre} />
+              <img src={p.esArroz ? "/arroz-pollo.jpg" : p.imagen} style={{ width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none' }} alt={p.nombre} />
               
-              {/* ✅ BADGE AGOTADO MEJORADO */}
               {todoAgotado && (
-                <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.95)', color: 'white', padding: '10px 20px', borderRadius: '0 0 0 20px', fontWeight: '800', fontSize: '14px', letterSpacing: '1px' }}>AGOTADO 🚫</div>
+                <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10 }}>AGOTADO 🚫</div>
               )}
 
               <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                <h3 style={{ margin: '0 0 10px 0', fontSize: '20px', fontWeight: '700' }}>{p.nombre}</h3>
-                
-                {/* PRECIO RESALTADO */}
-                <p style={{ color: MONO_NARANJA, fontWeight: '800', fontSize: '24px', margin: '0 0 20px 0', borderBottom: `2px dashed ${MONO_AMARILLO}`, paddingBottom: '10px' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800' }}>{p.nombre}</h3>
+                <p style={{ color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: `2px dashed ${MONO_AMARILLO}` }}>
                   ${p.esJugo ? (p.precios[tamanosJugo[p.id] || "Mediano"]).toLocaleString('es-CO') : p.precio.toLocaleString('es-CO')}
                 </p>
                 
                 {!todoAgotado && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: 'auto' }}>
-                    
-                    {/* ✅ MEJORA ARROZ: Jerarquía visual */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {p.esArroz && (
-                      <div style={{ background: MONO_AMARILLO, padding: '15px', borderRadius: '15px', border: `1px solid rgba(249, 115, 22, 0.2)` }}>
-                        <select onChange={(e) => setAcompañanteArroz(e.target.value)} style={{width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '10px', border: `1px solid rgba(0,0,0,0.1)`, fontSize: '16px' }}>
+                      <div style={{ background: MONO_AMARILLO, padding: '15px', borderRadius: '18px', border: `1px solid rgba(249, 115, 22, 0.2)` }}>
+                        <select onChange={(e) => setAcompañanteArroz(e.target.value)} style={{width: '100%', padding: '12px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px' }}>
                           <option value="">¿Tajada o Yuca?</option>
-                          <option value="Tajadas" disabled={listaAgotadosLimpios.includes("tajadas")}>Tajadas {listaAgotadosLimpios.includes("tajadas") ? "(🚫 AGOTADO)" : "😋"}</option>
-                          <option value="Yuca" disabled={listaAgotadosLimpios.includes("yuca")}>Yuca {listaAgotadosLimpios.includes("yuca") ? "(🚫 AGOTADO)" : "😋"}</option>
+                          <option value="Tajadas" disabled={listaAgotadosLimpios.includes("tajadas")}>Tajadas {listaAgotadosLimpios.includes("tajadas") ? "(AGOTADO)" : "😋"}</option>
+                          <option value="Yuca" disabled={listaAgotadosLimpios.includes("yuca")}>Yuca {listaAgotadosLimpios.includes("yuca") ? "(AGOTADO)" : "😋"}</option>
                         </select>
-                        
                         {listaAgotadosLimpios.includes("huevo arroz") || listaAgotadosLimpios.includes("huevo") ? (
-                          <p style={{ color: 'red', fontSize: '14px', margin: 0, fontWeight: 'bold', textAlign: 'center' }}>🚫 Adición de Huevo Agotada</p>
+                          <p style={{ color: 'red', fontSize: '14px', margin: '8px 0 0 0', fontWeight: 'bold', textAlign: 'center' }}>🚫 Huevo Agotado</p>
                         ) : (
-                          <label style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}><input type="checkbox" style={{ accentColor: MONO_NARANJA, width: '20px', height: '20px' }} onChange={(e) => setConHuevo(e.target.checked)} /> + Huevo ($1.000)</label>
+                          <label style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', cursor: 'pointer' }}>
+                            <input type="checkbox" style={{ accentColor: MONO_NARANJA, width: '22px', height: '22px' }} onChange={(e) => setConHuevo(e.target.checked)} /> + Huevo ($1.000)
+                          </label>
                         )}
                       </div>
                     )}
 
-                    {/* SELECTS ESTILIZADOS */}
                     {p.tieneSabor && (
-                      <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: `1px solid rgba(0,0,0,0.1)`, fontSize: '16px' }}>
+                      <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px' }}>
                         <option value="">-- Elige el Sabor --</option>
                         {p.opciones.map(opt => {
                           const productoYSabor = `${p.nombre.toLowerCase().trim()} ${opt.toLowerCase().trim()}`;
                           const saborAgotado = listaAgotadosLimpios.includes(opt.toLowerCase().trim()) || listaAgotadosLimpios.includes(productoYSabor);
-                          return <option key={opt} value={opt} disabled={saborAgotado}>{opt} {saborAgotado ? "(🚫 AGOTADO)" : ""}</option>;
+                          return <option key={opt} value={opt} disabled={saborAgotado}>{opt} {saborAgotado ? "(AGOTADO)" : ""}</option>;
                         })}
                       </select>
                     )}
-                    {p.esJugo && (
-                      <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: `1px solid rgba(0,0,0,0.1)`, fontSize: '16px' }}>
-                        {Object.keys(p.precios).map(t => <option key={t} value={t}>{t} - ${p.precios[t].toLocaleString('es-CO')}</option>)}
-                      </select>
-                    )}
 
-                    {/* CANTIDAD Y BOTÓN (Micro-interacciones) */}
-                    <div style={{display: 'flex', alignItems: 'center', gap: '15px', background: '#f9f9f9', padding: '10px', borderRadius: '15px'}}>
-                      <label style={{fontSize: '16px', fontWeight: 'bold'}}>Cant:</label>
-                      <input type="number" min="1" defaultValue="1" onChange={(e) => setCantidades({...cantidades, [p.id]: parseInt(e.target.value) || 1})} style={{ width: '60px', padding: '10px', borderRadius: '10px', border: `1px solid #ddd`, textAlign: 'center', fontSize: '16px' }} />
+                    <div style={{display: 'flex', alignItems: 'center', gap: '15px', background: '#fcfcfc', padding: '12px', borderRadius: '15px', border: '1px solid #eee'}}>
+                      <label style={{fontSize: '16px', fontWeight: 'bold'}}>Cantidad:</label>
+                      <input type="number" min="1" defaultValue="1" onChange={(e) => setCantidades({...cantidades, [p.id]: parseInt(e.target.value) || 1})} style={{ width: '70px', padding: '10px', borderRadius: '10px', border: `1px solid #ddd`, textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }} />
                     </div>
-                    <button 
-                      onClick={() => agregarAlCarrito(p)} 
-                      style={{ 
-                        background: isHovered ? '#ff8c3a' : MONO_NARANJA, // Micro-interaccion color
-                        color: 'white', border: 'none', padding: '15px', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', transition: 'background 0.2s ease'
-                      }}
-                    >
-                      Añadir al Pedido 🥟
-                    </button>
+                    <button onClick={() => agregarAlCarrito(p)} style={{ background: MONO_NARANJA, color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(249, 115, 22, 0.2)' }}>Añadir al Pedido 🥟</button>
                   </div>
                 )}
               </div>
@@ -212,129 +207,68 @@ export default function App() {
         })}
       </div>
 
-      {/* ✅ 2. SALSAS CHIPS (Tappable pills) */}
-      <div style={{ maxWidth: '800px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
-        <h3 style={{ color: MONO_NARANJA, margin: '0 0 20px 0', fontSize: '24px', fontWeight: '800' }}>🧂 ¿Qué salsas deseas? <span style={{fontSize: '16px', color: '#666', fontWeight: 'normal'}}>(Gratis)</span></h3>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+      {/* SALSAS CHIPS */}
+      <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+        <h3 style={{ color: MONO_NARANJA, margin: '0 0 25px 0', fontSize: '26px', fontWeight: '900' }}>🧂 ¿Qué salsas deseas?</h3>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
           {listadoSalsas.map(s => {
-            const salsaLimpia = s.toLowerCase().trim();
-            const salsaAgotada = listaAgotadosLimpios.includes(salsaLimpia);
-            const estaSeleccionada = salsasElegidas.includes(s);
-
-            // Estilos del Chip según estado
-            let bgChip = MONO_AMARILLO;
-            let textChip = MONO_TEXTO;
-            let borderChip = `2px solid transparent`;
-            let cursorChip = 'pointer';
-            let opacChip = 1;
-
-            if (estaSeleccionada) {
-              bgChip = MONO_NARANJA;
-              textChip = 'white';
-            }
-            if (salsaAgotada) {
-              bgChip = '#eee';
-              textChip = '#aaa';
-              cursorChip = 'not-allowed';
-              opacChip = 0.6;
-            }
-
+            const salsaAgotada = listaAgotadosLimpios.includes(s.toLowerCase().trim());
+            const seleccionada = salsasElegidas.includes(s);
             return (
               <button 
-                key={s} 
-                onClick={() => manejarSalsa(s)}
-                disabled={salsaAgotada}
+                key={s} onClick={() => manejarSalsa(s)} disabled={salsaAgotada}
                 style={{ 
-                  padding: '12px 24px', 
-                  background: bgChip, 
-                  color: textChip,
-                  borderRadius: '30px', // Chip circular
-                  cursor: cursorChip, 
-                  opacity: opacChip,
-                  border: borderChip,
-                  fontWeight: estaSeleccionada ? 'bold' : 'normal',
-                  fontSize: '16px',
-                  transition: 'all 0.2s ease',
-                  boxShadow: estaSeleccionada ? '0 4px 8px rgba(249, 115, 22, 0.3)' : '0 2px 4px rgba(0,0,0,0.05)',
-                  transform: estaSeleccionada ? 'scale(1.05)' : 'scale(1)',
+                  padding: '14px 28px', borderRadius: '40px', fontSize: '17px', border: 'none', cursor: salsaAgotada ? 'not-allowed' : 'pointer',
+                  background: seleccionada ? MONO_NARANJA : (salsaAgotada ? '#f0f0f0' : MONO_AMARILLO),
+                  color: seleccionada ? 'white' : (salsaAgotada ? '#bbb' : MONO_TEXTO),
+                  fontWeight: seleccionada ? 'bold' : 'normal', transition: 'all 0.2s',
+                  boxShadow: seleccionada ? '0 5px 12px rgba(249, 115, 22, 0.4)' : '0 2px 5px rgba(0,0,0,0.05)',
+                  transform: seleccionada ? 'scale(1.08)' : 'scale(1)',
                   textDecoration: salsaAgotada ? 'line-through' : 'none'
                 }}
               >
-                {estaSeleccionada ? `✓ ${s}` : s} {salsaAgotada ? "(🚫)" : ""}
+                {seleccionada ? `✓ ${s}` : s} {salsaAgotada ? "🚫" : ""}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* ✅ 3. BOTÓN FLOTANTE CARRITO */}
+      {/* BOTÓN FLOTANTE */}
       {pedido.length > 0 && (
-        <a 
-          href="#carrito_seccion"
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            background: MONO_TEXTO, // Contraste
-            color: 'white',
-            padding: '15px 25px',
-            borderRadius: '50px',
-            textDecoration: 'none',
-            fontWeight: 'bold',
-            boxShadow: '0 5px 20px rgba(0,0,0,0.3)',
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            fontSize: '16px'
-          }}
-        >
-          🛒 Ver mi Pedido 
-          <span style={{ background: MONO_NARANJA, borderRadius: '50%', width: '25px', height: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>
+        <a href="#carrito_seccion" style={{ position: 'fixed', bottom: '25px', right: '25px', background: MONO_TEXTO, color: 'white', padding: '18px 30px', borderRadius: '50px', textDecoration: 'none', fontWeight: 'bold', boxShadow: '0 8px 25px rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', gap: '12px', fontSize: '18px' }}>
+          🛒 Mi Pedido 
+          <span style={{ background: MONO_NARANJA, borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {pedido.reduce((acc, item) => acc + item.cantidad, 0)}
           </span>
         </a>
       )}
 
-      {/* CARRITO Y CONFIRMACIÓN */}
+      {/* CARRITO FINAL */}
       {pedido.length > 0 && (
-        <div id="carrito_seccion" style={{ maxWidth: '700px', margin: '0 auto 100px', background: 'white', padding: '35px', borderRadius: '30px', border: `4px solid ${MONO_NARANJA}`, boxShadow: '0 15px 35px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ margin: '0 0 25px 0', fontSize: '28px', fontWeight: '800' }}>🛒 Mi Pedido (Mono Fritos)</h2>
+        <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto 120px', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.15)' }}>
+          <h2 style={{ fontSize: '30px', fontWeight: '900', marginBottom: '25px' }}>🛒 Confirmar Pedido</h2>
           {pedido.map(item => (
-            <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '12px 0', alignItems: 'center' }}>
-              <span style={{fontSize: '16px'}}><strong>{item.cantidad}x</strong> {item.nombre} <small style={{color: '#666', background: MONO_CREMA, padding: '2px 5px', borderRadius: '5px'}}>{item.saborElegido} {item.detallesArroz}</small></span>
-              <div style={{display: 'flex', gap: '15px', alignItems: 'center'}}>
-                <span style={{fontWeight: '800', fontSize: '18px'}}>${item.subtotal.toLocaleString('es-CO')}</span>
-                <button onClick={() => setPedido(pedido.filter(i => i.idUnico !== item.idUnico))} style={{color: 'red', border: `1px solid #ffcccc`, background: '#fff5f5', cursor: 'pointer', fontWeight: 'bold', width: '30px', height: '30px', borderRadius: '50%'}}>X</button>
+            <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0', alignItems: 'center' }}>
+              <span style={{fontSize: '17px'}}><strong>{item.cantidad}x</strong> {item.nombre} <small style={{background: MONO_CREMA, padding: '3px 8px', borderRadius: '6px'}}>{item.saborElegido} {item.detallesArroz}</small></span>
+              <div style={{display: 'flex', gap: '20px', alignItems: 'center'}}>
+                <span style={{fontWeight: '900', fontSize: '20px'}}>${item.subtotal.toLocaleString('es-CO')}</span>
+                <button onClick={() => setPedido(pedido.filter(i => i.idUnico !== item.idUnico))} style={{color: 'red', border: '1px solid #ffcccc', background: '#fff5f5', cursor: 'pointer', width: '35px', height: '35px', borderRadius: '50%', fontWeight: '900'}}>X</button>
               </div>
             </div>
           ))}
-          
-          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '32px', fontWeight: '800', marginTop: '25px', padding: '10px 0', borderTop: `2px dashed ${MONO_AMARILLO}` }}>
+          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '38px', fontWeight: '900', marginTop: '30px', borderTop: `3px dashed ${MONO_AMARILLO}`, paddingTop: '15px' }}>
             Total: ${total.toLocaleString('es-CO')}
           </h2>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-            <input type="text" placeholder="Tu Nombre Completo" onChange={(e) => setNombre(e.target.value)} style={{ padding: '15px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px', background: MONO_CREMA }} />
-            <input type="text" placeholder="Dirección Exacta en Carepa (Barrio / Referencia)" onChange={(e) => setDireccion(e.target.value)} style={{ padding: '15px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px', background: MONO_CREMA }} />
-            <select onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '15px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px', background: 'white' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
+            <input type="text" placeholder="Tu Nombre Completo" onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px', background: MONO_CREMA }} />
+            <input type="text" placeholder="Dirección Exacta (Barrio / Referencia)" onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px', background: MONO_CREMA }} />
+            <select onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px' }}>
               <option value="">-- ¿Cómo pagas? --</option>
               <option value="Efectivo">Efectivo</option>
               <option value="Nequi (Mono)">Nequi (Mono)</option>
             </select>
-            
-            {/* ✅ MEJORA BOTÓN WA: Verde WhatsApp */}
-            <button 
-              onClick={enviarWhatsApp} 
-              style={{ 
-                background: MONO_VERDE, // Verde WA
-                color: 'white', border: 'none', padding: '18px', borderRadius: '15px', fontWeight: '800', fontSize: '18px', cursor: 'pointer', transition: 'background 0.2s', boxShadow: '0 5px 15px rgba(22, 163, 74, 0.3)'
-              }}
-              onMouseEnter={(e) => e.target.style.background = '#128c3e'}
-              onMouseLeave={(e) => e.target.style.background = MONO_VERDE}
-            >
-              Pedir por WhatsApp al Mono 📲
-            </button>
+            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '18px', fontWeight: '900', fontSize: '20px', cursor: 'pointer', boxShadow: '0 8px 20px rgba(22, 163, 74, 0.3)' }}>Enviar Pedido por WhatsApp 📲</button>
           </div>
         </div>
       )}
