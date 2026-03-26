@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 // - ["Huevo Arroz"] -> Bloquea solo el huevo del arroz.
 // - ["Suero"] -> Bloquea el Chip de Suero.
 // - ["Empanada Crujiente Carne"] -> Bloquea solo ese sabor.
-const agotados = ["Tajadas", "Huevo Arroz", "Suero"]; 
+const agotados = []; 
 
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
