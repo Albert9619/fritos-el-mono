@@ -3,11 +3,6 @@ import React, { useState } from 'react';
 // ==========================================
 // 🔴 CONTROL DE INVENTARIO ( Carepa )
 // ==========================================
-// - ["Tajadas"] -> Bloquea solo tajadas en el arroz.
-// - ["Yuca"] -> Bloquea solo yuca en el arroz.
-// - ["Huevo Arroz"] -> Bloquea solo el huevo del arroz.
-// - ["Suero"] -> Bloquea el Chip de Suero.
-// - ["Empanada Crujiente Carne"] -> Bloquea solo ese sabor.
 const agotados = ["Tajadas", "Huevo Arroz", "Suero"]; 
 
 const productosBase = [
@@ -31,7 +26,6 @@ const productosBase = [
 
 const listadoSalsas = ["Pique", "Salsa Roja", "Salsa Rosada", "Suero", "Suero Picante"];
 
-// 🎨 COLORES DE MARCA
 const MONO_NARANJA = "#f97316";
 const MONO_AMARILLO = "#fef3c7";
 const MONO_CREMA = "#fffbeb";
@@ -99,64 +93,25 @@ export default function App() {
   };
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '100px' }}>
+    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '60px' }}>
       
-      {/* 🟢 NUEVO HEADER TIPO BANNER FULL WIDTH */}
-      <header style={{ 
-        textAlign: 'center', 
-        background: 'white', 
-        borderRadius: '0 0 40px 40px', 
-        marginBottom: '30px', 
-        boxShadow: '0 10px 30px rgba(0,0,0,0.1)', 
-        overflow: 'hidden',
-        position: 'relative'
-      }}>
-        <img 
-          src="/logo-fritos-el-mono.jpg" 
-          alt="Banner Fritos El Mono" 
-          style={{ 
-            width: '100%', 
-            height: '280px', 
-            objectFit: 'cover', 
-            display: 'block'
-          }} 
-        />
-        <div style={{
-          padding: '25px',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(10px)',
-          borderTop: `5px solid ${MONO_NARANJA}`
-        }}>
+      <header style={{ textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', overflow: 'hidden', position: 'relative' }}>
+        <img src="/logo-fritos-el-mono.jpg" alt="Banner Fritos El Mono" style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
+        <div style={{ padding: '25px', background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderTop: `5px solid ${MONO_NARANJA}` }}>
           <h1 style={{ color: MONO_NARANJA, margin: 0, fontSize: '36px', fontWeight: '900', letterSpacing: '-1.5px' }}>Fritos El Mono 🐒</h1>
           <p style={{ marginTop: '5px', fontSize: '18px', fontWeight: '600' }}>Hoy Arroz de <span style={{color: MONO_NARANJA}}>{tipoArrozHoy}</span></p>
         </div>
       </header>
 
-      {/* PRODUCTOS GRID */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
         {productosBase.map(p => {
           const todoAgotado = listaAgotadosLimpios.includes(p.nombre.toLowerCase().trim());
           const isHovered = hoveredCardId === p.id;
 
           return (
-            <div 
-              key={p.id} 
-              onMouseEnter={() => setHoveredCardId(p.id)}
-              onMouseLeave={() => setHoveredCardId(null)}
-              style={{ 
-                background: 'white', borderRadius: '28px', padding: '0', 
-                boxShadow: isHovered ? '0 20px 40px rgba(0,0,0,0.12)' : '0 10px 20px rgba(0,0,0,0.05)',
-                position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease',
-                transform: isHovered ? 'translateY(-8px)' : 'translateY(0)',
-                border: isHovered ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`,
-                display: 'flex', flexDirection: 'column'
-              }}
-            >
+            <div key={p.id} onMouseEnter={() => setHoveredCardId(p.id)} onMouseLeave={() => setHoveredCardId(null)} style={{ background: 'white', borderRadius: '28px', padding: '0', boxShadow: isHovered ? '0 20px 40px rgba(0,0,0,0.12)' : '0 10px 20px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease', transform: isHovered ? 'translateY(-8px)' : 'translateY(0)', border: isHovered ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`, display: 'flex', flexDirection: 'column' }}>
               <img src={p.esArroz ? "/arroz-pollo.jpg" : p.imagen} style={{ width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none' }} alt={p.nombre} />
-              
-              {todoAgotado && (
-                <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10 }}>AGOTADO 🚫</div>
-              )}
+              {todoAgotado && ( <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10 }}>AGOTADO 🚫</div> )}
 
               <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800' }}>{p.nombre}</h3>
@@ -173,7 +128,7 @@ export default function App() {
                           <option value="Tajadas" disabled={listaAgotadosLimpios.includes("tajadas")}>Tajadas {listaAgotadosLimpios.includes("tajadas") ? "(AGOTADO)" : "😋"}</option>
                           <option value="Yuca" disabled={listaAgotadosLimpios.includes("yuca")}>Yuca {listaAgotadosLimpios.includes("yuca") ? "(AGOTADO)" : "😋"}</option>
                         </select>
-                        {listaAgotadosLimpios.includes("huevo arroz") || listaAgotadosLimpios.includes("huevo") ? (
+                        {(listaAgotadosLimpios.includes("huevo arroz") || listaAgotadosLimpios.includes("huevo")) ? (
                           <p style={{ color: 'red', fontSize: '14px', margin: '8px 0 0 0', fontWeight: 'bold', textAlign: 'center' }}>🚫 Huevo Agotado</p>
                         ) : (
                           <label style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', cursor: 'pointer' }}>
@@ -194,6 +149,16 @@ export default function App() {
                       </select>
                     )}
 
+                    {/* ✅ CORRECCIÓN JUGOS: Ahora muestra los tamaños claramente */}
+                    {p.esJugo && (
+                      <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `2px solid ${MONO_NARANJA}`, fontSize: '16px', fontWeight: 'bold' }}>
+                        <option value="Mediano">-- Tamaño: Mediano (Por defecto) --</option>
+                        {Object.keys(p.precios).map(t => (
+                          <option key={t} value={t}>{t} - ${p.precios[t].toLocaleString('es-CO')}</option>
+                        ))}
+                      </select>
+                    )}
+
                     <div style={{display: 'flex', alignItems: 'center', gap: '15px', background: '#fcfcfc', padding: '12px', borderRadius: '15px', border: '1px solid #eee'}}>
                       <label style={{fontSize: '16px', fontWeight: 'bold'}}>Cantidad:</label>
                       <input type="number" min="1" defaultValue="1" onChange={(e) => setCantidades({...cantidades, [p.id]: parseInt(e.target.value) || 1})} style={{ width: '70px', padding: '10px', borderRadius: '10px', border: `1px solid #ddd`, textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }} />
@@ -207,7 +172,6 @@ export default function App() {
         })}
       </div>
 
-      {/* SALSAS CHIPS */}
       <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
         <h3 style={{ color: MONO_NARANJA, margin: '0 0 25px 0', fontSize: '26px', fontWeight: '900' }}>🧂 ¿Qué salsas deseas?</h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px' }}>
@@ -215,18 +179,7 @@ export default function App() {
             const salsaAgotada = listaAgotadosLimpios.includes(s.toLowerCase().trim());
             const seleccionada = salsasElegidas.includes(s);
             return (
-              <button 
-                key={s} onClick={() => manejarSalsa(s)} disabled={salsaAgotada}
-                style={{ 
-                  padding: '14px 28px', borderRadius: '40px', fontSize: '17px', border: 'none', cursor: salsaAgotada ? 'not-allowed' : 'pointer',
-                  background: seleccionada ? MONO_NARANJA : (salsaAgotada ? '#f0f0f0' : MONO_AMARILLO),
-                  color: seleccionada ? 'white' : (salsaAgotada ? '#bbb' : MONO_TEXTO),
-                  fontWeight: seleccionada ? 'bold' : 'normal', transition: 'all 0.2s',
-                  boxShadow: seleccionada ? '0 5px 12px rgba(249, 115, 22, 0.4)' : '0 2px 5px rgba(0,0,0,0.05)',
-                  transform: seleccionada ? 'scale(1.08)' : 'scale(1)',
-                  textDecoration: salsaAgotada ? 'line-through' : 'none'
-                }}
-              >
+              <button key={s} onClick={() => manejarSalsa(s)} disabled={salsaAgotada} style={{ padding: '14px 28px', borderRadius: '40px', fontSize: '17px', border: 'none', cursor: salsaAgotada ? 'not-allowed' : 'pointer', background: seleccionada ? MONO_NARANJA : (salsaAgotada ? '#f0f0f0' : MONO_AMARILLO), color: seleccionada ? 'white' : (salsaAgotada ? '#bbb' : MONO_TEXTO), fontWeight: seleccionada ? 'bold' : 'normal', transition: 'all 0.2s', boxShadow: seleccionada ? '0 5px 12px rgba(249, 115, 22, 0.4)' : '0 2px 5px rgba(0,0,0,0.05)', transform: seleccionada ? 'scale(1.08)' : 'scale(1)', textDecoration: salsaAgotada ? 'line-through' : 'none' }}>
                 {seleccionada ? `✓ ${s}` : s} {salsaAgotada ? "🚫" : ""}
               </button>
             );
@@ -234,19 +187,14 @@ export default function App() {
         </div>
       </div>
 
-      {/* BOTÓN FLOTANTE */}
       {pedido.length > 0 && (
         <a href="#carrito_seccion" style={{ position: 'fixed', bottom: '25px', right: '25px', background: MONO_TEXTO, color: 'white', padding: '18px 30px', borderRadius: '50px', textDecoration: 'none', fontWeight: 'bold', boxShadow: '0 8px 25px rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', gap: '12px', fontSize: '18px' }}>
-          🛒 Mi Pedido 
-          <span style={{ background: MONO_NARANJA, borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {pedido.reduce((acc, item) => acc + item.cantidad, 0)}
-          </span>
+          🛒 Mi Pedido <span style={{ background: MONO_NARANJA, borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pedido.reduce((acc, item) => acc + item.cantidad, 0)}</span>
         </a>
       )}
 
-      {/* CARRITO FINAL */}
       {pedido.length > 0 && (
-        <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto 120px', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.15)' }}>
+        <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto 60px', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.15)' }}>
           <h2 style={{ fontSize: '30px', fontWeight: '900', marginBottom: '25px' }}>🛒 Confirmar Pedido</h2>
           {pedido.map(item => (
             <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0', alignItems: 'center' }}>
@@ -257,9 +205,7 @@ export default function App() {
               </div>
             </div>
           ))}
-          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '38px', fontWeight: '900', marginTop: '30px', borderTop: `3px dashed ${MONO_AMARILLO}`, paddingTop: '15px' }}>
-            Total: ${total.toLocaleString('es-CO')}
-          </h2>
+          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '38px', fontWeight: '900', marginTop: '30px', borderTop: `3px dashed ${MONO_AMARILLO}`, paddingTop: '15px' }}>Total: ${total.toLocaleString('es-CO')}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
             <input type="text" placeholder="Tu Nombre Completo" onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px', background: MONO_CREMA }} />
             <input type="text" placeholder="Dirección Exacta (Barrio / Referencia)" onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px', background: MONO_CREMA }} />
@@ -272,6 +218,13 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* ✅ NUEVO FOOTER PERSONALIZADO */}
+      <footer style={{ textAlign: 'center', padding: '40px 20px', color: '#666', fontSize: '15px', borderTop: '1px solid #eee', background: 'white' }}>
+        <p style={{ margin: 0, fontWeight: '600' }}>
+          📍 Carepa, Antioquia | Hecho con ❤️ para los clientes de El Mono
+        </p>
+      </footer>
     </div>
   );
 }
