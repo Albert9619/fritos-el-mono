@@ -152,7 +152,7 @@ export default function App() {
                     {/* ✅ CORRECCIÓN JUGOS: Ahora muestra los tamaños claramente */}
                     {p.esJugo && (
                       <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `2px solid ${MONO_NARANJA}`, fontSize: '16px', fontWeight: 'bold' }}>
-                        <option value="Mediano">-- Tamaño: Mediano (Por defecto) --</option>
+                        <option value="Mediano">-- Elije Tamaño --</option>
                         {Object.keys(p.precios).map(t => (
                           <option key={t} value={t}>{t} - ${p.precios[t].toLocaleString('es-CO')}</option>
                         ))}
