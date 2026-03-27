@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 // ==========================================
 // 🔴 CONTROL DE INVENTARIO ( Carepa )
 // ==========================================
-const agotados = ["Empanada Crujientenpm run dev"]; 
+const agotados = ["Empanada Crujiente]; 
 
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, tieneSabor: true, opciones: ["Carne", "Pollo", "Arroz"], imagen: "/empanada.jpg" },
