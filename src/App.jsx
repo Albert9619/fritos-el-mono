@@ -29,8 +29,9 @@ const productosBase = [
 ];
 
 const extrasArrozBase = [
-  { id: 'tajada', nombre: "Tajadas", disponible: true, precio: 0 },
-  { id: 'yuca', nombre: "Yuca", disponible: true, precio: 0 },
+  { id: 'tajada', nombre: "Tajadas", disponible: true },
+  { id: 'yuca', nombre: "Yuca", disponible: true },
+  // Al huevo le dejamos su propiedad de precio para que sea editable
   { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 }
 ];
 
@@ -70,7 +71,6 @@ export default function App() {
   const [conHuevo, setConHuevo] = useState(false);
   const [salsasElegidas, setSalsasElegidas] = useState([]);
   
-  // ✅ AQUÍ ESTÁ EL ESTADO QUE FALTABA
   const [hoveredCardId, setHoveredCardId] = useState(null); 
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
@@ -98,7 +98,18 @@ export default function App() {
     setProductos(productos.map(p => p.id === prodId && p.tamanos ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, disponible: !t.disponible } : t) } : p));
   };
 
+  // ✅ NUEVA: Cambiar precio de un tamaño específico de jugo
+  const cambiarPrecioTamano = (prodId, tamNombre, nuevoPrecio) => {
+    setProductos(productos.map(p => p.id === prodId && p.tamanos ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, precio: parseInt(nuevoPrecio) || 0 } : t) } : p));
+  };
+
   const toggleExtraArroz = (id) => setExtrasArroz(extrasArroz.map(e => e.id === id ? { ...e, disponible: !e.disponible } : e));
+  
+  // ✅ NUEVA: Cambiar el precio del Huevo Extra
+  const cambiarPrecioExtraArroz = (id, nuevoPrecio) => {
+    setExtrasArroz(extrasArroz.map(e => e.id === id ? { ...e, precio: parseInt(nuevoPrecio) || 0 } : e));
+  };
+
   const toggleSalsa = (nombre) => setSalsas(salsas.map(s => s.nombre === nombre ? { ...s, disponible: !s.disponible } : s));
 
   // --- FUNCIONES CLIENTE ---
@@ -194,6 +205,7 @@ export default function App() {
               <div key={p.id} style={{ borderBottom: '2px solid #eee' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', gap: '10px' }}>
                   <strong style={{ fontSize: '16px', flexGrow: 1 }}>{p.nombre}</strong>
+                  {/* El input principal se bloquea si es jugo, porque los jugos se cobran por tamaño */}
                   <input type="number" value={p.precio || ""} disabled={p.esJugo} onChange={(e) => cambiarPrecioProducto(p.id, e.target.value)} style={{ width: '70px', padding: '5px', borderRadius: '5px', border: '1px solid #ddd', background: p.esJugo ? '#eee' : 'white' }} />
                   <div style={{display: 'flex', gap: '5px', alignItems: 'center'}}>
                     <span style={{ fontSize: '12px', fontWeight: 'bold', color: p.disponible ? MONO_VERDE : 'red' }}>{p.disponible ? 'HAY' : 'AGOTADO'}</span>
@@ -213,13 +225,22 @@ export default function App() {
                   </div>
                 )}
 
+                {/* ✅ AQUÍ ESTÁ LA ACTUALIZACIÓN: INPUT PARA LOS TAMAÑOS DE JUGOS */}
                 {p.tamanos && (
                   <div style={{ padding: '10px 20px', background: '#fafafa', borderTop: '1px dashed #ddd' }}>
-                    <span style={{ fontSize: '12px', color: '#666', fontWeight: 'bold' }}>TAMAÑOS:</span>
+                    <span style={{ fontSize: '12px', color: '#666', fontWeight: 'bold' }}>TAMAÑOS Y PRECIOS:</span>
                     {p.tamanos.map(tam => (
-                      <div key={tam.nombre} style={{ display: 'flex', justifyContent: 'space-between', margin: '8px 0', paddingLeft: '15px' }}>
-                        <span style={{ fontSize: '14px', color: tam.disponible ? '#333' : '#aaa' }}>- {tam.nombre} (${tam.precio})</span>
-                        <MiniSwitch activo={tam.disponible} onClick={() => toggleTamano(p.id, tam.nombre)} />
+                      <div key={tam.nombre} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0', paddingLeft: '15px' }}>
+                        <span style={{ fontSize: '14px', color: tam.disponible ? '#333' : '#aaa', width: '80px' }}>- {tam.nombre}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                          <input 
+                            type="number" 
+                            value={tam.precio || ""} 
+                            onChange={(e) => cambiarPrecioTamano(p.id, tam.nombre, e.target.value)}
+                            style={{ width: '65px', padding: '5px', borderRadius: '5px', border: '1px solid #ddd' }}
+                          />
+                          <MiniSwitch activo={tam.disponible} onClick={() => toggleTamano(p.id, tam.nombre)} />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -232,9 +253,20 @@ export default function App() {
             <div style={{ flex: '1 1 300px', background: 'white', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden', paddingBottom: '10px' }}>
               <div style={{ padding: '15px 20px', background: MONO_AMARILLO, borderBottom: '1px solid #eee' }}><h3 style={{ margin: 0 }}>Extras del Arroz</h3></div>
               {extrasArroz.map(e => (
-                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid #eee' }}>
+                <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', borderBottom: '1px solid #eee' }}>
                   <span>{e.nombre}</span>
-                  <MiniSwitch activo={e.disponible} onClick={() => toggleExtraArroz(e.id)} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                    {/* ✅ INPUT PARA EL HUEVO EXTRA */}
+                    {e.precio !== undefined && (
+                      <input 
+                        type="number" 
+                        value={e.precio || ""} 
+                        onChange={(ev) => cambiarPrecioExtraArroz(e.id, ev.target.value)}
+                        style={{ width: '65px', padding: '5px', borderRadius: '5px', border: '1px solid #ddd' }}
+                      />
+                    )}
+                    <MiniSwitch activo={e.disponible} onClick={() => toggleExtraArroz(e.id)} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -323,7 +355,7 @@ export default function App() {
                         ) : (
                           <label style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', cursor: 'pointer' }}>
                             <input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} style={{ accentColor: MONO_NARANJA, width: '22px', height: '22px' }} /> 
-                            + Huevo (${huevoObj.precio.toLocaleString()})
+                            + Huevo (${huevoObj.precio.toLocaleString('es-CO')})
                           </label>
                         )}
                       </div>
