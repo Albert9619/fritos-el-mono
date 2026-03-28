@@ -12,14 +12,17 @@ export default function ProductCard({
   const todoAgotado = !p?.disponible;
   const isHovered = hoveredCardId === p?.id;
   
+  // 🥤 Lógica corregida para el precio de los jugos
   let precioMostrar = p?.precio || 0;
-  if (p?.esJugo && p?.tamanos) {
+  
+  if (p?.esJugo && p?.tamanos && p.tamanos.length > 0) {
     const tamSeleccionado = tamanosJugo[p.id];
     if (tamSeleccionado) {
       const tamObj = p.tamanos.find(t => t.nombre === tamSeleccionado);
       precioMostrar = tamObj ? tamObj.precio : p.tamanos[0].precio;
     } else {
-      precioMostrar = p.tamanos[0].precio;
+      // Si no hay nada seleccionado, mostramos el precio del primero (ej. Pequeño)
+      precioMostrar = p.tamanos[0].precio || 0;
     }
   }
 
@@ -36,20 +39,21 @@ export default function ProductCard({
         display: 'flex', flexDirection: 'column' 
       }}
     >
+      {/* 📸 Imagen local desde la carpeta public */}
       <img 
-  src={p?.imagen} 
-  style={{ 
-    width: '100%', 
-    height: '210px', 
-    objectFit: 'cover', 
-    filter: todoAgotado ? 'grayscale(1)' : 'none' 
-  }} 
-  alt={p?.nombre} 
-/>
+        src={p?.imagen} 
+        style={{ width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none' }} 
+        alt={p?.nombre} 
+      />
+      
+      {todoAgotado && ( <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10 }}>AGOTADO 🚫</div> )}
+
       <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800' }}>{p?.nombre}</h3>
+        
+        {/* Aquí es donde fallaba el toLocaleString si el precio era undefined */}
         <p style={{ color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: `2px dashed ${MONO_AMARILLO}` }}>
-          ${precioMostrar.toLocaleString('es-CO')}
+          ${(precioMostrar || 0).toLocaleString('es-CO')}
         </p>
         
         {!todoAgotado && tiendaAbierta && (
@@ -67,7 +71,7 @@ export default function ProductCard({
                 ) : (
                   <label style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', cursor: 'pointer' }}>
                     <input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} style={{ accentColor: MONO_NARANJA, width: '22px', height: '22px' }} /> 
-                    + Huevo (${huevoObj?.precio?.toLocaleString('es-CO')})
+                    + Huevo (${(huevoObj?.precio || 0).toLocaleString('es-CO')})
                   </label>
                 )}
               </div>
@@ -89,7 +93,7 @@ export default function ProductCard({
                 <option value="">-- Elije Tamaño --</option>
                 {p.tamanos.map(tam => (
                   <option key={tam.nombre} value={tam.nombre} disabled={!tam.disponible}>
-                    {tam.nombre} - ${tam.precio?.toLocaleString('es-CO')} {!tam.disponible ? "🚫" : ""}
+                    {tam.nombre} - ${(tam.precio || 0).toLocaleString('es-CO')} {!tam.disponible ? "🚫" : ""}
                   </option>
                 ))}
               </select>
@@ -108,14 +112,9 @@ export default function ProductCard({
               </div>
             </div>
 
-            {/* BOTÓN TRANSFORMADO EN DIV PARA EVITAR RECARGA */}
             <div 
               onClick={() => agregarAlCarrito(p)} 
-              style={{ 
-                background: MONO_NARANJA, color: 'white', textAlign: 'center', padding: '16px', 
-                borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', 
-                boxShadow: '0 4px 10px rgba(249, 115, 22, 0.2)', userSelect: 'none' 
-              }}
+              style={{ background: MONO_NARANJA, color: 'white', textAlign: 'center', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(249, 115, 22, 0.2)', userSelect: 'none' }}
             >
               Añadir al Pedido 🥟
             </div>
