@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast'; 
 import Header from './components/Header';
+import Carrito from './components/Carrito';
 
 // ==========================================
 // 🔴 DATOS BLINDADOS (Carepa)
@@ -321,9 +322,7 @@ export default function App() {
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '60px' }}>
       <Toaster position="bottom-center" /> {/* ✅ Componente base para los Toast del cliente */}
       
-      <header  <Header accesoSecreto={accesoSecreto} tipoArrozHoy={tipoArrozHoy} />
-      </header>
-
+     <Header accesoSecreto={accesoSecreto} tipoArrozHoy={tipoArrozHoy} />
       {!tiendaAbierta && (
         <div style={{ maxWidth: '800px', margin: '0 auto 30px', background: '#fee2e2', color: '#b91c1c', padding: '20px', borderRadius: '20px', textAlign: 'center', fontWeight: 'bold', border: '2px solid #ef4444' }}>
           🔴 Actualmente estamos cerrados. ¡Vuelve pronto a hacer tu pedido!
@@ -448,36 +447,19 @@ export default function App() {
       )}
 
       {pedido.length > 0 && tiendaAbierta && (
-        <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto 60px', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.15)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-            <h2 style={{ fontSize: '30px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
-            <button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #f87171', padding: '8px 15px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
-              🗑️ Vaciar
-            </button>
-          </div>
-
-          {pedido.map(item => (
-            <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0', alignItems: 'center' }}>
-              <span style={{fontSize: '17px'}}><strong>{item.cantidad}x</strong> {item.nombre} <small style={{background: MONO_CREMA, padding: '3px 8px', borderRadius: '6px'}}>{item.saborElegido} {item.detallesArroz}</small></span>
-              <div style={{display: 'flex', gap: '20px', alignItems: 'center'}}>
-                <span style={{fontWeight: '900', fontSize: '20px'}}>${item.subtotal.toLocaleString('es-CO')}</span>
-                <button onClick={() => setPedido(pedido.filter(i => i.idUnico !== item.idUnico))} style={{color: 'red', border: '1px solid #ffcccc', background: '#fff5f5', cursor: 'pointer', width: '35px', height: '35px', borderRadius: '50%', fontWeight: '900'}}>X</button>
-              </div>
-            </div>
-          ))}
-          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '38px', fontWeight: '900', marginTop: '30px', borderTop: `3px dashed ${MONO_AMARILLO}`, paddingTop: '15px' }}>Total: ${total.toLocaleString('es-CO')}</h2>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
-            <input type="text" placeholder="Tu Nombre Completo" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px', background: MONO_CREMA }} />
-            <input type="text" placeholder="Dirección Exacta (Barrio / Referencia)" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px', background: MONO_CREMA }} />
-            <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px' }}>
-              <option value="">-- ¿Cómo pagas? --</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Nequi (Mono)">Nequi (Mono)</option>
-            </select>
-            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '18px', fontWeight: '900', fontSize: '20px', cursor: 'pointer', boxShadow: '0 8px 20px rgba(22, 163, 74, 0.3)' }}>Enviar Pedido por WhatsApp 📲</button>
-          </div>
-        </div>
+        <Carrito 
+        pedido={pedido} 
+        setPedido={setPedido} 
+        total={total} 
+        vaciarCarrito={vaciarCarrito} 
+        nombre={nombre} 
+        setNombre={setNombre} 
+        direccion={direccion} 
+        setDireccion={setDireccion} 
+        metodoPago={metodoPago} 
+        setMetodoPago={setMetodoPago} 
+        enviarWhatsApp={enviarWhatsApp} 
+      />
       )}
 
       <footer style={{ textAlign: 'center', padding: '40px 20px', color: '#666', fontSize: '15px', borderTop: '1px solid #eee', background: 'white' }}>
