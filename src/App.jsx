@@ -28,8 +28,14 @@ const extrasArrozBase = [
   { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 }
 ];
 
+// --- En App.jsx ---
+
 const salsasBase = [
-  { nombre: "Pique", disponible: true }, { nombre: "Salsa Roja", disponible: true }, { nombre: "Salsa Rosada", disponible: true }, { nombre: "Suero", disponible: true }, { nombre: "Suero Picante", disponible: true }
+  { nombre: "🔥 Pique", disponible: true },
+  { nombre: "🍅 Salsa Roja", disponible: true },
+  { nombre: "🍥 Salsa Rosada", disponible: true },
+  { nombre: "🥛 Suero", disponible: true },
+  { nombre: "🌶️ Suero Picante", disponible: true }
 ];
 
 export default function App() {
