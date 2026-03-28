@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Toaster, toast } from 'react-hot-toast'; 
 
 // ==========================================
 // 🔴 DATOS BLINDADOS (Carepa)
@@ -49,9 +50,6 @@ const MONO_VERDE = "#16a34a";
 const MONO_TEXTO = "#333333";
 
 export default function App() {
-  // ==========================================
-  // ⚙️ ESTADOS
-  // ==========================================
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
   
@@ -59,7 +57,12 @@ export default function App() {
   const [extrasArroz, setExtrasArroz] = useState(extrasArrozBase);
   const [salsas, setSalsas] = useState(salsasBase);
 
-  const [pedido, setPedido] = useState([]);
+  // ✅ AQUÍ ESTÁ LA MEMORIA (LocalStorage)
+  const [pedido, setPedido] = useState(() => {
+    const guardado = localStorage.getItem("pedidoMono");
+    return guardado ? JSON.parse(guardado) : [];
+  });
+
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
   const [metodoPago, setMetodoPago] = useState("");
@@ -75,38 +78,30 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
+  // ✅ ESTO GUARDA EL PEDIDO SIEMPRE QUE CAMBIE
+  useEffect(() => {
+    localStorage.setItem("pedidoMono", JSON.stringify(pedido));
+  }, [pedido]);
+
   // --- ACCESO SEGURO ---
   const accesoSecreto = () => {
     const clave = window.prompt("🔐 Ingresa el PIN:");
     if (clave === "mono2026") {
       setIsAdmin(true);
+      toast.success("Bienvenido al panel, Mono"); // ✅ NOTIFICACIÓN BONITA
     } else if (clave !== null) {
-      alert("❌ PIN incorrecto.");
+      toast.error("PIN incorrecto"); // ✅ NOTIFICACIÓN BONITA
     }
   };
 
   // --- FUNCIONES ADMIN ---
   const toggleProducto = (id) => setProductos(productos.map(p => p.id === id ? { ...p, disponible: !p.disponible } : p));
   const cambiarPrecioProducto = (id, nuevoPrecio) => setProductos(productos.map(p => p.id === id ? { ...p, precio: parseInt(nuevoPrecio) || 0 } : p));
-  
-  const toggleSabor = (prodId, saborNombre) => {
-    setProductos(productos.map(p => p.id === prodId && p.opciones ? { ...p, opciones: p.opciones.map(o => o.nombre === saborNombre ? { ...o, disponible: !o.disponible } : o) } : p));
-  };
-  
-  const toggleTamano = (prodId, tamNombre) => {
-    setProductos(productos.map(p => p.id === prodId && p.tamanos ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, disponible: !t.disponible } : t) } : p));
-  };
-
-  const cambiarPrecioTamano = (prodId, tamNombre, nuevoPrecio) => {
-    setProductos(productos.map(p => p.id === prodId && p.tamanos ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, precio: parseInt(nuevoPrecio) || 0 } : t) } : p));
-  };
-
+  const toggleSabor = (prodId, saborNombre) => setProductos(productos.map(p => p.id === prodId && p.opciones ? { ...p, opciones: p.opciones.map(o => o.nombre === saborNombre ? { ...o, disponible: !o.disponible } : o) } : p));
+  const toggleTamano = (prodId, tamNombre) => setProductos(productos.map(p => p.id === prodId && p.tamanos ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, disponible: !t.disponible } : t) } : p));
+  const cambiarPrecioTamano = (prodId, tamNombre, nuevoPrecio) => setProductos(productos.map(p => p.id === prodId && p.tamanos ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, precio: parseInt(nuevoPrecio) || 0 } : t) } : p));
   const toggleExtraArroz = (id) => setExtrasArroz(extrasArroz.map(e => e.id === id ? { ...e, disponible: !e.disponible } : e));
-  
-  const cambiarPrecioExtraArroz = (id, nuevoPrecio) => {
-    setExtrasArroz(extrasArroz.map(e => e.id === id ? { ...e, precio: parseInt(nuevoPrecio) || 0 } : e));
-  };
-
+  const cambiarPrecioExtraArroz = (id, nuevoPrecio) => setExtrasArroz(extrasArroz.map(e => e.id === id ? { ...e, precio: parseInt(nuevoPrecio) || 0 } : e));
   const toggleSalsa = (nombre) => setSalsas(salsas.map(s => s.nombre === nombre ? { ...s, disponible: !s.disponible } : s));
 
   // --- FUNCIONES CLIENTE ---
@@ -115,40 +110,25 @@ export default function App() {
     setSalsasElegidas(prev => prev.includes(salsaObj.nombre) ? prev.filter(s => s !== salsaObj.nombre) : [...prev, salsaObj.nombre]);
   };
 
-  const sumarCantidad = (id) => {
-    setCantidades({ ...cantidades, [id]: (cantidades[id] || 1) + 1 });
-  };
-
+  const sumarCantidad = (id) => setCantidades({ ...cantidades, [id]: (cantidades[id] || 1) + 1 });
   const restarCantidad = (id) => {
     const actual = cantidades[id] || 1;
-    if (actual > 1) {
-      setCantidades({ ...cantidades, [id]: actual - 1 });
-    }
+    if (actual > 1) setCantidades({ ...cantidades, [id]: actual - 1 });
   };
 
-  // ✅ NUEVA FUNCIÓN: Para cuando el cliente escribe el número con su teclado
   const manejarInputCantidad = (id, valor) => {
-    if (valor === "") {
-      setCantidades({ ...cantidades, [id]: "" }); // Permite borrar temporalmente para escribir
-      return;
-    }
+    if (valor === "") { setCantidades({ ...cantidades, [id]: "" }); return; }
     const num = parseInt(valor);
-    if (!isNaN(num) && num > 0) {
-      setCantidades({ ...cantidades, [id]: num });
-    }
+    if (!isNaN(num) && num > 0) setCantidades({ ...cantidades, [id]: num });
   };
 
-  // ✅ NUEVA FUNCIÓN: Si el cliente borró el número y se fue, le ponemos 1 por defecto
   const corregirInputVacio = (id) => {
-    if (!cantidades[id] || cantidades[id] < 1) {
-      setCantidades({ ...cantidades, [id]: 1 });
-    }
+    if (!cantidades[id] || cantidades[id] < 1) setCantidades({ ...cantidades, [id]: 1 });
   };
 
   const agregarAlCarrito = (p) => {
-    if (!tiendaAbierta) return alert("El local está cerrado.");
+    if (!tiendaAbierta) return toast.error("El local está cerrado actualmente.");
     
-    // Si la cantidad está vacía por algún error, asume 1
     const cant = cantidades[p.id] || 1;
     let precioBase = p.precio || 0;
     let sabor = "";
@@ -156,11 +136,11 @@ export default function App() {
 
     if (p.opciones) {
       sabor = sabores[p.id];
-      if (!sabor) return alert(`Por favor elige un sabor para: ${p.nombre}`);
+      if (!sabor) return toast.error(`Por favor elige un sabor para: ${p.nombre}`);
     }
 
     if (p.esArroz) {
-      if (!acompañanteArroz) return alert("Por favor elige Tajadas o Yuca");
+      if (!acompañanteArroz) return toast.error("Por favor elige Tajadas o Yuca");
       const huevoExtra = extrasArroz.find(e => e.id === 'huevo');
       if (conHuevo && huevoExtra) precioBase += huevoExtra.precio;
       detallesExtra = `(Con ${acompañanteArroz}${conHuevo ? ' + Huevo' : ''})`;
@@ -168,7 +148,7 @@ export default function App() {
 
     if (p.esJugo && p.tamanos) {
       const tamNombre = tamanosJugo[p.id];
-      if (!tamNombre) return alert("Por favor elige el tamaño del jugo");
+      if (!tamNombre) return toast.error("Por favor elige el tamaño del jugo");
       const tamObj = p.tamanos.find(t => t.nombre === tamNombre);
       if (tamObj) precioBase = tamObj.precio;
       detallesExtra = `(${tamNombre})`;
@@ -189,15 +169,31 @@ export default function App() {
     setAcompañanteArroz("");
     setConHuevo(false);
     setCantidades({...cantidades, [p.id]: 1});
+    
+    toast.success(`${cant}x ${p.nombre} agregado!`); // ✅ NOTIFICACIÓN DE ÉXITO AL AÑADIR
+  };
+
+  // ✅ NUEVO: BOTÓN PARA VACIAR TODO EL CARRITO DE GOLPE
+  const vaciarCarrito = () => {
+    if(window.confirm("¿Seguro que deseas vaciar todo el pedido?")) {
+      setPedido([]);
+      toast.success("Carrito vaciado");
+    }
   };
 
   const total = pedido.reduce((acc, item) => acc + item.subtotal, 0);
 
   const enviarWhatsApp = () => {
-    if (pedido.length === 0) return alert("El carrito está vacío");
-    if (!nombre || !direccion || !metodoPago) return alert("Faltan datos de envío");
+    if (pedido.length === 0) return toast.error("El carrito está vacío");
+    if (!nombre || !direccion || !metodoPago) return toast.error("Faltan datos de envío");
+    
     const listaFritos = pedido.map(i => `- ${i.cantidad}x ${i.nombre} ${i.saborElegido ? '('+i.saborElegido+')' : ''} ${i.detallesArroz || ''}`).join('\n');
-    const mensaje = `¡Hola! Pedido Fritos El Mono:\n\n${listaFritos}\n\n🧂 Salsas: ${salsasElegidas.join(', ') || 'Ninguna'}\n\n*Total: $${total.toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
+    
+    // Agregamos la hora para que el Mono sepa exactamente cuándo pidieron
+    const horaActual = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    const idPedido = Math.floor(Math.random() * 10000); 
+    
+    const mensaje = `¡Hola! Pedido Fritos El Mono:\n\n*ID:* #${idPedido}\n*Hora:* ${horaActual}\n\n${listaFritos}\n\n🧂 Salsas: ${salsasElegidas.join(', ') || 'Ninguna'}\n\n*Total: $${total.toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(mensaje)}`);
   };
 
@@ -213,6 +209,7 @@ export default function App() {
 
     return (
       <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
+        <Toaster position="top-center" /> {/* ✅ Componente base para los Toast del admin */}
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
           <button onClick={() => setIsAdmin(false)} style={{ marginBottom: '20px', padding: '10px 15px', borderRadius: '10px', border: 'none', background: MONO_TEXTO, color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
             ← Volver a la Tienda
@@ -307,7 +304,6 @@ export default function App() {
               ))}
             </div>
           </div>
-
         </div>
       </div>
     );
@@ -322,6 +318,7 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '60px' }}>
+      <Toaster position="bottom-center" /> {/* ✅ Componente base para los Toast del cliente */}
       
       <header style={{ textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
         <img src="/logo-fritos-el-mono.jpg" alt="Banner Fritos El Mono" style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
@@ -409,21 +406,15 @@ export default function App() {
                       </select>
                     )}
 
-                    {/* ✅ ESTA CAJITA YA ES EDITABLE CON TECLADO */}
                     <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fcfcfc', padding: '12px', borderRadius: '15px', border: '1px solid #eee'}}>
                       <label style={{fontSize: '16px', fontWeight: 'bold', color: '#555'}}>Cantidad:</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <button onClick={() => restarCantidad(p.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', border: 'none', background: MONO_AMARILLO, color: MONO_NARANJA, fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
-                        
                         <input 
-                          type="number" 
-                          min="1"
-                          value={cantidades[p.id] !== undefined ? cantidades[p.id] : 1}
-                          onChange={(e) => manejarInputCantidad(p.id, e.target.value)}
-                          onBlur={() => corregirInputVacio(p.id)}
+                          type="number" min="1" value={cantidades[p.id] !== undefined ? cantidades[p.id] : 1}
+                          onChange={(e) => manejarInputCantidad(p.id, e.target.value)} onBlur={() => corregirInputVacio(p.id)}
                           style={{ width: '45px', textAlign: 'center', fontSize: '20px', fontWeight: '900', border: 'none', background: 'transparent', outline: 'none' }}
                         />
-                        
                         <button onClick={() => sumarCantidad(p.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', border: 'none', background: MONO_NARANJA, color: 'white', fontSize: '22px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                       </div>
                     </div>
@@ -464,7 +455,13 @@ export default function App() {
 
       {pedido.length > 0 && tiendaAbierta && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto 60px', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.15)' }}>
-          <h2 style={{ fontSize: '30px', fontWeight: '900', marginBottom: '25px' }}>🛒 Confirmar Pedido</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+            <h2 style={{ fontSize: '30px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
+            <button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #f87171', padding: '8px 15px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
+              🗑️ Vaciar
+            </button>
+          </div>
+
           {pedido.map(item => (
             <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0', alignItems: 'center' }}>
               <span style={{fontSize: '17px'}}><strong>{item.cantidad}x</strong> {item.nombre} <small style={{background: MONO_CREMA, padding: '3px 8px', borderRadius: '6px'}}>{item.saborElegido} {item.detallesArroz}</small></span>
@@ -475,6 +472,7 @@ export default function App() {
             </div>
           ))}
           <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '38px', fontWeight: '900', marginTop: '30px', borderTop: `3px dashed ${MONO_AMARILLO}`, paddingTop: '15px' }}>Total: ${total.toLocaleString('es-CO')}</h2>
+          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
             <input type="text" placeholder="Tu Nombre Completo" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px', background: MONO_CREMA }} />
             <input type="text" placeholder="Dirección Exacta (Barrio / Referencia)" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `1px solid #ddd`, fontSize: '17px', background: MONO_CREMA }} />
