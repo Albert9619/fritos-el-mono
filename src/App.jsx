@@ -112,21 +112,43 @@ export default function App() {
           ))}
         </div>
 
-        {/* --- SECCIÓN SALSAS GRANDES --- */}
-        <div style={{ maxWidth: '900px', margin: '50px auto', background: 'white', padding: '40px', borderRadius: '35px', border: `1px solid ${MONO_AMARILLO}` }}>
-          <h3 style={{ color: MONO_NARANJA, textAlign: 'center', fontSize: '32px', fontWeight: '900', marginBottom: '30px' }}>🧂 ¿Qué salsas deseas?</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px' }}>
-            {salsas.map(s => (
-              <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} disabled={!s.disponible} 
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px', borderRadius: '25px', border: salsasElegidas.includes(s.nombre) ? `3px solid ${MONO_NARANJA}` : `2px solid #f0f0f0`, background: salsasElegidas.includes(s.nombre) ? MONO_AMARILLO : 'white', cursor: s.disponible ? 'pointer' : 'not-allowed' }}>
-                <img src={s.imagen} alt={s.nombre} style={{ width: '100px', height: '100px', borderRadius: '20px', objectFit: 'cover', marginBottom: '15px', filter: s.disponible ? 'none' : 'grayscale(1)' }} />
-                <span>{s.nombre}</span>
-                {salsasElegidas.includes(s.nombre) && <div style={{ position: 'absolute', top: '10px', right: '10px', background: MONO_NARANJA, color: 'white', width: '25px', height: '25px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✓</div>}
-                {!s.disponible && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', borderRadius: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>🚫</div>}
-              </button>
-            ))}
-          </div>
-        </div>
+     
+        {/* --- SECCIÓN DE SALSAS (RESTAURADA Y LIMPIA) --- */}
+<div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', border: `1px solid ${MONO_AMARILLO}`, boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+  <h3 style={{ color: MONO_NARANJA, textAlign: 'center', fontSize: '28px', fontWeight: '900', marginBottom: '25px' }}>🧂 ¿Qué salsas deseas?</h3>
+  
+  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
+    {salsas.map(s => (
+      <button 
+        key={s.nombre} 
+        onClick={() => {
+          if (!s.disponible) return;
+          setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])
+        }} 
+        disabled={!s.disponible} 
+        style={{ 
+          //display: 'flex', alignItems: 'center', gap: '10px', // <--- Ya no necesitamos esto
+          padding: '15px 25px', // <--- Un padding más cómodo
+          borderRadius: '50px', 
+          border: 'none', 
+          cursor: s.disponible ? 'pointer' : 'not-allowed', 
+          // El fondo cambia a naranja si está seleccionada
+          background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'), 
+          color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#bbb'), 
+          fontWeight: 'bold', 
+          transition: '0.3s',
+          fontSize: '18px' // <--- Un tamaño de letra bacano
+        }}>
+        
+        {/* 📸 Quitamos la etiqueta <img> que estaba rota */}
+        
+        {salsasElegidas.includes(s.nombre) && "✓ "} {s.nombre} {/* <--- Muestra "🔥 Pique" o "✓ 🔥 Pique" */}
+        
+        {!s.disponible && "🚫"}
+      </button>
+    ))}
+  </div>
+</div>
       </main>
 
       {pedido.length > 0 && (
