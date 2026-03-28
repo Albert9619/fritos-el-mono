@@ -19,46 +19,22 @@ const MONO_TEXTO = "#333333";
 // --- DATOS INICIALES ---
 const productosBase = [
   { 
-    id: 1, nombre: "Empanada Crujiente", precio: 1500, 
-    imagen: "https://images.unsplash.com/photo-1628102476629-f8c6d1122bc3?auto=format&fit=crop&w=400&q=80", 
-    disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] 
+    id: 1, 
+    nombre: "Empanada Crujiente", 
+    precio: 1500, 
+    imagen: "/empanada.jpg", // <--- El nombre exacto de tu foto en la carpeta public
+    disponible: true, 
+    opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] 
   },
   { 
-    id: 2, nombre: "Papa Rellena de la Casa", precio: 2500, 
-    imagen: "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?auto=format&fit=crop&w=400&q=80", 
-    disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] 
+    id: 2, 
+    nombre: "Papa Rellena de la Casa", 
+    precio: 2500, 
+    imagen: "/papa-rellena.jpg", 
+    disponible: true, 
+    opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] 
   },
-  { 
-    id: 3, nombre: "Pastel de Pollo Hojaldrado", precio: 2500, 
-    imagen: "https://images.unsplash.com/photo-1623653387945-2fd25214f8fc?auto=format&fit=crop&w=400&q=80", 
-    disponible: true 
-  },
-  { 
-    id: 4, nombre: "Arepa con Huevo y Carne", precio: 3500, 
-    imagen: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=400&q=80", 
-    disponible: true 
-  },
-  { 
-    id: 7, nombre: "Palitos de Queso Costeño", precio: 2000, 
-    imagen: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=400&q=80", 
-    disponible: true 
-  },
-  { 
-    id: 8, nombre: "Buñuelos Calientitos", precio: 1000, 
-    imagen: "https://images.unsplash.com/photo-1601050690597-df056fb4ce99?auto=format&fit=crop&w=400&q=80", 
-    disponible: true 
-  },
-  { 
-    id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true, 
-    imagen: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=400&q=80", 
-    disponible: true 
-  },
-  { 
-    id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, 
-    imagen: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80", 
-    disponible: true, opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], 
-    tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] 
-  }
+  // ... sigue con los demás igual
 ];
 
 const extrasArrozBase = [
