@@ -36,9 +36,16 @@ export default function ProductCard({
         display: 'flex', flexDirection: 'column' 
       }}
     >
-      <img src={p?.esArroz ? "/arroz-pollo.jpg" : p?.imagen} style={{ width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none' }} alt={p?.nombre} />
-      {todoAgotado && ( <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10 }}>AGOTADO 🚫</div> )}
-
+      <img 
+  src={p?.imagen} 
+  style={{ 
+    width: '100%', 
+    height: '210px', 
+    objectFit: 'cover', 
+    filter: todoAgotado ? 'grayscale(1)' : 'none' 
+  }} 
+  alt={p?.nombre} 
+/>
       <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800' }}>{p?.nombre}</h3>
         <p style={{ color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: `2px dashed ${MONO_AMARILLO}` }}>
