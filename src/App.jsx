@@ -22,7 +22,7 @@ const productosBase = [
     id: 1, 
     nombre: "Empanada Crujiente", 
     precio: 1500, 
-    imagen: "http://googleusercontent.com/image_collection/image_retrieval/6412895683168966107_0", 
+    imagen: "http://googleusercontent.com/image_collection/image_retrieval/10497564751937598812_0", 
     disponible: true, 
     opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] 
   },
@@ -30,7 +30,7 @@ const productosBase = [
     id: 2, 
     nombre: "Papa Rellena de la Casa", 
     precio: 2500, 
-    imagen: "http://googleusercontent.com/image_collection/image_retrieval/843398407831899511_0", 
+    imagen: "http://googleusercontent.com/image_collection/image_retrieval/10235418679788100548_0", 
     disponible: true, 
     opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] 
   },
@@ -38,28 +38,28 @@ const productosBase = [
     id: 3, 
     nombre: "Pastel de Pollo Hojaldrado", 
     precio: 2500, 
-    imagen: "http://googleusercontent.com/image_collection/image_retrieval/11411665033604479255_0", 
+    imagen: "http://googleusercontent.com/image_collection/image_retrieval/2176097270737145361_0", 
     disponible: true 
   },
   { 
     id: 4, 
     nombre: "Arepa con Huevo y Carne", 
     precio: 3500, 
-    imagen: "http://googleusercontent.com/image_collection/image_retrieval/10156794243256114427_0", 
+    imagen: "http://googleusercontent.com/image_collection/image_retrieval/15501282894168940776_0", 
     disponible: true 
   },
   { 
     id: 7, 
     nombre: "Palitos de Queso Costeño", 
     precio: 2000, 
-    imagen: "http://googleusercontent.com/image_collection/image_retrieval/11698830782019973901_0", 
+    imagen: "http://googleusercontent.com/image_collection/image_retrieval/12225656174512544127_0", 
     disponible: true 
   },
   { 
     id: 8, 
     nombre: "Buñuelos Calientitos", 
     precio: 1000, 
-    imagen: "http://googleusercontent.com/image_collection/image_retrieval/9974624336436146162_0", 
+    imagen: "http://googleusercontent.com/image_collection/image_retrieval/15171831669450191096_0", 
     disponible: true 
   },
   { 
@@ -67,7 +67,7 @@ const productosBase = [
     nombre: "Arroz Especial del Día", 
     precio: 6000, 
     esArroz: true, 
-    imagen: "http://googleusercontent.com/image_collection/image_retrieval/15692624650925383041_0",
+    imagen: "http://googleusercontent.com/image_collection/image_retrieval/8362682757457934399_0",
     disponible: true 
   },
   { 
@@ -75,7 +75,7 @@ const productosBase = [
     nombre: "Jugo Natural Helado", 
     esJugo: true, 
     precio: 0, 
-    imagen: "http://googleusercontent.com/image_collection/image_retrieval/7423236270248521796_0", 
+    imagen: "http://googleusercontent.com/image_collection/image_retrieval/16777743473950017851_0", 
     disponible: true, 
     opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], 
     tamanos: [
