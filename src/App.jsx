@@ -69,6 +69,9 @@ export default function App() {
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
   const [conHuevo, setConHuevo] = useState(false);
   const [salsasElegidas, setSalsasElegidas] = useState([]);
+  
+  // ✅ AQUÍ ESTÁ EL ESTADO QUE FALTABA
+  const [hoveredCardId, setHoveredCardId] = useState(null); 
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
@@ -283,7 +286,6 @@ export default function App() {
           const todoAgotado = !p.disponible;
           const isHovered = hoveredCardId === p.id;
           
-          // Lógica súper segura para calcular el precio
           let precioMostrar = p.precio || 0;
           if (p.esJugo && p.tamanos) {
             const tamSeleccionado = tamanosJugo[p.id];
@@ -353,7 +355,7 @@ export default function App() {
                       <label style={{fontSize: '16px', fontWeight: 'bold'}}>Cantidad:</label>
                       <input type="number" min="1" value={cantidades[p.id] || 1} onChange={(e) => setCantidades({...cantidades, [p.id]: parseInt(e.target.value) || 1})} style={{ width: '70px', padding: '10px', borderRadius: '10px', border: `1px solid #ddd`, textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }} />
                     </div>
-                    <button onClick={() => agregarAlCarrito(p)} style={{ background: MONO_NARANJA, color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}>
+                    <button onClick={() => agregarAlCarrito(p)} style={{ background: MONO_NARANJA, color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(249, 115, 22, 0.2)' }}>
                       Añadir al Pedido 🥟
                     </button>
                   </div>
