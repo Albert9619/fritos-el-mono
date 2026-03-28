@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 
-// Importación de tus componentes
+// Importación de tus componentes locales
 import Header from './components/Header';
 import Carrito from './components/Carrito';
 import ProductCard from './components/ProductCard';
 import AdminPanel from './components/AdminPanel';
 
 // ==========================================
-// 🎨 COLORES DE MARCA (¡Aquí estaba el error!)
+// 🎨 COLORES DE MARCA (¡Aquí estaban faltando!)
 // ==========================================
 const MONO_NARANJA = "#f97316";
 const MONO_AMARILLO = "#fef3c7";
@@ -43,6 +43,7 @@ const salsasBase = [
 ];
 
 export default function App() {
+  // --- ESTADOS ---
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
   const [productos, setProductos] = useState(productosBase);
@@ -76,29 +77,30 @@ export default function App() {
   const toggleSalsa = (nom) => setSalsas(prev => prev.map(s => s.nombre === nom ? { ...s, disponible: !s.disponible } : s));
 
   // --- FUNCIONES CLIENTE ---
-  const sumarCantidad = (id) => setCantidades({ ...cantidades, [id]: (cantidades[id] || 1) + 1 });
+  const sumarCantidad = (id) => setCantidades(prev => ({ ...prev, [id]: (prev[id] || 1) + 1 }));
   const restarCantidad = (id) => {
     const act = cantidades[id] || 1;
-    if (act > 1) setCantidades({ ...cantidades, [id]: act - 1 });
+    if (act > 1) setCantidades(prev => ({ ...prev, [id]: act - 1 }));
   };
   const manejarInputCantidad = (id, val) => {
-    if (val === "") { setCantidades({ ...cantidades, [id]: "" }); return; }
+    if (val === "") { setCantidades(prev => ({ ...prev, [id]: "" })); return; }
     const num = parseInt(val);
-    if (!isNaN(num) && num > 0) setCantidades({ ...cantidades, [id]: num });
+    if (!isNaN(num) && num > 0) setCantidades(prev => ({ ...prev, [id]: num }));
   };
-  const corregirInputVacio = (id) => { if (!cantidades[id]) setCantidades({ ...cantidades, [id]: 1 }); };
+  const corregirInputVacio = (id) => { if (!cantidades[id]) setCantidades(prev => ({ ...prev, [id]: 1 })); };
 
   const agregarAlCarrito = (p) => {
-    if (!tiendaAbierta) return toast.error("Cerrado");
+    if (!tiendaAbierta) return toast.error("Local cerrado");
     const cant = cantidades[p.id] || 1;
     let precioBase = p.precio || 0;
     let sabor = sabores[p.id] || "";
     let detallesExtra = "";
 
-    if (p.opciones && !sabor) return toast.error(`Elige el sabor de tu ${p.nombre}`);
+    if (p.opciones && !sabor) return toast.error(`Elige el sabor`);
     if (p.esJugo) {
       if (!tamanosJugo[p.id]) return toast.error("Elige tamaño del jugo");
-      precioBase = p.tamanos.find(t => t.nombre === tamanosJugo[p.id]).precio;
+      const tam = p.tamanos.find(t => t.nombre === tamanosJugo[p.id]);
+      precioBase = tam ? tam.precio : 0;
       detallesExtra = `(${tamanosJugo[p.id]})`;
     }
     if (p.esArroz) {
@@ -107,8 +109,26 @@ export default function App() {
       detallesExtra = `(Con ${acompañanteArroz}${conHuevo ? ' + Huevo' : ''})`;
     }
 
-    setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioBase, saborElegido: sabor, detallesArroz: detallesExtra, cantidad: cant, subtotal: precioBase * cant }]);
-    toast.success("🥟 ¡Al pedido!");
+    setPedido(prev => [...prev, { 
+        idUnico: Date.now(), 
+        nombre: p.nombre, 
+        precioUnitario: precioBase, 
+        saborElegido: sabor, 
+        detallesArroz: detallesExtra, 
+        cantidad: cant, 
+        subtotal: precioBase * cant 
+    }]);
+    toast.success("🥟 ¡Al carrito!");
+  };
+
+  const enviarWhatsApp = () => {
+    if (pedido.length === 0) return toast.error("Carrito vacío");
+    if (!nombre || !direccion || !metodoPago) return toast.error("Faltan datos de envío");
+    
+    const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.saborElegido} ${i.detallesArroz}`).join('\n');
+    const msg = `Pedido Fritos El Mono:\n\n${lista}\n\nSalsas: ${salsasElegidas.join(', ') || 'Ninguna'}\nTotal: $${pedido.reduce((a, b) => a + b.subtotal, 0).toLocaleString('es-CO')}\n\nCliente: ${nombre}\nDir: ${direccion}\nPago: ${metodoPago}`;
+    
+    window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
   if (isAdmin) {
@@ -148,18 +168,21 @@ export default function App() {
           ))}
         </div>
 
-        {/* --- SECCIÓN DE SALSAS ELEGANTES --- */}
+        {/* --- SALSAS ELEGANTES --- */}
         <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', border: `1px solid ${MONO_AMARILLO}` }}>
-          <div style={{ textAlign: 'center', marginBottom: '25px' }}>
-            <h3 style={{ color: MONO_NARANJA, margin: 0, fontSize: '28px', fontWeight: '900' }}>🧂 ¿Qué salsas deseas?</h3>
-          </div>
+          <h3 style={{ color: MONO_NARANJA, textAlign: 'center', fontSize: '28px', fontWeight: '900', marginBottom: '20px' }}>🧂 ¿Qué salsas deseas?</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
             {salsas.map(s => (
-              <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} disabled={!s.disponible} 
-                style={{ padding: '14px 28px', borderRadius: '50px', fontSize: '17px', border: 'none', cursor: s.disponible ? 'pointer' : 'not-allowed', 
-                background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'),
-                color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#bbb'),
-                fontWeight: 'bold', transition: '0.3s', transform: salsasElegidas.includes(s.nombre) ? 'scale(1.1)' : 'scale(1)' }}>
+              <button 
+                key={s.nombre} 
+                onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} 
+                disabled={!s.disponible} 
+                style={{ 
+                  padding: '14px 28px', borderRadius: '50px', border: 'none', cursor: s.disponible ? 'pointer' : 'not-allowed', 
+                  background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'),
+                  color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#bbb'),
+                  fontWeight: 'bold', transition: '0.3s'
+                }}>
                 {salsasElegidas.includes(s.nombre) && "✓ "} {s.nombre} {!s.disponible && "🚫"}
               </button>
             ))}
@@ -172,7 +195,7 @@ export default function App() {
           pedido={pedido} setPedido={setPedido} total={pedido.reduce((a, b) => a + b.subtotal, 0)}
           nombre={nombre} setNombre={setNombre} direccion={direccion} setDireccion={setDireccion}
           metodoPago={metodoPago} setMetodoPago={setMetodoPago} enviarWhatsApp={enviarWhatsApp}
-          vaciarCarrito={() => { if(window.confirm("¿Vaciar todo?")) setPedido([]); }}
+          vaciarCarrito={() => { if(window.confirm("¿Vaciar?")) setPedido([]); }}
         />
       )}
     </div>
