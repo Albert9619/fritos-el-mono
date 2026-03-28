@@ -4,26 +4,24 @@ import Header from './components/Header';
 import Carrito from './components/Carrito';
 import ProductCard from './components/ProductCard'; 
 import AdminPanel from './components/AdminPanel';
-import { db } from './firebase'; 
-import { collection, onSnapshot, doc, addDoc } from 'firebase/firestore'; 
 
-// 1. 📋 LISTA CORREGIDA
-const PRODUCTOS_ANTERIORES = [
+// ==========================================
+// 🔴 DATOS LOCALES (Los de Carepa de toda la vida)
+// ==========================================
+const productosBase = [
   { 
-    nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.jpg", disponible: true, categoria: "Fritos",
+    id: 1, nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.jpg", disponible: true,
     opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] 
   },
   { 
-    nombre: "Papa Rellena de la Casa", precio: 2500, imagen: "/papa-rellena.jpg", disponible: true, categoria: "Fritos",
+    id: 2, nombre: "Papa Rellena de la Casa", precio: 2500, imagen: "/papa-rellena.jpg", disponible: true,
     opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] 
   },
-  { nombre: "Pastel de Pollo Hojaldrado", precio: 2500, imagen: "/pastel-pollo.jpg", disponible: true, categoria: "Fritos", opciones: [] },
-  { nombre: "Arepa con Huevo y Carne", precio: 3500, imagen: "/arepa-huevo.jpg", disponible: true, categoria: "Fritos", opciones: [] },
-  { nombre: "Palitos de Queso Costeño", precio: 2000, imagen: "/palito-queso.jpg", disponible: true, categoria: "Fritos", opciones: [] },
-  { nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.jpg", disponible: true, categoria: "Fritos", opciones: [] },
-  { nombre: "Arroz Especial del Día", precio: 6000, disponible: true, categoria: "Arroz", esArroz: true, opciones: [] },
+  { id: 3, nombre: "Pastel de Pollo Hojaldrado", precio: 2500, imagen: "/pastel-pollo.jpg", disponible: true },
+  { id: 4, nombre: "Arepa con Huevo y Carne", precio: 3500, imagen: "/arepa-huevo.jpg", disponible: true },
+  { id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true, disponible: true },
   { 
-    nombre: "Jugo Natural Helado", precio: 2000, imagen: "/jugo-natural.jpg", disponible: true, categoria: "Bebidas", esJugo: true,
+    id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, imagen: "/jugo-natural.jpg", disponible: true,
     opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }],
     tamanos: [
       { nombre: "Pequeño", precio: 1000, disponible: true },
@@ -33,13 +31,15 @@ const PRODUCTOS_ANTERIORES = [
   }
 ];
 
+const MONO_CREMA = "#fffbeb";
+
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
-  const [productos, setProductos] = useState([]);
-  const [cantidades, setCantidades] = useState({});
   
-  // 🟢 ESTOS SON LOS CABLES QUE FALTABAN:
+  // 🟢 El estado ahora es 100% LOCAL
+  const [productos, setProductos] = useState(productosBase);
+  const [cantidades, setCantidades] = useState({});
   const [sabores, setSabores] = useState({});
   const [tamanosJugo, setTamanosJugo] = useState({});
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
@@ -50,53 +50,96 @@ export default function App() {
     return guardado ? JSON.parse(guardado) : [];
   });
 
+  // Persistencia del carrito
   useEffect(() => {
-    const unsubProd = onSnapshot(collection(db, "productos"), (snapshot) => {
-      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setProductos(docs);
-    });
-    return () => unsubProd();
-  }, []);
+    localStorage.setItem("pedidoMono", JSON.stringify(pedido));
+  }, [pedido]);
 
-  const inyectarMenu = async () => {
-    const idCarga = toast.loading("Subiendo menú...");
-    try {
-      for (const p of PRODUCTOS_ANTERIORES) {
-        await addDoc(collection(db, "productos"), p);
-      }
-      toast.success("¡Menú cargado!", { id: idCarga });
-    } catch (e) { toast.error("Error"); }
+  // --- FUNCIONES DEL CONTROLADOR ---
+  const accesoSecreto = () => {
+    const pin = window.prompt("🔐 PIN de Admin:");
+    if (pin === "mono2026") {
+      setIsAdmin(true);
+      toast.success("Modo Admin Activado");
+    }
   };
 
-  return (
-    <div style={{ backgroundColor: '#fffbeb', minHeight: '100vh' }}>
-      <Toaster position="top-center" />
-      <button onClick={inyectarMenu} style={{ width: '100%', padding: '20px', background: 'red', color: 'white', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>
-        🔥 CLICK AQUÍ: SUBIR MENÚ COMPLETO
-      </button>
+  const toggleProducto = (id) => {
+    setProductos(productos.map(p => p.id === id ? { ...p, disponible: !p.disponible } : p));
+  };
 
-      <Header accesoSecreto={() => {
-        const pin = window.prompt("PIN:");
-        if (pin === "mono2026") setIsAdmin(true);
-      }} />
+  const cambiarPrecioProducto = (id, nuevoPrecio) => {
+    setProductos(productos.map(p => p.id === id ? { ...p, precio: parseInt(nuevoPrecio) || 0 } : p));
+  };
+
+  const agregarAlCarrito = (p) => {
+    if (!tiendaAbierta) return toast.error("Cerrado");
+    const cant = cantidades[p.id] || 1;
+    setPedido([...pedido, {
+      idUnico: Date.now(),
+      nombre: p.nombre,
+      precioUnitario: p.precio || 0,
+      cantidad: cant,
+      subtotal: (p.precio || 0) * cant
+    }]);
+    toast.success(`${p.nombre} agregado!`);
+  };
+
+  // ==========================================
+  // 🟢 VISTA ADMINISTRADOR
+  // ==========================================
+  if (isAdmin) {
+    return (
+      <AdminPanel 
+        setIsAdmin={setIsAdmin} 
+        tiendaAbierta={tiendaAbierta} 
+        setTiendaAbierta={setTiendaAbierta}
+        productos={productos}
+        toggleProducto={toggleProducto}
+        cambiarPrecioProducto={cambiarPrecioProducto}
+        extrasArroz={[]} // Simplificado por ahora
+        salsas={[]} // Simplificado por ahora
+      />
+    );
+  }
+
+  // ==========================================
+  // 🔵 VISTA CLIENTE
+  // ==========================================
+  return (
+    <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh' }}>
+      <Toaster position="top-center" />
+      
+      <Header accesoSecreto={accesoSecreto} tipoArrozHoy="Especial" />
 
       <main style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
           {productos.map(p => (
             <ProductCard 
-              key={p.id} p={p} tiendaAbierta={tiendaAbierta}
+              key={p.id} 
+              p={p} 
+              tiendaAbierta={tiendaAbierta}
               cantidades={cantidades}
-              sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})}
-              restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})}
+              setCantidades={setCantidades}
               sabores={sabores} setSabores={setSabores}
               tamanosJugo={tamanosJugo} setTamanosJugo={setTamanosJugo}
+              sumarCantidad={(id) => setCantidades(prev => ({ ...prev, [id]: (prev[id] || 1) + 1 }))}
+              restarCantidad={(id) => setCantidades(prev => ({ ...prev, [id]: Math.max(1, (prev[id] || 1) - 1) }))}
+              agregarAlCarrito={() => agregarAlCarrito(p)}
               acompañanteArroz={acompañanteArroz} setAcompañanteArroz={setAcompañanteArroz}
               conHuevo={conHuevo} setConHuevo={setConHuevo}
-              agregarAlCarrito={() => toast.success(`${p.nombre} agregado`)}
             />
           ))}
         </div>
+
+        {pedido.length > 0 && (
+          <Carrito pedido={pedido} setPedido={setPedido} total={pedido.reduce((acc, i) => acc + i.subtotal, 0)} />
+        )}
       </main>
+
+      <footer style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
+        <p>📍 Carepa, Antioquia | Hecho para El Mono 🐒</p>
+      </footer>
     </div>
   );
 }
