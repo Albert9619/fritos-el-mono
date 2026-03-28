@@ -18,23 +18,14 @@ const MONO_TEXTO = "#333333";
 
 // --- DATOS INICIALES ---
 const productosBase = [
-  { 
-    id: 1, 
-    nombre: "Empanada Crujiente", 
-    precio: 1500, 
-    imagen: "/empanada.jpg", // <--- El nombre exacto de tu foto en la carpeta public
-    disponible: true, 
-    opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] 
-  },
-  { 
-    id: 2, 
-    nombre: "Papa Rellena de la Casa", 
-    precio: 2500, 
-    imagen: "/papa-rellena.jpg", 
-    disponible: true, 
-    opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] 
-  },
-  // ... sigue con los demás igual
+  { id: 1, nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
+  { id: 2, nombre: "Papa Rellena de la Casa", precio: 2500, imagen: "/papa-rellena.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
+  { id: 3, nombre: "Pastel de Pollo Hojaldrado", precio: 2500, imagen: "/pastel-pollo.jpg", disponible: true },
+  { id: 4, nombre: "Arepa con Huevo y Carne", precio: 3500, imagen: "/arepa-huevo.jpg", disponible: true },
+  { id: 7, nombre: "Palitos de Queso Costeño", precio: 2000, imagen: "/palito-queso.jpg", disponible: true },
+  { id: 8, nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.jpg", disponible: true },
+  { id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true, disponible: true },
+  { id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, imagen: "/jugo-natural.jpg", disponible: true, opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] }
 ];
 
 const extrasArrozBase = [
