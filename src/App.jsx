@@ -137,30 +137,92 @@ export default function App() {
           ))}
         </div>
 
-        {/* SECCIÓN DE SALSAS (RESTAURADA) */}
-        <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', border: `1px solid ${MONO_AMARILLO}`, boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ color: MONO_NARANJA, textAlign: 'center', fontSize: '28px', fontWeight: '900', marginBottom: '25px' }}>🧂 ¿Qué salsas deseas?</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
-            {salsas.map(s => (
-              <button 
-                key={s.nombre} 
-                onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} 
-                disabled={!s.disponible} 
-                style={{ 
-                  display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 20px', borderRadius: '50px', border: 'none', cursor: s.disponible ? 'pointer' : 'not-allowed', 
-                  background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'), 
-                  color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#bbb'), 
-                  fontWeight: 'bold', transition: '0.3s' 
-                }}>
-                <img src={s.imagen} alt={s.nombre} style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'cover', filter: s.disponible ? 'none' : 'grayscale(1)' }} />
-                {s.nombre}
-                {!s.disponible && "🚫"}
-              </button>
-            ))}
-          </div>
-        </div>
-      </main>
+      {/* --- SECCIÓN DE SALSAS PREMIUM (FOTOS GRANDES) --- */}
+<div style={{ 
+  maxWidth: '900px', 
+  margin: '50px auto', 
+  background: 'white', 
+  padding: '40px', 
+  borderRadius: '35px', 
+  border: `1px solid ${MONO_AMARILLO}`, 
+  boxShadow: '0 15px 35px rgba(0,0,0,0.08)' 
+}}>
+  <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+    <h3 style={{ color: MONO_NARANJA, margin: 0, fontSize: '32px', fontWeight: '900' }}>
+      🧂 ¿Qué salsas deseas?
+    </h3>
+    <p style={{ color: '#666', fontSize: '18px', marginTop: '5px' }}>Dale el toque final de sabor a tu pedido</p>
+  </div>
 
+  <div style={{ 
+    display: 'grid', 
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', // <--- Diseño en grilla moderna
+    gap: '20px', 
+    justifyContent: 'center' 
+  }}>
+    {salsas.map(s => {
+      const seleccionada = salsasElegidas.includes(s.nombre);
+      const agotada = !s.disponible;
+      
+      return (
+        <button 
+          key={s.nombre} 
+          onClick={() => {
+            if (agotada) return;
+            setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])
+          }} 
+          disabled={agotada} 
+          style={{ 
+            display: 'flex',
+            flexDirection: 'column', // <--- Imagen arriba, texto abajo
+            alignItems: 'center',
+            padding: '15px', 
+            borderRadius: '20px', 
+            border: seleccionada ? `3px solid ${MONO_NARANJA}` : `2px solid #eee`, 
+            cursor: agotada ? 'not-allowed' : 'pointer', 
+            background: seleccionada ? MONO_AMARILLO : 'white', // <--- Fondo amarillo clarito al elegir
+            color: MONO_TEXTO,
+            fontWeight: 'bold', 
+            transition: 'all 0.3s ease',
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: seleccionada ? '0 10px 20px rgba(249, 115, 22, 0.15)' : '0 5px 10px rgba(0,0,0,0.03)',
+            transform: seleccionada ? 'translateY(-5px)' : 'translateY(0)'
+          }}>
+          
+          {/* 📸 Imagen de la salsa ¡AHORA GRANDE! */}
+          <img 
+            src={s.imagen} 
+            alt={s.nombre} 
+            style={{ 
+              width: '100px', // <--- De 25px a 100px. ¡4 veces más grande!
+              height: '100px', 
+              borderRadius: '15px', 
+              objectFit: 'cover', 
+              marginBottom: '10px',
+              filter: s.disponible ? 'none' : 'grayscale(1)' 
+            }} 
+          />
+          
+          <span style={{ fontSize: '16px', textAlign: 'center' }}>{s.nombre}</span>
+          
+          {/* Indicador de selección visual */}
+          {seleccionada && (
+            <div style={{ position: 'absolute', top: '10px', right: '10px', background: MONO_NARANJA, color: 'white', width: '25px', height: '25px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 'bold' }}>
+              ✓
+            </div>
+          )}
+
+          {agotada && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '30px' }}>
+              🚫
+            </div>
+          )}
+        </button>
+      );
+    })}
+  </div>
+</div>
       {pedido.length > 0 && (
         <Carrito 
           pedido={pedido} setPedido={setPedido} total={pedido.reduce((acc, item) => acc + item.subtotal, 0)}
