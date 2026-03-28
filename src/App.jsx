@@ -4,6 +4,8 @@ import Header from './components/Header';
 import Carrito from './components/Carrito';
 import ProductCard from './components/ProductCard'; // ✅ Nueva pieza
 import AdminPanel from './components/AdminPanel';
+import { db } from './firebase'; // El puente que creamos
+import { collection, onSnapshot, doc } from 'firebase/firestore'; // Las herramientas de Firebase
 
 // ==========================================
 // 🔴 DATOS BLINDADOS (Carepa)
@@ -57,7 +59,7 @@ export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
   
-  const [productos, setProductos] = useState(productosBase);
+  const [productos, setProductos] = useState([]);
   const [extrasArroz, setExtrasArroz] = useState(extrasArrozBase);
   const [salsas, setSalsas] = useState(salsasBase);
 
@@ -82,10 +84,28 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // ✅ ESTO GUARDA EL PEDIDO SIEMPRE QUE CAMBIE
+  // 📡 Conexión en tiempo real con Firebase
   useEffect(() => {
-    localStorage.setItem("pedidoMono", JSON.stringify(pedido));
-  }, [pedido]);
+    // 1. Escuchar los Productos
+    const unsubProductos = onSnapshot(collection(db, "productos"), (snapshot) => {
+      const listaProductos = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setProductos(listaProductos);
+    });
+
+    // 2. Escuchar la Configuración (Tienda abierta y Arroz)
+    const unsubConfig = onSnapshot(doc(db, "configuracion", "tienda"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setTiendaAbierta(data.tiendaAbierta);
+        setAcompañanteArroz(data.tipoArrozHoy); // O el estado que uses para el arroz
+      }
+    });
+
+    return () => { unsubProductos(); unsubConfig(); };
+  }, []);
 
   // --- ACCESO SEGURO ---
   const accesoSecreto = () => {
