@@ -148,15 +148,71 @@ export default function App() {
       </main>
 
       {/* SALSAS CLIENTE */}
-      <div style={{ maxWidth: '850px', margin: '20px auto', background: 'white', padding: '20px', borderRadius: '20px' }}>
-        <h3>Salsas:</h3>
-        {salsas.map(s => (
-          <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} disabled={!s.disponible} style={{ margin: '5px', padding: '10px', borderRadius: '10px', border: 'none', background: salsasElegidas.includes(s.nombre) ? '#f97316' : '#fef3c7', cursor: s.disponible ? 'pointer' : 'not-allowed' }}>
-            {s.nombre} {!s.disponible && "🚫"}
-          </button>
-        ))}
-      </div>
+      {/* --- SECCIÓN DE SALSAS PREMIUM --- */}
+<div style={{ 
+  maxWidth: '850px', 
+  margin: '40px auto', 
+  background: 'white', 
+  padding: '35px', 
+  borderRadius: '35px', 
+  boxShadow: '0 10px 30px rgba(0,0,0,0.05)',
+  border: `1px solid ${MONO_AMARILLO}`
+}}>
+  <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+    <h3 style={{ color: MONO_NARANJA, margin: 0, fontSize: '28px', fontWeight: '900' }}>
+      🧂 ¿Qué salsas deseas?
+    </h3>
+    <p style={{ color: '#666', fontSize: '16px', marginTop: '5px' }}>Dale un toque extra de sabor a tu pedido</p>
+  </div>
 
+  <div style={{ 
+    display: 'flex', 
+    flexWrap: 'wrap', 
+    gap: '12px', 
+    justifyContent: 'center' 
+  }}>
+    {salsas.map(salsaObj => {
+      const seleccionada = salsasElegidas.includes(salsaObj.nombre);
+      const agotada = !salsaObj.disponible;
+
+      return (
+        <button
+          key={salsaObj.nombre}
+          onClick={() => {
+            if (!tiendaAbierta || agotada) return;
+            setSalsasElegidas(prev => 
+              prev.includes(salsaObj.nombre) ? prev.filter(s => s !== salsaObj.nombre) : [...prev, salsaObj.nombre]
+            );
+          }}
+          disabled={agotada || !tiendaAbierta}
+          style={{
+            padding: '14px 28px',
+            borderRadius: '50px',
+            fontSize: '17px',
+            border: 'none',
+            cursor: agotada ? 'not-allowed' : 'pointer',
+            background: seleccionada ? MONO_NARANJA : (agotada ? '#f0f0f0' : MONO_AMARILLO),
+            color: seleccionada ? 'white' : (agotada ? '#bbb' : MONO_TEXTO),
+            fontWeight: seleccionada ? 'bold' : '600',
+            transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            boxShadow: seleccionada 
+              ? `0 8px 20px rgba(249, 115, 22, 0.4)` 
+              : '0 4px 6px rgba(0,0,0,0.03)',
+            transform: seleccionada ? 'scale(1.1)' : 'scale(1)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            textDecoration: agotada ? 'line-through' : 'none'
+          }}
+        >
+          {seleccionada && <span>✓</span>}
+          {salsaObj.nombre}
+          {agotada && <span style={{fontSize: '14px'}}>🚫</span>}
+        </button>
+      );
+    })}
+  </div>
+</div>
       {pedido.length > 0 && (
         <Carrito 
           pedido={pedido} setPedido={setPedido} total={pedido.reduce((a, b) => a + b.subtotal, 0)}
