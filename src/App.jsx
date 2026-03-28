@@ -7,14 +7,22 @@ import Carrito from './components/Carrito';
 import ProductCard from './components/ProductCard';
 import AdminPanel from './components/AdminPanel';
 
-// ==========================================
-// 🎨 COLORES DE MARCA (¡Aquí estaban faltando!)
-// ==========================================
+// 1. COLORES SIEMPRE ARRIBA DEL TODO
 const MONO_NARANJA = "#f97316";
 const MONO_AMARILLO = "#fef3c7";
 const MONO_CREMA = "#fffbeb";
-const MONO_VERDE = "#16a34a";
 const MONO_TEXTO = "#333333";
+
+export default function App() {
+  // ... todos tus estados (useState)
+  
+  // 2. ASEGÚRATE DE QUE LA FUNCIÓN EXISTE
+  const enviarWhatsApp = () => {
+     // ... lógica de envío que ya teníamos
+  };
+
+  // ... resto del código
+}
 
 // --- DATOS INICIALES ---
 const productosBase = [
