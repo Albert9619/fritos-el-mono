@@ -24,7 +24,7 @@ const productosBase = [
 
 const listadoSalsas = ["Pique", "Salsa Roja", "Salsa Rosada", "Suero", "Suero Picante"];
 
-// Lista manual de extras agotados (puedes agregar "tajadas", "yuca", "huevo", "suero", etc.)
+// Lista manual de extras agotados (para acompañantes y salsas)
 const extrasAgotadosIniciales = ["Empanada Crujiente"]; 
 
 const MONO_NARANJA = "#f97316";
@@ -35,22 +35,20 @@ const MONO_TEXTO = "#333333";
 
 export default function App() {
   // ==========================================
-  // ⚙️ ESTADOS DEL ADMINISTRADOR (NUEVO)
+  // ⚙️ ESTADOS DEL ADMINISTRADOR
   // ==========================================
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
   
-  // Convertimos los productos base en un estado para poder cambiarles el precio y apagarlos
   const [productos, setProductos] = useState(() => {
     return productosBase.map(p => ({
       ...p,
-      // Si estaba en la lista de agotados vieja, arranca apagado
       disponible: !extrasAgotadosIniciales.map(a => a.toLowerCase().trim()).includes(p.nombre.toLowerCase().trim())
     }));
   });
 
   // ==========================================
-  // 🛒 ESTADOS DEL CLIENTE (Tus originales)
+  // 🛒 ESTADOS DEL CLIENTE
   // ==========================================
   const [pedido, setPedido] = useState([]);
   const [nombre, setNombre] = useState("");
@@ -67,6 +65,16 @@ export default function App() {
   const listaAgotadosLimpios = extrasAgotadosIniciales.map(a => a.toLowerCase().trim());
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
+
+  // --- FUNCIÓN DE SEGURIDAD (PIN) ---
+  const accesoSecreto = () => {
+    const clave = window.prompt("🔐 Ingresa el PIN de administrador:");
+    if (clave === "mono2026") {
+      setIsAdmin(true);
+    } else if (clave !== null) {
+      alert("❌ PIN incorrecto. Acceso denegado.");
+    }
+  };
 
   // --- FUNCIONES DEL ADMINISTRADOR ---
   const toggleDisponibilidad = (id) => {
@@ -125,7 +133,7 @@ export default function App() {
   };
 
   // ==========================================
-  // 🟢 VISTA DE ADMINISTRADOR (NUEVA)
+  // 🟢 VISTA DE ADMINISTRADOR
   // ==========================================
   if (isAdmin) {
     return (
@@ -163,7 +171,7 @@ export default function App() {
                   <input 
                     type="number" 
                     value={p.precio} 
-                    disabled={p.esJugo} // Los jugos tienen precios por tamaño
+                    disabled={p.esJugo} 
                     onChange={(e) => cambiarPrecio(p.id, e.target.value)}
                     style={{ width: '80px', padding: '8px', borderRadius: '8px', border: '1px solid #ddd', fontWeight: 'bold', background: p.esJugo ? '#f0f0f0' : 'white' }}
                   />
@@ -194,19 +202,18 @@ export default function App() {
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '60px' }}>
       
-      {/* BOTÓN SECRETO PARA EL ADMIN (Esquina inferior izquierda) */}
-      <div 
-        onClick={() => setIsAdmin(true)} 
-        style={{ position: 'fixed', bottom: '20px', left: '20px', fontSize: '30px', cursor: 'pointer', opacity: 0.2, zIndex: 9999 }}
-        title="Panel Secreto"
-      >
-        ⚙️
-      </div>
-
       <header style={{ textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', overflow: 'hidden', position: 'relative' }}>
         <img src="/logo-fritos-el-mono.jpg" alt="Banner Fritos El Mono" style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
         <div style={{ padding: '25px', background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(10px)', borderTop: `5px solid ${MONO_NARANJA}` }}>
-          <h1 style={{ color: MONO_NARANJA, margin: 0, fontSize: '36px', fontWeight: '900', letterSpacing: '-1.5px' }}>Fritos El Mono 🐒</h1>
+          
+          {/* ✅ AQUÍ ESTÁ EL TOQUE SECRETO (Doble clic / Doble tap en el celular) */}
+          <h1 
+            onDoubleClick={accesoSecreto} 
+            style={{ color: MONO_NARANJA, margin: 0, fontSize: '36px', fontWeight: '900', letterSpacing: '-1.5px', cursor: 'pointer', userSelect: 'none' }}
+          >
+            Fritos El Mono 🐒
+          </h1>
+          
           <p style={{ marginTop: '5px', fontSize: '18px', fontWeight: '600' }}>Hoy Arroz de <span style={{color: MONO_NARANJA}}>{tipoArrozHoy}</span></p>
         </div>
       </header>
@@ -221,7 +228,6 @@ export default function App() {
       {/* GRILLA DE PRODUCTOS */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px', opacity: tiendaAbierta ? 1 : 0.6 }}>
         {productos.map(p => {
-          // Ahora leemos el estado p.disponible en lugar de la lista manual
           const todoAgotado = !p.disponible;
           const isHovered = hoveredCardId === p.id;
 
@@ -236,7 +242,6 @@ export default function App() {
                   ${p.esJugo ? (p.precios[tamanosJugo[p.id] || "Mediano"]).toLocaleString('es-CO') : p.precio.toLocaleString('es-CO')}
                 </p>
                 
-                {/* SOLO MUESTRA OPCIONES SI HAY PRODUCTO Y EL LOCAL ESTÁ ABIERTO */}
                 {!todoAgotado && tiendaAbierta && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {p.esArroz && (
@@ -289,7 +294,6 @@ export default function App() {
         })}
       </div>
 
-      {/* SALSAS (Solo se muestran si la tienda está abierta) */}
       {tiendaAbierta && (
         <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
           <h3 style={{ color: MONO_NARANJA, margin: '0 0 25px 0', fontSize: '26px', fontWeight: '900' }}>🧂 ¿Qué salsas deseas?</h3>
@@ -307,14 +311,12 @@ export default function App() {
         </div>
       )}
 
-      {/* CARRITO FLOTANTE */}
       {pedido.length > 0 && tiendaAbierta && (
         <a href="#carrito_seccion" style={{ position: 'fixed', bottom: '25px', right: '25px', background: MONO_TEXTO, color: 'white', padding: '18px 30px', borderRadius: '50px', textDecoration: 'none', fontWeight: 'bold', boxShadow: '0 8px 25px rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', gap: '12px', fontSize: '18px' }}>
           🛒 Mi Pedido <span style={{ background: MONO_NARANJA, borderRadius: '50%', width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{pedido.reduce((acc, item) => acc + item.cantidad, 0)}</span>
         </a>
       )}
 
-      {/* SECCIÓN CONFIRMAR PEDIDO */}
       {pedido.length > 0 && tiendaAbierta && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto 60px', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.15)' }}>
           <h2 style={{ fontSize: '30px', fontWeight: '900', marginBottom: '25px' }}>🛒 Confirmar Pedido</h2>
@@ -341,7 +343,6 @@ export default function App() {
         </div>
       )}
 
-      {/* FOOTER PERSONALIZADO */}
       <footer style={{ textAlign: 'center', padding: '40px 20px', color: '#666', fontSize: '15px', borderTop: '1px solid #eee', background: 'white' }}>
         <p style={{ margin: 0, fontWeight: '600' }}>
           📍 Carepa, Antioquia | Hecho con ❤️ para los clientes de El Mono
