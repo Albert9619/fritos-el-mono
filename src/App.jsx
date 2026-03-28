@@ -7,7 +7,7 @@ import AdminPanel from './components/AdminPanel';
 import { db } from './firebase'; 
 import { collection, onSnapshot, doc, addDoc, updateDoc } from 'firebase/firestore'; 
 
-// 1. 📋 TU LISTA ORIGINAL (La que vamos a inyectar)
+// 1. 📋 TU LISTA ORIGINAL (Fuera de la función, esto está perfecto)
 const PRODUCTOS_ANTERIORES = [
   { nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.jpg", disponible: true, categoria: "Fritos" },
   { nombre: "Papa Rellena de la Casa", precio: 2500, imagen: "/papa-rellena.jpg", disponible: true, categoria: "Fritos" },
@@ -20,29 +20,17 @@ const PRODUCTOS_ANTERIORES = [
 ];
 
 export default function App() {
-  {productos.map(p => (
-  <ProductCard 
-    key={p.id} 
-    p={p} 
-    tiendaAbierta={tiendaAbierta}
-    cantidades={cantidades} // <-- Faltaba este
-    setCantidades={setCantidades} // <-- Faltaba este
-    sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})}
-    restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})}
-    agregarAlCarrito={() => toast.success(`${p.nombre} al carrito`)}
-  />
-))}
+  // Primero definimos todos los estados
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
   const [productos, setProductos] = useState([]);
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
+  const [cantidades, setCantidades] = useState({});
   
   const [pedido, setPedido] = useState(() => {
     const guardado = localStorage.getItem("pedidoMono");
     return guardado ? JSON.parse(guardado) : [];
   });
-
-  const [cantidades, setCantidades] = useState({});
 
   // 📡 CONEXIÓN EN TIEMPO REAL
   useEffect(() => {
@@ -66,12 +54,12 @@ export default function App() {
     }
   };
 
-  // --- RENDERIZADO ---
+  // --- RENDERIZADO (Aquí es donde ocurre la magia) ---
   return (
     <div style={{ backgroundColor: '#fffbeb', minHeight: '100vh' }}>
       <Toaster position="top-center" />
 
-      {/* 🔴 EL BOTÓN QUE BUSCABAS */}
+      {/* 🔴 EL BOTÓN DE INYECCIÓN */}
       <button 
         onClick={inyectarMenu}
         style={{ 
@@ -89,14 +77,21 @@ export default function App() {
 
       <main style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+          
+          {/* Aquí es donde deben ir los productos mapeados */}
           {productos.map(p => (
             <ProductCard 
               key={p.id} 
               p={p} 
               tiendaAbierta={tiendaAbierta}
+              cantidades={cantidades}
+              setCantidades={setCantidades}
+              sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})}
+              restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})}
               agregarAlCarrito={() => toast.success(`${p.nombre} al carrito`)}
             />
           ))}
+          
         </div>
       </main>
 
