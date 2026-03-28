@@ -331,7 +331,7 @@ export default function App() {
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px', opacity: tiendaAbierta ? 1 : 0.6 }}>
-        {productos.map(p => {
+        {productos.map(p => (
           <ProductCard 
             key={p.id}
             p={p}
