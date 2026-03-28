@@ -115,7 +115,6 @@ export default function App() {
     setSalsasElegidas(prev => prev.includes(salsaObj.nombre) ? prev.filter(s => s !== salsaObj.nombre) : [...prev, salsaObj.nombre]);
   };
 
-  // ✅ NUEVAS FUNCIONES PARA LOS BOTONES + Y -
   const sumarCantidad = (id) => {
     setCantidades({ ...cantidades, [id]: (cantidades[id] || 1) + 1 });
   };
@@ -127,9 +126,29 @@ export default function App() {
     }
   };
 
+  // ✅ NUEVA FUNCIÓN: Para cuando el cliente escribe el número con su teclado
+  const manejarInputCantidad = (id, valor) => {
+    if (valor === "") {
+      setCantidades({ ...cantidades, [id]: "" }); // Permite borrar temporalmente para escribir
+      return;
+    }
+    const num = parseInt(valor);
+    if (!isNaN(num) && num > 0) {
+      setCantidades({ ...cantidades, [id]: num });
+    }
+  };
+
+  // ✅ NUEVA FUNCIÓN: Si el cliente borró el número y se fue, le ponemos 1 por defecto
+  const corregirInputVacio = (id) => {
+    if (!cantidades[id] || cantidades[id] < 1) {
+      setCantidades({ ...cantidades, [id]: 1 });
+    }
+  };
+
   const agregarAlCarrito = (p) => {
     if (!tiendaAbierta) return alert("El local está cerrado.");
     
+    // Si la cantidad está vacía por algún error, asume 1
     const cant = cantidades[p.id] || 1;
     let precioBase = p.precio || 0;
     let sabor = "";
@@ -165,12 +184,11 @@ export default function App() {
       subtotal: precioBase * cant
     }]);
     
-    // Limpiar el formulario de esa tarjeta
     setSabores({...sabores, [p.id]: ""});
     setTamanosJugo({...tamanosJugo, [p.id]: ""});
     setAcompañanteArroz("");
     setConHuevo(false);
-    setCantidades({...cantidades, [p.id]: 1}); // ✅ Volver la cantidad a 1
+    setCantidades({...cantidades, [p.id]: 1});
   };
 
   const total = pedido.reduce((acc, item) => acc + item.subtotal, 0);
@@ -391,12 +409,21 @@ export default function App() {
                       </select>
                     )}
 
-                    {/* ✅ AQUÍ ESTÁN LOS NUEVOS BOTONES DE CANTIDAD */}
+                    {/* ✅ ESTA CAJITA YA ES EDITABLE CON TECLADO */}
                     <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fcfcfc', padding: '12px', borderRadius: '15px', border: '1px solid #eee'}}>
                       <label style={{fontSize: '16px', fontWeight: 'bold', color: '#555'}}>Cantidad:</label>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <button onClick={() => restarCantidad(p.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', border: 'none', background: MONO_AMARILLO, color: MONO_NARANJA, fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
-                        <span style={{ fontSize: '20px', fontWeight: '900', width: '25px', textAlign: 'center' }}>{cantidades[p.id] || 1}</span>
+                        
+                        <input 
+                          type="number" 
+                          min="1"
+                          value={cantidades[p.id] !== undefined ? cantidades[p.id] : 1}
+                          onChange={(e) => manejarInputCantidad(p.id, e.target.value)}
+                          onBlur={() => corregirInputVacio(p.id)}
+                          style={{ width: '45px', textAlign: 'center', fontSize: '20px', fontWeight: '900', border: 'none', background: 'transparent', outline: 'none' }}
+                        />
+                        
                         <button onClick={() => sumarCantidad(p.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', border: 'none', background: MONO_NARANJA, color: 'white', fontSize: '22px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                       </div>
                     </div>
