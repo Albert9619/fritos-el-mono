@@ -28,14 +28,12 @@ const extrasArrozBase = [
   { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 }
 ];
 
-// --- En App.jsx ---
-
 const salsasBase = [
-  { nombre: "🔥 Pique", disponible: true },
-  { nombre: "🍅 Salsa Roja", disponible: true },
-  { nombre: "🍥 Salsa Rosada", disponible: true },
-  { nombre: "🥛 Suero", disponible: true },
-  { nombre: "🌶️ Suero Picante", disponible: true }
+  { nombre: "Pique", disponible: true, imagen: "/pique.png" },
+  { nombre: "Salsa Roja", disponible: true, imagen: "/salsa-roja.png" },
+  { nombre: "Salsa Rosada", disponible: true, imagen: "/salsa-rosada.png" },
+  { nombre: "Suero", disponible: true, imagen: "/suero.png" },
+  { nombre: "Suero Picante", disponible: true, imagen: "/suero-picante.png" }
 ];
 
 export default function App() {
@@ -59,6 +57,7 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
+  // --- FUNCIONES ADMIN ---
   const toggleProducto = (id) => setProductos(prev => prev.map(p => p.id === id ? { ...p, disponible: !p.disponible } : p));
   const cambiarPrecioProducto = (id, n) => setProductos(prev => prev.map(p => p.id === id ? { ...p, precio: parseInt(n) || 0 } : p));
   const toggleSabor = (pId, sNom) => setProductos(prev => prev.map(p => p.id === pId ? { ...p, opciones: p.opciones.map(o => o.nombre === sNom ? { ...o, disponible: !o.disponible } : o) } : p));
@@ -69,13 +68,13 @@ export default function App() {
   const toggleSalsa = (nom) => setSalsas(prev => prev.map(s => s.nombre === nom ? { ...s, disponible: !s.disponible } : s));
 
   const agregarAlCarrito = (p) => {
-    if (!tiendaAbierta) return toast.error("Local cerrado");
+    if (!tiendaAbierta) return toast.error("Cerrado");
     const cant = cantidades[p.id] || 1;
     let precioBase = p.precio || 0;
     let sabor = sabores[p.id] || "";
     let detallesExtra = "";
 
-    if (p.opciones && !sabor) return toast.error(`Elige el sabor`);
+    if (p.opciones && !sabor) return toast.error(`Elige sabor`);
     if (p.esJugo) {
       const tamElegido = tamanosJugo[p.id] || p.tamanos[0].nombre;
       const tamObj = p.tamanos.find(t => t.nombre === tamElegido);
@@ -83,17 +82,16 @@ export default function App() {
       detallesExtra = `(${tamElegido})`;
     }
     if (p.esArroz) {
-      if (!acompañanteArroz) return toast.error("Elige Tajada o Yuca");
+      if (!acompañanteArroz) return toast.error("Elige acompañante");
       if (conHuevo) precioBase += 1000;
       detallesExtra = `(Con ${acompañanteArroz}${conHuevo ? ' + Huevo' : ''})`;
     }
 
     setPedido(prev => [...prev, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioBase, saborElegido: sabor, detallesArroz: detallesExtra, cantidad: cant, subtotal: precioBase * cant }]);
-    toast.success("🥟 ¡Al pedido!");
+    toast.success("🥟 ¡Añadido!");
   };
 
   const enviarWhatsApp = () => {
-    if (pedido.length === 0) return toast.error("Carrito vacío");
     const total = pedido.reduce((acc, item) => acc + item.subtotal, 0);
     const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.saborElegido} ${i.detallesArroz}`).join('\n');
     const msg = `Pedido Fritos El Mono:\n\n${lista}\n\nSalsas: ${salsasElegidas.join(', ') || 'Ninguna'}\nTotal: $${total.toLocaleString('es-CO')}\n\nCliente: ${nombre}\nDir: ${direccion}\nPago: ${metodoPago}`;
@@ -116,6 +114,7 @@ export default function App() {
       <Header accesoSecreto={() => { const p = window.prompt("PIN:"); if (p === "mono2026") setIsAdmin(true); }} tipoArrozHoy={tipoArrozHoy} />
       
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+        {/* GRILLA DE PRODUCTOS */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
           {productos.map(p => (
             <ProductCard 
@@ -138,13 +137,24 @@ export default function App() {
           ))}
         </div>
 
-        <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', border: `1px solid ${MONO_AMARILLO}` }}>
-          <h3 style={{ color: MONO_NARANJA, textAlign: 'center', fontSize: '28px', fontWeight: '900', marginBottom: '20px' }}>🧂 Salsas</h3>
+        {/* SECCIÓN DE SALSAS (RESTAURADA) */}
+        <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', border: `1px solid ${MONO_AMARILLO}`, boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ color: MONO_NARANJA, textAlign: 'center', fontSize: '28px', fontWeight: '900', marginBottom: '25px' }}>🧂 ¿Qué salsas deseas?</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
             {salsas.map(s => (
-              <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} disabled={!s.disponible} 
-                style={{ padding: '14px 28px', borderRadius: '50px', border: 'none', cursor: s.disponible ? 'pointer' : 'not-allowed', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'), color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#bbb'), fontWeight: 'bold' }}>
-                {salsasElegidas.includes(s.nombre) && "✓ "} {s.nombre} {!s.disponible && "🚫"}
+              <button 
+                key={s.nombre} 
+                onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} 
+                disabled={!s.disponible} 
+                style={{ 
+                  display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 20px', borderRadius: '50px', border: 'none', cursor: s.disponible ? 'pointer' : 'not-allowed', 
+                  background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'), 
+                  color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#bbb'), 
+                  fontWeight: 'bold', transition: '0.3s' 
+                }}>
+                <img src={s.imagen} alt={s.nombre} style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'cover', filter: s.disponible ? 'none' : 'grayscale(1)' }} />
+                {s.nombre}
+                {!s.disponible && "🚫"}
               </button>
             ))}
           </div>
@@ -156,7 +166,7 @@ export default function App() {
           pedido={pedido} setPedido={setPedido} total={pedido.reduce((acc, item) => acc + item.subtotal, 0)}
           nombre={nombre} setNombre={setNombre} direccion={direccion} setDireccion={setDireccion}
           metodoPago={metodoPago} setMetodoPago={setMetodoPago} enviarWhatsApp={enviarWhatsApp}
-          vaciarCarrito={() => { if(window.confirm("¿Vaciar pedido?")) setPedido([]); }}
+          vaciarCarrito={() => { if(window.confirm("¿Vaciar?")) setPedido([]); }}
         />
       )}
     </div>
