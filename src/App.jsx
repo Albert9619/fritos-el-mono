@@ -5,47 +5,32 @@ import Carrito from './components/Carrito';
 import ProductCard from './components/ProductCard'; 
 import AdminPanel from './components/AdminPanel';
 import { db } from './firebase'; 
-import { collection, onSnapshot, doc, addDoc } from 'firebase/firestore'; // ✅ addDoc añadido
+import { collection, onSnapshot, doc, addDoc } from 'firebase/firestore'; 
 
 // ==========================================
 // 🔴 LISTA PARA LA INYECCIÓN (Temporal)
 // ==========================================
 const productosParaSubir = [
   { nombre: "Empanada de Carne", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/empanada.jpg" },
-  { nombre: "Papa Rellena", precio: 3000, categoria: "Fritos", disponible: true, imagen: "/papa.jpg" },
+  { nombre: "Papa Rellena de la Casa", precio: 3000, categoria: "Fritos", disponible: true, imagen: "/papa-rellena.jpg" },
+  { nombre: "Pastel de Pollo", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/pastel-pollo.jpg" },
+  { nombre: "Arepa con Huevo", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/arepa-huevo.jpg" },
   { nombre: "Cariseca", precio: 2000, categoria: "Fritos", disponible: true, imagen: "/cariseca.jpg" },
   { nombre: "Chorizo con Arepa", precio: 5000, categoria: "Fritos", disponible: true, imagen: "/chorizo.jpg" },
-  { nombre: "Jugo de Mora 12oz", precio: 3000, categoria: "Bebidas", disponible: true, imagen: "/jugo.jpg" },
-  { nombre: "Jugo de Mora 16oz", precio: 4000, categoria: "Bebidas", disponible: true, imagen: "/jugo.jpg" },
+  { nombre: "Jugo Natural 12oz", precio: 3000, categoria: "Bebidas", disponible: true, imagen: "/jugo-natural.jpg" },
+  { nombre: "Jugo Natural 16oz", precio: 4000, categoria: "Bebidas", disponible: true, imagen: "/jugo-natural.jpg" },
 ];
 
-const extrasArrozBase = [
-  { id: 'tajada', nombre: "Tajadas", disponible: true, precio: 0 },
-  { id: 'yuca', nombre: "Yuca", disponible: true, precio: 0 },
-  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 }
-];
-
-const salsasBase = [
-  { nombre: "Pique", disponible: true },
-  { nombre: "Salsa Roja", disponible: true },
-  { nombre: "Salsa Rosada", disponible: true },
-  { nombre: "Suero", disponible: true },
-  { nombre: "Suero Picante", disponible: true }
-];
-
-const MONO_NARANJA = "#f97316";
-const MONO_AMARILLO = "#fef3c7";
 const MONO_CREMA = "#fffbeb";
-const MONO_VERDE = "#16a34a";
 const MONO_TEXTO = "#333333";
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
   const [productos, setProductos] = useState([]);
-  const [extrasArroz, setExtrasArroz] = useState(extrasArrozBase);
-  const [salsas, setSalsas] = useState(salsasBase);
-
+  const [acompañanteArroz, setAcompañanteArroz] = useState("");
+  
+  // Estados para el pedido
   const [pedido, setPedido] = useState(() => {
     const guardado = localStorage.getItem("pedidoMono");
     return guardado ? JSON.parse(guardado) : [];
@@ -54,64 +39,58 @@ export default function App() {
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
   const [metodoPago, setMetodoPago] = useState("");
-  const [sabores, setSabores] = useState({});
   const [cantidades, setCantidades] = useState({});
-  const [tamanosJugo, setTamanosJugo] = useState({});
-  const [acompañanteArroz, setAcompañanteArroz] = useState("");
-  const [conHuevo, setConHuevo] = useState(false);
-  const [salsasElegidas, setSalsasElegidas] = useState([]);
-  const [hoveredCardId, setHoveredCardId] = useState(null); 
 
-  const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
-  const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
-
-  // 📡 Conexión en tiempo real
+  // 📡 CONEXIÓN REAL CON FIREBASE
   useEffect(() => {
-    const unsubProductos = onSnapshot(collection(db, "productos"), (snapshot) => {
-      const listaProductos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setProductos(listaProductos);
+    // Escuchar productos
+    const unsubProd = onSnapshot(collection(db, "productos"), (snapshot) => {
+      const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setProductos(docs);
     });
 
-    const unsubConfig = onSnapshot(doc(db, "configuracion", "tienda"), (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        setTiendaAbierta(data.tiendaAbierta);
-        setAcompañanteArroz(data.tipoArrozHoy);
+    // Escuchar configuración de la tienda
+    const unsubConf = onSnapshot(doc(db, "configuracion", "tienda"), (snap) => {
+      if (snap.exists()) {
+        setTiendaAbierta(snap.data().tiendaAbierta);
+        setAcompañanteArroz(snap.data().tipoArrozHoy);
       }
     });
 
-    return () => { unsubProductos(); unsubConfig(); };
+    return () => { unsubProd(); unsubConf(); };
   }, []);
 
-  // 🔥 FUNCIÓN DE INYECCIÓN
+  // Persistencia de pedido
+  useEffect(() => {
+    localStorage.setItem("pedidoMono", JSON.stringify(pedido));
+  }, [pedido]);
+
+  // 🔥 FUNCIÓN MÁGICA DE INYECCIÓN
   const subirMenuCompleto = async () => {
+    const idCarga = toast.loading("Subiendo fritos a la nube...");
     try {
-      toast.loading("Subiendo fritos...");
-      for (const producto of productosParaSubir) {
-        await addDoc(collection(db, "productos"), producto);
+      for (const p of productosParaSubir) {
+        await addDoc(collection(db, "productos"), p);
       }
-      toast.dismiss();
-      toast.success("¡Menú inyectado con éxito!");
-    } catch (error) {
-      toast.error("Error al subir el menú");
+      toast.success("¡Menú de El Mono cargado!", { id: idCarga });
+    } catch (e) {
+      toast.error("Error al subir", { id: idCarga });
+      console.error(e);
     }
   };
 
-  // --- ACCESO Y FUNCIONES (Admin/Cliente) ---
-  const accesoSecreto = () => {
-    const clave = window.prompt("🔐 Ingresa el PIN:");
-    if (clave === "mono2026") { setIsAdmin(true); toast.success("Bienvenido"); }
-    else if (clave !== null) { toast.error("PIN incorrecto"); }
-  };
-
-  const toggleProducto = (id) => setProductos(productos.map(p => p.id === id ? { ...p, disponible: !p.disponible } : p));
-  const cambiarPrecioProducto = (id, nuevoPrecio) => setProductos(productos.map(p => p.id === id ? { ...p, precio: parseInt(nuevoPrecio) || 0 } : p));
+  // --- LOGICA DE CLIENTE ---
   const agregarAlCarrito = (p) => {
-    if (!tiendaAbierta) return toast.error("Cerrado");
     const cant = cantidades[p.id] || 1;
-    let precioBase = p.precio || 0;
-    setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioBase, cantidad: cant, subtotal: precioBase * cant }]);
-    toast.success("¡Agregado!");
+    const nuevoItem = {
+      idUnico: Date.now(),
+      nombre: p.nombre,
+      precioUnitario: p.precio,
+      cantidad: cant,
+      subtotal: p.precio * cant
+    };
+    setPedido([...pedido, nuevoItem]);
+    toast.success(`Agregado: ${p.nombre}`);
   };
 
   const total = pedido.reduce((acc, item) => acc + item.subtotal, 0);
@@ -122,9 +101,9 @@ export default function App() {
   if (isAdmin) {
     return (
       <AdminPanel 
-        setIsAdmin={setIsAdmin} tiendaAbierta={tiendaAbierta} setTiendaAbierta={setTiendaAbierta}
-        productos={productos} toggleProducto={toggleProducto} cambiarPrecioProducto={cambiarPrecioProducto}
-        extrasArroz={extrasArroz} salsas={salsas}
+        setIsAdmin={setIsAdmin} 
+        tiendaAbierta={tiendaAbierta} 
+        productos={productos}
       />
     );
   }
@@ -132,41 +111,62 @@ export default function App() {
   // ==========================================
   // 🔵 VISTA CLIENTE
   // ==========================================
-  const tajadaObj = extrasArroz.find(e => e.id === 'tajada') || { disponible: false, precio: 0 };
-  const yucaObj = extrasArroz.find(e => e.id === 'yuca') || { disponible: false, precio: 0 };
-  const huevoObj = extrasArroz.find(e => e.id === 'huevo') || { disponible: false, precio: 1000 };
-
   return (
-    <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '60px' }}>
-      <Toaster position="bottom-center" />
-      
-      {/* 🚀 BOTÓN TEMPORAL DE INYECCIÓN */}
+    <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO }}>
+      <Toaster position="top-center" />
+
+      {/* 🚀 EL BOTÓN ROJO (Aparecerá arriba de todo) */}
       <button 
         onClick={subirMenuCompleto}
-        style={{ width: '100%', padding: '15px', background: 'red', color: 'white', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}
+        style={{ 
+          width: '100%', padding: '20px', background: 'red', color: 'white', 
+          fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '18px' 
+        }}
       >
-        🔥 SUBIR MENÚ A FIREBASE (UN SOLO CLIC)
+        🔥 INYECTAR MENÚ COMPLETO A FIREBASE (DAR SOLO UN CLIC)
       </button>
 
-      <Header accesoSecreto={accesoSecreto} tipoArrozHoy={tipoArrozHoy} />
+      <Header accesoSecreto={() => {
+        const pin = window.prompt("PIN de Admin:");
+        if (pin === "mono2026") setIsAdmin(true);
+      }} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
-        {productos.map(p => (
-          <ProductCard 
-            key={p.id} p={p} tiendaAbierta={tiendaAbierta} 
-            cantidades={cantidades} agregarAlCarrito={agregarAlCarrito}
-            tajadaObj={tajadaObj} yucaObj={yucaObj} huevoObj={huevoObj}
-            sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id]||1)+1})}
-            restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id]||1)-1)})}
+      <main style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
+        
+        {/* GRILLA DE PRODUCTOS */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+          gap: '20px' 
+        }}>
+          {productos.map(p => (
+            <ProductCard 
+              key={p.id}
+              p={p}
+              tiendaAbierta={tiendaAbierta}
+              cantidades={cantidades}
+              setCantidades={setCantidades}
+              sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})}
+              restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})}
+              agregarAlCarrito={agregarAlCarrito}
+            />
+          ))}
+        </div>
+
+        {/* CARRITO */}
+        {pedido.length > 0 && (
+          <Carrito 
+            pedido={pedido} 
+            setPedido={setPedido} 
+            total={total}
+            nombre={nombre} setNombre={setNombre}
+            direccion={direccion} setDireccion={setDireccion}
+            metodoPago={metodoPago} setMetodoPago={setMetodoPago}
           />
-        ))}
-      </div>
+        )}
+      </main>
 
-      {pedido.length > 0 && (
-        <Carrito pedido={pedido} setPedido={setPedido} total={total} nombre={nombre} setNombre={setNombre} direccion={direccion} setDireccion={setDireccion} metodoPago={metodoPago} setMetodoPago={setMetodoPago} />
-      )}
-
-      <footer style={{ textAlign: 'center', padding: '40px', background: 'white' }}>
+      <footer style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
         <p>📍 Carepa, Antioquia | Fritos El Mono 2026</p>
       </footer>
     </div>
