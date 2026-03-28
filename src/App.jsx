@@ -5,10 +5,9 @@ import Carrito from './components/Carrito';
 import ProductCard from './components/ProductCard'; 
 import AdminPanel from './components/AdminPanel';
 import { db } from './firebase'; 
-import { collection, onSnapshot, doc, addDoc, updateDoc } from 'firebase/firestore'; 
+import { collection, onSnapshot, doc, addDoc } from 'firebase/firestore'; 
 
-
-// 1. 📋 LISTA BLINDADA (Con la estructura que pide ProductCard)
+// 1. 📋 LISTA CORREGIDA
 const PRODUCTOS_ANTERIORES = [
   { 
     nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.jpg", disponible: true, categoria: "Fritos",
@@ -35,19 +34,22 @@ const PRODUCTOS_ANTERIORES = [
 ];
 
 export default function App() {
-  // Primero definimos todos los estados
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
   const [productos, setProductos] = useState([]);
-  const [acompañanteArroz, setAcompañanteArroz] = useState("");
   const [cantidades, setCantidades] = useState({});
   
+  // 🟢 ESTOS SON LOS CABLES QUE FALTABAN:
+  const [sabores, setSabores] = useState({});
+  const [tamanosJugo, setTamanosJugo] = useState({});
+  const [acompañanteArroz, setAcompañanteArroz] = useState("");
+  const [conHuevo, setConHuevo] = useState(false);
+
   const [pedido, setPedido] = useState(() => {
     const guardado = localStorage.getItem("pedidoMono");
     return guardado ? JSON.parse(guardado) : [];
   });
 
-  // 📡 CONEXIÓN EN TIEMPO REAL
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (snapshot) => {
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -56,33 +58,21 @@ export default function App() {
     return () => unsubProd();
   }, []);
 
-  // ⚡ FUNCIÓN DE INYECCIÓN
   const inyectarMenu = async () => {
-    const idCarga = toast.loading("Subiendo menú a la nube...");
+    const idCarga = toast.loading("Subiendo menú...");
     try {
       for (const p of PRODUCTOS_ANTERIORES) {
         await addDoc(collection(db, "productos"), p);
       }
-      toast.success("¡Menú cargado en Firebase! 🚀", { id: idCarga });
-    } catch (e) {
-      toast.error("Fallo la subida", { id: idCarga });
-    }
+      toast.success("¡Menú cargado!", { id: idCarga });
+    } catch (e) { toast.error("Error"); }
   };
 
-  // --- RENDERIZADO (Aquí es donde ocurre la magia) ---
   return (
     <div style={{ backgroundColor: '#fffbeb', minHeight: '100vh' }}>
       <Toaster position="top-center" />
-
-      {/* 🔴 EL BOTÓN DE INYECCIÓN */}
-      <button 
-        onClick={inyectarMenu}
-        style={{ 
-          width: '100%', padding: '20px', background: 'red', color: 'white', 
-          fontWeight: 'bold', border: 'none', cursor: 'pointer', fontSize: '18px' 
-        }}
-      >
-        🔥 CLICK AQUÍ: SUBIR TODO EL MENÚ ANTERIOR A FIREBASE
+      <button onClick={inyectarMenu} style={{ width: '100%', padding: '20px', background: 'red', color: 'white', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>
+        🔥 CLICK AQUÍ: SUBIR MENÚ COMPLETO
       </button>
 
       <Header accesoSecreto={() => {
@@ -91,28 +81,22 @@ export default function App() {
       }} />
 
       <main style={{ maxWidth: '1200px', margin: '30px auto', padding: '0 20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-          
-          {/* Aquí es donde deben ir los productos mapeados */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
           {productos.map(p => (
             <ProductCard 
-              key={p.id} 
-              p={p} 
-              tiendaAbierta={tiendaAbierta}
+              key={p.id} p={p} tiendaAbierta={tiendaAbierta}
               cantidades={cantidades}
-              setCantidades={setCantidades}
               sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})}
               restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})}
-              agregarAlCarrito={() => toast.success(`${p.nombre} al carrito`)}
+              sabores={sabores} setSabores={setSabores}
+              tamanosJugo={tamanosJugo} setTamanosJugo={setTamanosJugo}
+              acompañanteArroz={acompañanteArroz} setAcompañanteArroz={setAcompañanteArroz}
+              conHuevo={conHuevo} setConHuevo={setConHuevo}
+              agregarAlCarrito={() => toast.success(`${p.nombre} agregado`)}
             />
           ))}
-          
         </div>
       </main>
-
-      <footer style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
-        <p>📍 Carepa, Antioquia | Fritos El Mono 2026</p>
-      </footer>
     </div>
   );
 }
