@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 
 // ==========================================
-// 🔴 DATOS ESTRUCTURADOS CON SUB-OPCIONES (Carepa)
+// 🔴 DATOS BLINDADOS (Carepa)
 // ==========================================
-// Ahora cada sabor y tamaño es un objeto con su propio "disponible: true"
 const productosBase = [
   { 
     id: 1, nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.jpg", disponible: true,
@@ -19,7 +18,7 @@ const productosBase = [
   { id: 8, nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.jpg", disponible: true },
   { id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true, disponible: true },
   { 
-    id: 6, nombre: "Jugo Natural Helado", esJugo: true, imagen: "/jugo-natural.jpg", disponible: true,
+    id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, imagen: "/jugo-natural.jpg", disponible: true,
     opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }],
     tamanos: [
       { nombre: "Pequeño", precio: 1000, disponible: true },
@@ -30,9 +29,9 @@ const productosBase = [
 ];
 
 const extrasArrozBase = [
-  { id: 'tajada', nombre: "Tajadas", disponible: true },
-  { id: 'yuca', nombre: "Yuca", disponible: true },
-  { id: 'huevo', nombre: "Huevo Extra", precio: 1000, disponible: true }
+  { id: 'tajada', nombre: "Tajadas", disponible: true, precio: 0 },
+  { id: 'yuca', nombre: "Yuca", disponible: true, precio: 0 },
+  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 }
 ];
 
 const salsasBase = [
@@ -51,19 +50,15 @@ const MONO_TEXTO = "#333333";
 
 export default function App() {
   // ==========================================
-  // ⚙️ ESTADOS DEL ADMINISTRADOR
+  // ⚙️ ESTADOS
   // ==========================================
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
   
-  // Estados independientes para poder apagar cada cosa
   const [productos, setProductos] = useState(productosBase);
   const [extrasArroz, setExtrasArroz] = useState(extrasArrozBase);
   const [salsas, setSalsas] = useState(salsasBase);
 
-  // ==========================================
-  // 🛒 ESTADOS DEL CLIENTE
-  // ==========================================
   const [pedido, setPedido] = useState([]);
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
@@ -78,9 +73,9 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // --- FUNCIÓN DE SEGURIDAD (PIN) ---
+  // --- ACCESO SEGURO ---
   const accesoSecreto = () => {
-    const clave = window.prompt("🔐 Ingresa el PIN de administrador:");
+    const clave = window.prompt("🔐 Ingresa el PIN:");
     if (clave === "mono2026") {
       setIsAdmin(true);
     } else if (clave !== null) {
@@ -88,24 +83,24 @@ export default function App() {
     }
   };
 
-  // --- FUNCIONES DEL ADMINISTRADOR (LOS NUEVOS SWITCHES) ---
+  // --- FUNCIONES ADMIN ---
   const toggleProducto = (id) => setProductos(productos.map(p => p.id === id ? { ...p, disponible: !p.disponible } : p));
   const cambiarPrecioProducto = (id, nuevoPrecio) => setProductos(productos.map(p => p.id === id ? { ...p, precio: parseInt(nuevoPrecio) || 0 } : p));
   
   const toggleSabor = (prodId, saborNombre) => {
-    setProductos(productos.map(p => p.id === prodId ? { ...p, opciones: p.opciones.map(o => o.nombre === saborNombre ? { ...o, disponible: !o.disponible } : o) } : p));
+    setProductos(productos.map(p => p.id === prodId && p.opciones ? { ...p, opciones: p.opciones.map(o => o.nombre === saborNombre ? { ...o, disponible: !o.disponible } : o) } : p));
   };
   
   const toggleTamano = (prodId, tamNombre) => {
-    setProductos(productos.map(p => p.id === prodId ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, disponible: !t.disponible } : t) } : p));
+    setProductos(productos.map(p => p.id === prodId && p.tamanos ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, disponible: !t.disponible } : t) } : p));
   };
 
   const toggleExtraArroz = (id) => setExtrasArroz(extrasArroz.map(e => e.id === id ? { ...e, disponible: !e.disponible } : e));
   const toggleSalsa = (nombre) => setSalsas(salsas.map(s => s.nombre === nombre ? { ...s, disponible: !s.disponible } : s));
 
-  // --- FUNCIONES DEL CLIENTE ---
+  // --- FUNCIONES CLIENTE ---
   const manejarSalsa = (salsaObj) => {
-    if (!tiendaAbierta || !salsaObj.disponible) return;
+    if (!tiendaAbierta || !salsaObj || !salsaObj.disponible) return;
     setSalsasElegidas(prev => prev.includes(salsaObj.nombre) ? prev.filter(s => s !== salsaObj.nombre) : [...prev, salsaObj.nombre]);
   };
 
@@ -113,11 +108,10 @@ export default function App() {
     if (!tiendaAbierta) return alert("El local está cerrado.");
     
     const cant = cantidades[p.id] || 1;
-    let precioBase = p.precio;
+    let precioBase = p.precio || 0;
     let sabor = "";
     let detallesExtra = "";
 
-    // Validaciones estrictas
     if (p.opciones) {
       sabor = sabores[p.id];
       if (!sabor) return alert(`Por favor elige un sabor para: ${p.nombre}`);
@@ -125,16 +119,17 @@ export default function App() {
 
     if (p.esArroz) {
       if (!acompañanteArroz) return alert("Por favor elige Tajadas o Yuca");
-      if (conHuevo) precioBase += extrasArroz.find(e => e.id === 'huevo').precio;
+      const huevoExtra = extrasArroz.find(e => e.id === 'huevo');
+      if (conHuevo && huevoExtra) precioBase += huevoExtra.precio;
       detallesExtra = `(Con ${acompañanteArroz}${conHuevo ? ' + Huevo' : ''})`;
     }
 
-    if (p.esJugo) {
+    if (p.esJugo && p.tamanos) {
       const tamNombre = tamanosJugo[p.id];
       if (!tamNombre) return alert("Por favor elige el tamaño del jugo");
       const tamObj = p.tamanos.find(t => t.nombre === tamNombre);
-      precioBase = tamObj.precio;
-      detallesExtra = `(${tamNombre})`; // Guarda el tamaño en los detalles
+      if (tamObj) precioBase = tamObj.precio;
+      detallesExtra = `(${tamNombre})`;
     }
 
     setPedido([...pedido, {
@@ -147,7 +142,6 @@ export default function App() {
       subtotal: precioBase * cant
     }]);
     
-    // Resetear selecciones después de agregar
     setSabores({...sabores, [p.id]: ""});
     setTamanosJugo({...tamanosJugo, [p.id]: ""});
     setAcompañanteArroz("");
@@ -160,15 +154,14 @@ export default function App() {
     if (pedido.length === 0) return alert("El carrito está vacío");
     if (!nombre || !direccion || !metodoPago) return alert("Faltan datos de envío");
     const listaFritos = pedido.map(i => `- ${i.cantidad}x ${i.nombre} ${i.saborElegido ? '('+i.saborElegido+')' : ''} ${i.detallesArroz || ''}`).join('\n');
-    const mensaje = `¡Hola! Pedido Fritos El Mono (Carepa):\n\n${listaFritos}\n\n🧂 Salsas: ${salsasElegidas.join(', ') || 'Ninguna'}\n\n*Total: $${total.toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
+    const mensaje = `¡Hola! Pedido Fritos El Mono:\n\n${listaFritos}\n\n🧂 Salsas: ${salsasElegidas.join(', ') || 'Ninguna'}\n\n*Total: $${total.toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(mensaje)}`);
   };
 
   // ==========================================
-  // 🟢 VISTA DE ADMINISTRADOR (EL SÚPER PANEL)
+  // 🟢 VISTA ADMINISTRADOR
   // ==========================================
   if (isAdmin) {
-    // Componente mini-switch reutilizable para no repetir código
     const MiniSwitch = ({ activo, onClick }) => (
       <div onClick={onClick} style={{ width: '40px', height: '22px', backgroundColor: activo ? MONO_VERDE : '#ccc', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s' }}>
         <div style={{ width: '16px', height: '16px', background: 'white', borderRadius: '50%', position: 'absolute', top: '3px', left: activo ? '21px' : '3px', transition: '0.3s' }} />
@@ -178,7 +171,6 @@ export default function App() {
     return (
       <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-          
           <button onClick={() => setIsAdmin(false)} style={{ marginBottom: '20px', padding: '10px 15px', borderRadius: '10px', border: 'none', background: MONO_TEXTO, color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
             ← Volver a la Tienda
           </button>
@@ -187,18 +179,16 @@ export default function App() {
             <h1 style={{ color: MONO_NARANJA, margin: '0 0 10px 0' }}>Panel de Control ⚙️</h1>
             <div style={{ padding: '20px', borderRadius: '15px', background: tiendaAbierta ? '#dcfce7' : '#fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <strong style={{ fontSize: '18px' }}>ESTADO: {tiendaAbierta ? '🟢 ABIERTO' : '🔴 CERRADO'}</strong>
-              <button onClick={() => setTiendaAbierta(!tiendaAbierta)} style={{ background: MONO_TEXTO, color: 'white', border: 'none', padding: '12px 20px', borderRadius: '10px', fontWeight: 'bold' }}>
+              <button onClick={() => setTiendaAbierta(!tiendaAbierta)} style={{ background: MONO_TEXTO, color: 'white', border: 'none', padding: '12px 20px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
                 {tiendaAbierta ? 'Cerrar Negocio' : 'Abrir Negocio'}
               </button>
             </div>
           </div>
 
-          {/* CONTROL DE PRODUCTOS, SABORES Y TAMAÑOS */}
           <div style={{ background: 'white', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden', marginBottom: '20px' }}>
             <div style={{ padding: '20px', background: MONO_AMARILLO, borderBottom: '1px solid #eee' }}><h3 style={{ margin: 0 }}>Productos Principales</h3></div>
             {productos.map(p => (
               <div key={p.id} style={{ borderBottom: '2px solid #eee' }}>
-                {/* Switch Principal */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', gap: '10px' }}>
                   <strong style={{ fontSize: '16px', flexGrow: 1 }}>{p.nombre}</strong>
                   <input type="number" value={p.precio || ""} disabled={p.esJugo} onChange={(e) => cambiarPrecioProducto(p.id, e.target.value)} style={{ width: '70px', padding: '5px', borderRadius: '5px', border: '1px solid #ddd', background: p.esJugo ? '#eee' : 'white' }} />
@@ -208,10 +198,9 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Sub-Switches: Sabores */}
                 {p.opciones && (
                   <div style={{ padding: '10px 20px', background: '#fafafa', borderTop: '1px dashed #ddd' }}>
-                    <span style={{ fontSize: '12px', color: '#666', fontWeight: 'bold' }}>SABORES DISPONIBLES:</span>
+                    <span style={{ fontSize: '12px', color: '#666', fontWeight: 'bold' }}>SABORES:</span>
                     {p.opciones.map(opt => (
                       <div key={opt.nombre} style={{ display: 'flex', justifyContent: 'space-between', margin: '8px 0', paddingLeft: '15px' }}>
                         <span style={{ fontSize: '14px', color: opt.disponible ? '#333' : '#aaa' }}>- {opt.nombre}</span>
@@ -221,10 +210,9 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Sub-Switches: Tamaños (Jugos) */}
                 {p.tamanos && (
                   <div style={{ padding: '10px 20px', background: '#fafafa', borderTop: '1px dashed #ddd' }}>
-                    <span style={{ fontSize: '12px', color: '#666', fontWeight: 'bold' }}>TAMAÑOS DISPONIBLES:</span>
+                    <span style={{ fontSize: '12px', color: '#666', fontWeight: 'bold' }}>TAMAÑOS:</span>
                     {p.tamanos.map(tam => (
                       <div key={tam.nombre} style={{ display: 'flex', justifyContent: 'space-between', margin: '8px 0', paddingLeft: '15px' }}>
                         <span style={{ fontSize: '14px', color: tam.disponible ? '#333' : '#aaa' }}>- {tam.nombre} (${tam.precio})</span>
@@ -237,7 +225,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* CONTROL DE ARROZ Y SALSAS */}
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 300px', background: 'white', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden', paddingBottom: '10px' }}>
               <div style={{ padding: '15px 20px', background: MONO_AMARILLO, borderBottom: '1px solid #eee' }}><h3 style={{ margin: 0 }}>Extras del Arroz</h3></div>
@@ -266,13 +253,11 @@ export default function App() {
   }
 
   // ==========================================
-  // 🔵 VISTA DEL CLIENTE (LA VITRINA)
+  // 🔵 VISTA CLIENTE
   // ==========================================
-  
-  // Variables de ayuda para el arroz
-  const tajadaObj = extrasArroz.find(e => e.id === 'tajada');
-  const yucaObj = extrasArroz.find(e => e.id === 'yuca');
-  const huevoObj = extrasArroz.find(e => e.id === 'huevo');
+  const tajadaObj = extrasArroz.find(e => e.id === 'tajada') || { disponible: false, precio: 0 };
+  const yucaObj = extrasArroz.find(e => e.id === 'yuca') || { disponible: false, precio: 0 };
+  const huevoObj = extrasArroz.find(e => e.id === 'huevo') || { disponible: false, precio: 1000 };
 
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '60px' }}>
@@ -280,8 +265,7 @@ export default function App() {
       <header style={{ textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
         <img src="/logo-fritos-el-mono.jpg" alt="Banner Fritos El Mono" style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }} />
         <div style={{ padding: '25px', background: 'rgba(255, 255, 255, 0.95)', borderTop: `5px solid ${MONO_NARANJA}` }}>
-          {/* TOQUE SECRETO (Doble clic) */}
-          <h1 onDoubleClick={accesoSecreto} style={{ color: MONO_NARANJA, margin: 0, fontSize: '36px', fontWeight: '900', userSelect: 'none' }}>
+          <h1 onDoubleClick={accesoSecreto} style={{ color: MONO_NARANJA, margin: 0, fontSize: '36px', fontWeight: '900', userSelect: 'none', cursor: 'pointer' }}>
             Fritos El Mono 🐒
           </h1>
           <p style={{ marginTop: '5px', fontSize: '18px', fontWeight: '600' }}>Hoy Arroz de <span style={{color: MONO_NARANJA}}>{tipoArrozHoy}</span></p>
@@ -299,10 +283,17 @@ export default function App() {
           const todoAgotado = !p.disponible;
           const isHovered = hoveredCardId === p.id;
           
-          // Buscar precios dinámicos para los jugos
-          const precioMostrar = p.esJugo && tamanosJugo[p.id] 
-            ? p.tamanos.find(t => t.nombre === tamanosJugo[p.id])?.precio || p.tamanos[0].precio 
-            : p.precio;
+          // Lógica súper segura para calcular el precio
+          let precioMostrar = p.precio || 0;
+          if (p.esJugo && p.tamanos) {
+            const tamSeleccionado = tamanosJugo[p.id];
+            if (tamSeleccionado) {
+              const tamObj = p.tamanos.find(t => t.nombre === tamSeleccionado);
+              precioMostrar = tamObj ? tamObj.precio : p.tamanos[0].precio;
+            } else {
+              precioMostrar = p.tamanos[0].precio;
+            }
+          }
 
           return (
             <div key={p.id} onMouseEnter={() => setHoveredCardId(p.id)} onMouseLeave={() => setHoveredCardId(null)} style={{ background: 'white', borderRadius: '28px', padding: '0', boxShadow: isHovered && tiendaAbierta ? '0 20px 40px rgba(0,0,0,0.12)' : '0 10px 20px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease', transform: isHovered && tiendaAbierta ? 'translateY(-8px)' : 'translateY(0)', border: isHovered && tiendaAbierta ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`, display: 'flex', flexDirection: 'column' }}>
@@ -312,13 +303,12 @@ export default function App() {
               <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                 <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800' }}>{p.nombre}</h3>
                 <p style={{ color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: `2px dashed ${MONO_AMARILLO}` }}>
-                  ${precioMostrar?.toLocaleString('es-CO')}
+                  ${precioMostrar.toLocaleString('es-CO')}
                 </p>
                 
                 {!todoAgotado && tiendaAbierta && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     
-                    {/* SELECT DE ARROZ */}
                     {p.esArroz && (
                       <div style={{ background: MONO_AMARILLO, padding: '15px', borderRadius: '18px', border: `1px solid rgba(249, 115, 22, 0.2)` }}>
                         <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width: '100%', padding: '12px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px' }}>
@@ -337,7 +327,6 @@ export default function App() {
                       </div>
                     )}
 
-                    {/* SELECT DE SABORES (Empanadas, Papas, Jugos) */}
                     {p.opciones && (
                       <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} value={sabores[p.id] || ""} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px' }}>
                         <option value="">-- Elige el Sabor --</option>
@@ -349,7 +338,6 @@ export default function App() {
                       </select>
                     )}
 
-                    {/* SELECT DE TAMAÑOS (Solo Jugos) */}
                     {p.tamanos && (
                       <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} value={tamanosJugo[p.id] || ""} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `2px solid ${MONO_NARANJA}`, fontSize: '16px', fontWeight: 'bold' }}>
                         <option value="">-- Elije Tamaño --</option>
@@ -365,7 +353,7 @@ export default function App() {
                       <label style={{fontSize: '16px', fontWeight: 'bold'}}>Cantidad:</label>
                       <input type="number" min="1" value={cantidades[p.id] || 1} onChange={(e) => setCantidades({...cantidades, [p.id]: parseInt(e.target.value) || 1})} style={{ width: '70px', padding: '10px', borderRadius: '10px', border: `1px solid #ddd`, textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }} />
                     </div>
-                    <button onClick={() => agregarAlCarrito(p)} style={{ background: MONO_NARANJA, color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(249, 115, 22, 0.2)' }}>
+                    <button onClick={() => agregarAlCarrito(p)} style={{ background: MONO_NARANJA, color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}>
                       Añadir al Pedido 🥟
                     </button>
                   </div>
