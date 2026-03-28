@@ -29,9 +29,8 @@ const productosBase = [
 ];
 
 const extrasArrozBase = [
-  { id: 'tajada', nombre: "Tajadas", disponible: true },
-  { id: 'yuca', nombre: "Yuca", disponible: true },
-  // Al huevo le dejamos su propiedad de precio para que sea editable
+  { id: 'tajada', nombre: "Tajadas", disponible: true, precio: 0 },
+  { id: 'yuca', nombre: "Yuca", disponible: true, precio: 0 },
   { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 }
 ];
 
@@ -98,14 +97,12 @@ export default function App() {
     setProductos(productos.map(p => p.id === prodId && p.tamanos ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, disponible: !t.disponible } : t) } : p));
   };
 
-  // ✅ NUEVA: Cambiar precio de un tamaño específico de jugo
   const cambiarPrecioTamano = (prodId, tamNombre, nuevoPrecio) => {
     setProductos(productos.map(p => p.id === prodId && p.tamanos ? { ...p, tamanos: p.tamanos.map(t => t.nombre === tamNombre ? { ...t, precio: parseInt(nuevoPrecio) || 0 } : t) } : p));
   };
 
   const toggleExtraArroz = (id) => setExtrasArroz(extrasArroz.map(e => e.id === id ? { ...e, disponible: !e.disponible } : e));
   
-  // ✅ NUEVA: Cambiar el precio del Huevo Extra
   const cambiarPrecioExtraArroz = (id, nuevoPrecio) => {
     setExtrasArroz(extrasArroz.map(e => e.id === id ? { ...e, precio: parseInt(nuevoPrecio) || 0 } : e));
   };
@@ -116,6 +113,18 @@ export default function App() {
   const manejarSalsa = (salsaObj) => {
     if (!tiendaAbierta || !salsaObj || !salsaObj.disponible) return;
     setSalsasElegidas(prev => prev.includes(salsaObj.nombre) ? prev.filter(s => s !== salsaObj.nombre) : [...prev, salsaObj.nombre]);
+  };
+
+  // ✅ NUEVAS FUNCIONES PARA LOS BOTONES + Y -
+  const sumarCantidad = (id) => {
+    setCantidades({ ...cantidades, [id]: (cantidades[id] || 1) + 1 });
+  };
+
+  const restarCantidad = (id) => {
+    const actual = cantidades[id] || 1;
+    if (actual > 1) {
+      setCantidades({ ...cantidades, [id]: actual - 1 });
+    }
   };
 
   const agregarAlCarrito = (p) => {
@@ -156,10 +165,12 @@ export default function App() {
       subtotal: precioBase * cant
     }]);
     
+    // Limpiar el formulario de esa tarjeta
     setSabores({...sabores, [p.id]: ""});
     setTamanosJugo({...tamanosJugo, [p.id]: ""});
     setAcompañanteArroz("");
     setConHuevo(false);
+    setCantidades({...cantidades, [p.id]: 1}); // ✅ Volver la cantidad a 1
   };
 
   const total = pedido.reduce((acc, item) => acc + item.subtotal, 0);
@@ -205,7 +216,6 @@ export default function App() {
               <div key={p.id} style={{ borderBottom: '2px solid #eee' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', gap: '10px' }}>
                   <strong style={{ fontSize: '16px', flexGrow: 1 }}>{p.nombre}</strong>
-                  {/* El input principal se bloquea si es jugo, porque los jugos se cobran por tamaño */}
                   <input type="number" value={p.precio || ""} disabled={p.esJugo} onChange={(e) => cambiarPrecioProducto(p.id, e.target.value)} style={{ width: '70px', padding: '5px', borderRadius: '5px', border: '1px solid #ddd', background: p.esJugo ? '#eee' : 'white' }} />
                   <div style={{display: 'flex', gap: '5px', alignItems: 'center'}}>
                     <span style={{ fontSize: '12px', fontWeight: 'bold', color: p.disponible ? MONO_VERDE : 'red' }}>{p.disponible ? 'HAY' : 'AGOTADO'}</span>
@@ -225,7 +235,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* ✅ AQUÍ ESTÁ LA ACTUALIZACIÓN: INPUT PARA LOS TAMAÑOS DE JUGOS */}
                 {p.tamanos && (
                   <div style={{ padding: '10px 20px', background: '#fafafa', borderTop: '1px dashed #ddd' }}>
                     <span style={{ fontSize: '12px', color: '#666', fontWeight: 'bold' }}>TAMAÑOS Y PRECIOS:</span>
@@ -256,7 +265,6 @@ export default function App() {
                 <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', borderBottom: '1px solid #eee' }}>
                   <span>{e.nombre}</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                    {/* ✅ INPUT PARA EL HUEVO EXTRA */}
                     {e.precio !== undefined && (
                       <input 
                         type="number" 
@@ -383,10 +391,16 @@ export default function App() {
                       </select>
                     )}
 
-                    <div style={{display: 'flex', alignItems: 'center', gap: '15px', background: '#fcfcfc', padding: '12px', borderRadius: '15px', border: '1px solid #eee'}}>
-                      <label style={{fontSize: '16px', fontWeight: 'bold'}}>Cantidad:</label>
-                      <input type="number" min="1" value={cantidades[p.id] || 1} onChange={(e) => setCantidades({...cantidades, [p.id]: parseInt(e.target.value) || 1})} style={{ width: '70px', padding: '10px', borderRadius: '10px', border: `1px solid #ddd`, textAlign: 'center', fontSize: '18px', fontWeight: 'bold' }} />
+                    {/* ✅ AQUÍ ESTÁN LOS NUEVOS BOTONES DE CANTIDAD */}
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fcfcfc', padding: '12px', borderRadius: '15px', border: '1px solid #eee'}}>
+                      <label style={{fontSize: '16px', fontWeight: 'bold', color: '#555'}}>Cantidad:</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <button onClick={() => restarCantidad(p.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', border: 'none', background: MONO_AMARILLO, color: MONO_NARANJA, fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
+                        <span style={{ fontSize: '20px', fontWeight: '900', width: '25px', textAlign: 'center' }}>{cantidades[p.id] || 1}</span>
+                        <button onClick={() => sumarCantidad(p.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', border: 'none', background: MONO_NARANJA, color: 'white', fontSize: '22px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                      </div>
                     </div>
+
                     <button onClick={() => agregarAlCarrito(p)} style={{ background: MONO_NARANJA, color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(249, 115, 22, 0.2)' }}>
                       Añadir al Pedido 🥟
                     </button>
