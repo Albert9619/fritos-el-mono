@@ -20,6 +20,18 @@ const PRODUCTOS_ANTERIORES = [
 ];
 
 export default function App() {
+  {productos.map(p => (
+  <ProductCard 
+    key={p.id} 
+    p={p} 
+    tiendaAbierta={tiendaAbierta}
+    cantidades={cantidades} // <-- Faltaba este
+    setCantidades={setCantidades} // <-- Faltaba este
+    sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})}
+    restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})}
+    agregarAlCarrito={() => toast.success(`${p.nombre} al carrito`)}
+  />
+))}
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
   const [productos, setProductos] = useState([]);
