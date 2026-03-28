@@ -13,18 +13,34 @@ export default function ProductCard({
   const isHovered = hoveredCardId === p?.id;
   
   // 🥤 Lógica corregida para el precio de los jugos
-  let precioMostrar = p?.precio || 0;
-  
-  if (p?.esJugo && p?.tamanos && p.tamanos.length > 0) {
-    const tamSeleccionado = tamanosJugo[p.id];
-    if (tamSeleccionado) {
-      const tamObj = p.tamanos.find(t => t.nombre === tamSeleccionado);
-      precioMostrar = tamObj ? tamObj.precio : p.tamanos[0].precio;
-    } else {
-      // Si no hay nada seleccionado, mostramos el precio del primero (ej. Pequeño)
-      precioMostrar = p.tamanos[0].precio || 0;
-    }
+ // --- Dentro de ProductCard.jsx ---
+
+let precioMostrar = p?.precio || 0;
+
+if (p?.esJugo && p?.tamanos) {
+  const tamSeleccionado = tamanosJugo[p.id];
+  if (tamSeleccionado) {
+    // Si eligió tamaño (ej. Grande), buscamos su precio en la lista de tamaños
+    const tamObj = p.tamanos.find(t => t.nombre === tamSeleccionado);
+    precioMostrar = tamObj ? tamObj.precio : 0;
+  } else {
+    // Si NO ha elegido tamaño, podemos mostrar el precio del más pequeño por defecto
+    // o dejarlo en el precio base (que es 0)
+    precioMostrar = p.tamanos[0]?.precio || 0; 
   }
+}
+
+// Ahora el render del precio (donde dice $0) debe ser así:
+<p style={{ 
+  color: MONO_NARANJA, 
+  fontWeight: '900', 
+  fontSize: '26px', 
+  margin: '0 0 20px 0', 
+  paddingBottom: '10px', 
+  borderBottom: `2px dashed ${MONO_AMARILLO}` 
+}}>
+  {precioMostrar > 0 ? `$${precioMostrar.toLocaleString('es-CO')}` : "Selecciona tamaño"}
+</p>
 
   return (
     <div 
