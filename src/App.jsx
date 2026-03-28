@@ -7,16 +7,31 @@ import AdminPanel from './components/AdminPanel';
 import { db } from './firebase'; 
 import { collection, onSnapshot, doc, addDoc, updateDoc } from 'firebase/firestore'; 
 
-// 1. 📋 TU LISTA ORIGINAL (Fuera de la función, esto está perfecto)
+
+// 1. 📋 LISTA BLINDADA (Con la estructura que pide ProductCard)
 const PRODUCTOS_ANTERIORES = [
-  { nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.jpg", disponible: true, categoria: "Fritos" },
-  { nombre: "Papa Rellena de la Casa", precio: 2500, imagen: "/papa-rellena.jpg", disponible: true, categoria: "Fritos" },
-  { nombre: "Pastel de Pollo Hojaldrado", precio: 2500, imagen: "/pastel-pollo.jpg", disponible: true, categoria: "Fritos" },
-  { nombre: "Arepa con Huevo y Carne", precio: 3500, imagen: "/arepa-huevo.jpg", disponible: true, categoria: "Fritos" },
-  { nombre: "Palitos de Queso Costeño", precio: 2000, imagen: "/palito-queso.jpg", disponible: true, categoria: "Fritos" },
-  { nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.jpg", disponible: true, categoria: "Fritos" },
-  { nombre: "Arroz Especial del Día", precio: 6000, disponible: true, categoria: "Arroz", esArroz: true },
-  { nombre: "Jugo Natural Helado", precio: 2000, imagen: "/jugo-natural.jpg", disponible: true, categoria: "Bebidas", esJugo: true }
+  { 
+    nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.jpg", disponible: true, categoria: "Fritos",
+    opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] 
+  },
+  { 
+    nombre: "Papa Rellena de la Casa", precio: 2500, imagen: "/papa-rellena.jpg", disponible: true, categoria: "Fritos",
+    opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] 
+  },
+  { nombre: "Pastel de Pollo Hojaldrado", precio: 2500, imagen: "/pastel-pollo.jpg", disponible: true, categoria: "Fritos", opciones: [] },
+  { nombre: "Arepa con Huevo y Carne", precio: 3500, imagen: "/arepa-huevo.jpg", disponible: true, categoria: "Fritos", opciones: [] },
+  { nombre: "Palitos de Queso Costeño", precio: 2000, imagen: "/palito-queso.jpg", disponible: true, categoria: "Fritos", opciones: [] },
+  { nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.jpg", disponible: true, categoria: "Fritos", opciones: [] },
+  { nombre: "Arroz Especial del Día", precio: 6000, disponible: true, categoria: "Arroz", esArroz: true, opciones: [] },
+  { 
+    nombre: "Jugo Natural Helado", precio: 2000, imagen: "/jugo-natural.jpg", disponible: true, categoria: "Bebidas", esJugo: true,
+    opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }],
+    tamanos: [
+      { nombre: "Pequeño", precio: 1000, disponible: true },
+      { nombre: "Mediano", precio: 1500, disponible: true },
+      { nombre: "Grande", precio: 2000, disponible: true }
+    ]
+  }
 ];
 
 export default function App() {
