@@ -27,7 +27,8 @@ const productosBase = [
 const extrasArrozBase = [
   { id: 'tajada', nombre: "Tajadas", disponible: true, precio: 0 },
   { id: 'yuca', nombre: "Yuca", disponible: true, precio: 0 },
-  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 }
+  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 },
+  { id: 'queso', nombre: "Queso Extra", disponible: true, precio: 1000 }
 ];
 
 const salsasBase = [
@@ -49,6 +50,7 @@ export default function App() {
   const [tamanosJugo, setTamanosJugo] = useState({});
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
   const [conHuevo, setConHuevo] = useState(false);
+  const [conQueso, setConQueso] = useState(false);
   const [salsasElegidas, setSalsasElegidas] = useState([]);
   const [hoveredCardId, setHoveredCardId] = useState(null);
   const [categoriaActiva, setCategoriaActiva] = useState("fritos");
@@ -65,6 +67,22 @@ export default function App() {
       const tam = p.tamanos.find(t => t.nombre === (tamanosJugo[p.id] || "Pequeño"));
       precioFinal = tam.precio;
     }
+    if (p.esArroz) {
+    if (!acompañanteArroz) return toast.error("Elige Tajada o Yuca");
+    if (conHuevo) precioFinal += 1000;
+    if (conQueso) precioFinal += 1000; // <--- NUEVO: Suma el queso
+  }
+
+  setPedido([...pedido, { 
+    idUnico: Date.now(), 
+    nombre: p.nombre, 
+    precioUnitario: precioFinal, 
+    detallesArroz: p.esArroz ? `(${acompañanteArroz}${conHuevo ? ' + Huevo' : ''}${conQueso ? ' + Queso' : ''})` : "", 
+    cantidad: cant, 
+    subtotal: precioFinal * cant 
+  }]);
+  toast.success("🥟 ¡Añadido!");
+};
 
     setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioFinal, cantidad: cant, subtotal: precioFinal * cant }]);
     toast.success("Añadido");
