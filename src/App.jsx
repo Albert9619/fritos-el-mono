@@ -12,25 +12,18 @@ const MONO_CREMA = "#fffbeb";
 const MONO_TEXTO = "#333333";
 
 const productosBase = [
-  // 🥟 FRITOS
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.png", disponible: true, categoria: "fritos", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: 2, nombre: "Papa Rellena", precio: 2500, imagen: "/papa-rellena.png", disponible: true, categoria: "fritos", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
   { id: 3, nombre: "Pastel de Pollo", precio: 2500, imagen: "/pastel-pollo.png", disponible: true, categoria: "fritos" },
   { id: 4, nombre: "Arepa con Huevo y Carne", precio: 3500, imagen: "/arepa-huevo.png", disponible: true, categoria: "fritos" },
   { id: 7, nombre: "Palitos de Queso", precio: 2000, imagen: "/palito-queso.png", disponible: true, categoria: "fritos" },
   { id: 8, nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.png", disponible: true, categoria: "fritos" },
-  
-  // 🥤 BEBIDAS
   { id: 10, nombre: "Agua Cielo 620 mL", precio: 2000, imagen: "/agua.png", disponible: true, categoria: "bebidas" },
   { id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, imagen: "/jugo-natural.png", disponible: true, categoria: "bebidas", opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: 11, nombre: "Coca-Cola", esJugo: true, precio: 0, imagen: "/cocacola.png", disponible: true, categoria: "bebidas", tamanos: [{ nombre: "Mini 250 mL", precio: 2000, disponible: true }, { nombre: "Personal 400 mL", precio: 3500, disponible: true }, { nombre: "Mediana 1.5 L", precio: 6500, disponible: true }] },
   { id: 14, nombre: "Pony Malta", esJugo: true, precio: 0, imagen: "/malta.png", disponible: true, categoria: "bebidas", tamanos: [{ nombre: "Mini 250 mL", precio: 2000, disponible: true }, { nombre: "Personal 400 mL", precio: 3500, disponible: true }] },
-
-  // 🍳 DESAYUNOS
   { id: 12, nombre: "Desayuno Tradicional", precio: 8000, esDesayuno: true, tipo: "tradicional", imagen: "/desayuno-huevo.png", disponible: true, categoria: "desayunos" },
   { id: 13, nombre: "Desayuno Especial", precio: 10000, esDesayuno: true, tipo: "especial", imagen: "/desayuno-carne.png", disponible: true, categoria: "desayunos" },
-
-  // 🍛 ARROCES
   { id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true, imagen: "/arroz-pollo.png", disponible: true, categoria: "arroces" }
 ];
 
@@ -71,6 +64,23 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
+  // --- 🔌 FUNCIONES DEL ADMINISTRADOR (LAS QUE FALTABAN) ---
+  const toggleProducto = (id) => {
+    setProductos(prev => prev.map(p => p.id === id ? { ...p, disponible: !p.disponible } : p));
+  };
+
+  const cambiarPrecioProducto = (id, nuevoPrecio) => {
+    setProductos(prev => prev.map(p => p.id === id ? { ...p, precio: parseInt(nuevoPrecio) || 0 } : p));
+  };
+
+  const toggleSalsa = (nombreSalsa) => {
+    setSalsas(prev => prev.map(s => s.nombre === nombreSalsa ? { ...s, disponible: !s.disponible } : s));
+  };
+
+  const toggleExtraArroz = (id) => {
+    setExtrasArroz(prev => prev.map(e => e.id === id ? { ...e, disponible: !e.disponible } : e));
+  };
+
   const agregarAlCarrito = (p) => {
     if (!tiendaAbierta) return toast.error("Cerrado");
     const cant = cantidades[p.id] || 1;
@@ -78,8 +88,9 @@ export default function App() {
     let det = "";
 
     if (p.tamanos) {
-      const tam = p.tamanos.find(t => t.nombre === (tamanosJugo[p.id] || p.tamanos[0].nombre));
-      precioFinal = tam.precio;
+      const tamElegido = tamanosJugo[p.id] || p.tamanos[0].nombre;
+      const tamObj = p.tamanos.find(t => t.nombre === tamElegido);
+      precioFinal = tamObj ? tamObj.precio : 0;
     }
     if (p.esDesayuno) {
       const opt = opcionesDesayuno[p.id] || {};
@@ -97,7 +108,23 @@ export default function App() {
     toast.success("🛒 ¡Añadido!");
   };
 
-  if (isAdmin) return <AdminPanel setIsAdmin={setIsAdmin} tiendaAbierta={tiendaAbierta} setTiendaAbierta={setTiendaAbierta} productos={productos} setProductos={setProductos} salsas={salsas} extrasArroz={extrasArroz} />;
+  // --- 🖥️ RENDER DEL PANEL DE ADMIN ---
+  if (isAdmin) {
+    return (
+      <AdminPanel 
+        setIsAdmin={setIsAdmin} 
+        tiendaAbierta={tiendaAbierta} 
+        setTiendaAbierta={setTiendaAbierta} 
+        productos={productos} 
+        toggleProducto={toggleProducto} 
+        cambiarPrecioProducto={cambiarPrecioProducto}
+        salsas={salsas} 
+        toggleSalsa={toggleSalsa}
+        extrasArroz={extrasArroz}
+        toggleExtraArroz={toggleExtraArroz}
+      />
+    );
+  }
 
   return (
     <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '100px' }}>
@@ -115,7 +142,7 @@ export default function App() {
           ))}
         </div>
         <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `1px solid ${MONO_AMARILLO}` }}>
-          <h3 style={{ textAlign: 'center', color: MONO_NARANJA, fontWeight: '900' }}>🧂 Salsas</h3>
+          <h3 style={{ textAlign: 'center', color: MONO_NARANJA, fontWeight: '900' }}>🧂 ¿Qué salsas deseas?</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
             {salsas.map(s => (
               <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '50px', border: 'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : MONO_AMARILLO, color: salsasElegidas.includes(s.nombre) ? 'white' : MONO_TEXTO, fontWeight: 'bold', cursor: 'pointer' }}>
