@@ -8,7 +8,6 @@ export default function ProductCard({
 }) {
   const MONO_NARANJA = "#f97316";
   const MONO_AMARILLO = "#fef3c7";
-
   const todoAgotado = !p?.disponible;
   
   let precioMostrar = p?.precio || 0;
@@ -19,12 +18,7 @@ export default function ProductCard({
   }
 
   return (
-    <div style={{ 
-      background: 'white', borderRadius: '28px', overflow: 'hidden', transition: 'all 0.3s ease', 
-      minHeight: '580px', display: 'flex', flexDirection: 'column', border: `2px solid #f0f0f0`,
-      boxShadow: '0 8px 15px rgba(0,0,0,0.03)'
-    }}>
-      {/* 📸 FOTO UNIFICADA: objectFit 'cover' evita que se estire */}
+    <div style={{ background: 'white', borderRadius: '28px', overflow: 'hidden', minHeight: '580px', display: 'flex', flexDirection: 'column', border: `2px solid #f0f0f0` }}>
       <div style={{ width: '100%', height: '200px', backgroundColor: '#f9f9f9', overflow: 'hidden' }}>
         <img src={p?.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none' }} alt={p?.nombre} />
       </div>
@@ -45,12 +39,11 @@ export default function ProductCard({
                 <option value="Patacón">Patacón 🍌</option><option value="Arepa">Arepa 🫓</option>
               </select>
               <select onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), [p.tipo === 'tradicional' ? 'huevo' : 'proteina']: e.target.value}})} style={{ width: '100%', padding: '8px', borderRadius: '10px' }}>
-                <option value="">{p.tipo === 'tradicional' ? '¿Huevo Revuelto o Perico?' : '¿Carne o Pollo?'}</option>
+                <option value="">{p.tipo === 'tradicional' ? '¿Huevos?' : '¿Carne o Pollo?'}</option>
                 {p.tipo === 'tradicional' ? <><option value="Revueltos">Revueltos</option><option value="Pericos">Pericos</option></> : <><option value="Carne Desmechada">Carne</option><option value="Pollo Desmechado">Pollo</option></>}
               </select>
-              <select onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), jugo: e.target.value}})} style={{ width: '100%', padding: '8px', borderRadius: '10px', border: `2px solid ${MONO_NARANJA}` }}>
-                <option value="">Sabor de Jugo</option>
-                <option value="Avena">Avena 🥛</option><option value="Maracuyá">Maracuyá 🍋</option>
+              <select onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), jugo: e.target.value}})} style={{ width: '100%', padding: '8px', borderRadius: '10px' }}>
+                <option value="">Jugo</option><option value="Avena">Avena</option><option value="Maracuyá">Maracuyá</option>
               </select>
             </div>
           )}
@@ -58,7 +51,7 @@ export default function ProductCard({
           {p?.esArroz && (
             <div style={{ background: MONO_AMARILLO, padding: '12px', borderRadius: '15px' }}>
               <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width: '100%', padding: '10px', borderRadius: '10px' }}>
-                <option value="">¿Tajada o Yuca?</option>
+                <option value="">Acompañante</option>
                 <option value="Tajadas">Tajadas</option><option value="Yuca">Yuca</option>
               </select>
               <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
@@ -69,10 +62,10 @@ export default function ProductCard({
           )}
 
           {p?.opciones && (
-            <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '10px' }}><option value="">-- Selecciona Sabor --</option>{p.opciones.map(opt => ( <option key={opt.nombre} value={opt.nombre} disabled={!opt.disponible}>{opt.nombre}</option> ))}</select>
+            <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '10px' }}><option value="">-- Sabor --</option>{p.opciones.map(opt => ( <option key={opt.nombre} value={opt.nombre} disabled={!opt.disponible}>{opt.nombre}</option> ))}</select>
           )}
           {p?.tamanos && (
-            <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '10px', border: `2px solid ${MONO_NARANJA}`, fontWeight: 'bold' }}><option value="">-- Presentación --</option>{p.tamanos.map(tam => ( <option key={tam.nombre} value={tam.nombre} disabled={!tam.disponible}>{tam.nombre} - ${tam.precio}</option> ))}</select>
+            <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '10px' }}><option value="">-- Presentación --</option>{p.tamanos.map(tam => ( <option key={tam.nombre} value={tam.nombre} disabled={!tam.disponible}>{tam.nombre} - ${tam.precio}</option> ))}</select>
           )}
         </div>
 
@@ -85,7 +78,7 @@ export default function ProductCard({
               <button onClick={() => sumarCantidad(p?.id)} style={{ width: '30px', height: '30px', borderRadius: '50%', background: MONO_NARANJA, color: 'white', border: 'none' }}>+</button>
             </div>
           </div>
-          <button onClick={() => agregarAlCarrito(p)} disabled={!tiendaAbierta || todoAgotado} style={{ width: '100%', background: todoAgotado ? '#ccc' : MONO_NARANJA, color: 'white', border: 'none', padding: '15px', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer' }}>{todoAgotado ? "Agotado" : "Añadir al Pedido 🥟"}</button>
+          <button onClick={() => agregarAlCarrito(p)} disabled={!tiendaAbierta || todoAgotado} style={{ width: '100%', background: MONO_NARANJA, color: 'white', border: 'none', padding: '15px', borderRadius: '15px', fontWeight: 'bold' }}>Añadir</button>
         </div>
       </div>
     </div>
