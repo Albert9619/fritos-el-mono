@@ -19,7 +19,9 @@ const productosBase = [
   { id: 7, nombre: "Palitos de Queso Costeño", precio: 2000, imagen: "/palito-queso.png", disponible: true, categoria: "fritos" },
   { id: 8, nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.png", disponible: true, categoria: "fritos" },
   { id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true, imagen: "/arroz-pollo.png", disponible: true, categoria: "arroces" },
-  { id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, imagen: "/jugo-natural.png", disponible: true, categoria: "bebidas", opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] }
+  { id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, imagen: "/jugo-natural.png", disponible: true, categoria: "bebidas", opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
+  { id: 10, nombre: "Gaseosa 350ml", precio: 2500, imagen: "/gaseosa.png", disponible: true, categoria: "bebidas" },
+  { id: 11, nombre: "Agua Mineral", precio: 2000, imagen: "/agua.png", disponible: true, categoria: "bebidas" }
 ];
 
 const extrasArrozBase = [
@@ -29,11 +31,7 @@ const extrasArrozBase = [
 ];
 
 const salsasBase = [
-  { nombre: "Pique", disponible: true, imagen: "/pique.png" },
-  { nombre: "Salsa Roja", disponible: true, imagen: "/salsa-roja.png" },
-  { nombre: "Salsa Rosada", disponible: true, imagen: "/salsa-rosada.png" },
-  { nombre: "Suero", disponible: true, imagen: "/suero.png" },
-  { nombre: "Suero Picante", disponible: true, imagen: "/suero-picante.png" }
+  { nombre: "🔥 Pique", disponible: true }, { nombre: "🍅 Salsa Roja", disponible: true }, { nombre: "🍥 Salsa Rosada", disponible: true }, { nombre: "🥛 Suero", disponible: true }, { nombre: "🌶️ Suero Picante", disponible: true }
 ];
 
 export default function App() {
@@ -64,17 +62,12 @@ export default function App() {
     let precioFinal = p.precio || 0;
     
     if (p.esJugo) {
-      const tamElegido = tamanosJugo[p.id] || "Pequeño";
-      const tamObj = p.tamanos.find(t => t.nombre === tamElegido);
-      precioFinal = tamObj ? tamObj.precio : 0;
-    }
-    if (p.esArroz) {
-      if (!acompañanteArroz) return toast.error("Elige Tajada o Yuca");
-      if (conHuevo) precioFinal += 1000;
+      const tam = p.tamanos.find(t => t.nombre === (tamanosJugo[p.id] || "Pequeño"));
+      precioFinal = tam.precio;
     }
 
-    setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioFinal, saborElegido: sabores[p.id] || "", detallesArroz: p.esArroz ? `(${acompañanteArroz})` : "", cantidad: cant, subtotal: precioFinal * cant }]);
-    toast.success("🥟 ¡Añadido!");
+    setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioFinal, cantidad: cant, subtotal: precioFinal * cant }]);
+    toast.success("Añadido");
   };
 
   if (isAdmin) return <AdminPanel setIsAdmin={setIsAdmin} tiendaAbierta={tiendaAbierta} setTiendaAbierta={setTiendaAbierta} productos={productos} setProductos={setProductos} salsas={salsas} extrasArroz={extrasArroz} />;
@@ -86,6 +79,7 @@ export default function App() {
       
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
         
+        {/* PESTAÑAS */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', flexWrap: 'wrap' }}>
           {["fritos", "bebidas", "arroces"].map(cat => (
             <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '10px 20px', borderRadius: '50px', border: `2px solid ${MONO_NARANJA}`, background: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_NARANJA, fontWeight: 'bold', cursor: 'pointer', textTransform: 'capitalize' }}>
@@ -94,6 +88,7 @@ export default function App() {
           ))}
         </div>
 
+        {/* GRILLA FILTRADA */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
           {productos.filter(p => p.categoria === categoriaActiva).map(p => (
             <ProductCard 
@@ -110,13 +105,12 @@ export default function App() {
           ))}
         </div>
 
-        <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `1px solid ${MONO_AMARILLO}`, boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ textAlign: 'center', color: MONO_NARANJA, fontWeight: '900', fontSize: '28px', marginBottom: '25px' }}>🧂 ¿Qué salsas deseas?</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'center' }}>
+        {/* SALSAS */}
+        <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `1px solid ${MONO_AMARILLO}` }}>
+          <h3 style={{ textAlign: 'center', color: MONO_NARANJA }}>🧂 Salsas</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
             {salsas.map(s => (
-              <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} disabled={!s.disponible} 
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 20px', borderRadius: '50px', border: 'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'), color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#bbb'), fontWeight: 'bold', cursor: s.disponible ? 'pointer' : 'not-allowed' }}>
-                <img src={s.imagen} alt={s.nombre} style={{ width: '25px', height: '25px', borderRadius: '50%', objectFit: 'cover' }} />
+              <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} style={{ padding: '10px 20px', borderRadius: '50px', border: 'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : MONO_AMARILLO, color: salsasElegidas.includes(s.nombre) ? 'white' : MONO_TEXTO, fontWeight: 'bold', cursor: 'pointer' }}>
                 {s.nombre}
               </button>
             ))}
