@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 
 import Header from './components/Header';
@@ -11,6 +11,7 @@ const MONO_AMARILLO = "#fef3c7";
 const MONO_CREMA = "#fffbeb";
 const MONO_TEXTO = "#333333";
 
+// --- DATOS INICIALES ---
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.png", disponible: true, categoria: "fritos", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: 2, nombre: "Papa Rellena", precio: 2500, imagen: "/papa-rellena.png", disponible: true, categoria: "fritos", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
@@ -27,11 +28,6 @@ const productosBase = [
   { id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true, imagen: "/arroz-pollo.png", disponible: true, categoria: "arroces" }
 ];
 
-const extrasArrozBase = [
-  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 },
-  { id: 'queso', nombre: "Queso Extra", disponible: true, precio: 1000 }
-];
-
 const salsasBase = [
   { nombre: "Pique", disponible: true, imagen: "/pique.png" },
   { nombre: "Salsa Roja", disponible: true, imagen: "/salsa-roja.png" },
@@ -40,12 +36,33 @@ const salsasBase = [
   { nombre: "Suero Picante", disponible: true, imagen: "/suero-picante.png" }
 ];
 
+const extrasArrozBase = [
+  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 },
+  { id: 'queso', nombre: "Queso Extra", disponible: true, precio: 1000 }
+];
+
 export default function App() {
+  // --- 🧠 MEMORIA LOCAL ---
+  const [productos, setProductos] = useState(() => {
+    const g = localStorage.getItem('productos_mono');
+    return g ? JSON.parse(g) : productosBase;
+  });
+  const [salsas, setSalsas] = useState(() => {
+    const g = localStorage.getItem('salsas_mono');
+    return g ? JSON.parse(g) : salsasBase;
+  });
+  const [extrasArroz, setExtrasArroz] = useState(() => {
+    const g = localStorage.getItem('extras_mono');
+    return g ? JSON.parse(g) : extrasArrozBase;
+  });
+
+  useEffect(() => { localStorage.setItem('productos_mono', JSON.stringify(productos)); }, [productos]);
+  useEffect(() => { localStorage.setItem('salsas_mono', JSON.stringify(salsas)); }, [salsas]);
+  useEffect(() => { localStorage.setItem('extras_mono', JSON.stringify(extrasArroz)); }, [extrasArroz]);
+
+  // --- ESTADOS ---
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
-  const [productos, setProductos] = useState(productosBase);
-  const [extrasArroz, setExtrasArroz] = useState(extrasArrozBase);
-  const [salsas, setSalsas] = useState(salsasBase);
   const [pedido, setPedido] = useState([]);
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
@@ -58,27 +75,33 @@ export default function App() {
   const [conHuevo, setConHuevo] = useState(false);
   const [conQueso, setConQueso] = useState(false);
   const [salsasElegidas, setSalsasElegidas] = useState([]);
-  const [hoveredCardId, setHoveredCardId] = useState(null);
   const [categoriaActiva, setCategoriaActiva] = useState("fritos");
 
-  const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
-  const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
+  // --- 🔌 FUNCIONES ADMIN (LAS QUE FALTABAN) ---
+  const toggleProducto = (id) => setProductos(prev => prev.map(p => p.id === id ? { ...p, disponible: !p.disponible } : p));
+  const cambiarPrecioProducto = (id, n) => setProductos(prev => prev.map(p => p.id === id ? { ...p, precio: parseInt(n) || 0 } : p));
+  const toggleSalsa = (nom) => setSalsas(prev => prev.map(s => s.nombre === nom ? { ...s, disponible: !s.disponible } : s));
+  const toggleExtraArroz = (id) => setExtrasArroz(prev => prev.map(e => e.id === id ? { ...e, disponible: !e.disponible } : e));
+  const cambiarPrecioExtraArroz = (id, n) => setExtrasArroz(prev => prev.map(e => e.id === id ? { ...e, precio: parseInt(n) || 0 } : e));
 
-  // --- 🔌 FUNCIONES DEL ADMINISTRADOR (LAS QUE FALTABAN) ---
-  const toggleProducto = (id) => {
-    setProductos(prev => prev.map(p => p.id === id ? { ...p, disponible: !p.disponible } : p));
+  // Función para apagar Sabores (Empanadas, Jugos)
+  const toggleSabor = (pId, saborNom) => {
+    setProductos(prev => prev.map(p => p.id === pId ? {
+      ...p, opciones: p.opciones.map(o => o.nombre === saborNom ? { ...o, disponible: !o.disponible } : o)
+    } : p));
   };
 
-  const cambiarPrecioProducto = (id, nuevoPrecio) => {
-    setProductos(prev => prev.map(p => p.id === id ? { ...p, precio: parseInt(nuevoPrecio) || 0 } : p));
+  // Funciones para Tamaños (Gaseosas, Jugos)
+  const toggleTamano = (pId, tamNom) => {
+    setProductos(prev => prev.map(p => p.id === pId ? {
+      ...p, tamanos: p.tamanos.map(t => t.nombre === tamNom ? { ...t, disponible: !t.disponible } : t)
+    } : p));
   };
 
-  const toggleSalsa = (nombreSalsa) => {
-    setSalsas(prev => prev.map(s => s.nombre === nombreSalsa ? { ...s, disponible: !s.disponible } : s));
-  };
-
-  const toggleExtraArroz = (id) => {
-    setExtrasArroz(prev => prev.map(e => e.id === id ? { ...e, disponible: !e.disponible } : e));
+  const cambiarPrecioTamano = (pId, tamNom, n) => {
+    setProductos(prev => prev.map(p => p.id === pId ? {
+      ...p, tamanos: p.tamanos.map(t => t.nombre === tamNom ? { ...t, precio: parseInt(n) || 0 } : t)
+    } : p));
   };
 
   const agregarAlCarrito = (p) => {
@@ -86,11 +109,9 @@ export default function App() {
     const cant = cantidades[p.id] || 1;
     let precioFinal = p.precio || 0;
     let det = "";
-
     if (p.tamanos) {
-      const tamElegido = tamanosJugo[p.id] || p.tamanos[0].nombre;
-      const tamObj = p.tamanos.find(t => t.nombre === tamElegido);
-      precioFinal = tamObj ? tamObj.precio : 0;
+      const tam = p.tamanos.find(t => t.nombre === (tamanosJugo[p.id] || p.tamanos[0].nombre));
+      precioFinal = tam?.precio || 0;
     }
     if (p.esDesayuno) {
       const opt = opcionesDesayuno[p.id] || {};
@@ -103,50 +124,51 @@ export default function App() {
       if (conQueso) precioFinal += 1000;
       det = `(${acompañanteArroz}${conHuevo ? '+Huevo' : ''}${conQueso ? '+Queso' : ''})`;
     }
-
     setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioFinal, saborElegido: sabores[p.id] || "", detallesExtra: det, cantidad: cant, subtotal: precioFinal * cant }]);
     toast.success("🛒 ¡Añadido!");
   };
 
-  // --- 🖥️ RENDER DEL PANEL DE ADMIN ---
-  if (isAdmin) {
-    return (
-      <AdminPanel 
-        setIsAdmin={setIsAdmin} 
-        tiendaAbierta={tiendaAbierta} 
-        setTiendaAbierta={setTiendaAbierta} 
-        productos={productos} 
-        toggleProducto={toggleProducto} 
-        cambiarPrecioProducto={cambiarPrecioProducto}
-        salsas={salsas} 
-        toggleSalsa={toggleSalsa}
-        extrasArroz={extrasArroz}
-        toggleExtraArroz={toggleExtraArroz}
-      />
-    );
-  }
+  // --- AQUÍ PASAMOS TODO AL ADMINPANEL ---
+  if (isAdmin) return (
+    <AdminPanel 
+      setIsAdmin={setIsAdmin} 
+      tiendaAbierta={tiendaAbierta} 
+      setTiendaAbierta={setTiendaAbierta} 
+      productos={productos} 
+      toggleProducto={toggleProducto} 
+      cambiarPrecioProducto={cambiarPrecioProducto}
+      toggleSabor={toggleSabor}
+      toggleTamano={toggleTamano}
+      cambiarPrecioTamano={cambiarPrecioTamano}
+      extrasArroz={extrasArroz}
+      toggleExtraArroz={toggleExtraArroz}
+      cambiarPrecioExtraArroz={cambiarPrecioExtraArroz}
+      salsas={salsas}
+      toggleSalsa={toggleSalsa}
+    />
+  );
 
   return (
     <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '100px' }}>
       <Toaster position="top-center" />
-      <Header accesoSecreto={() => { const p = window.prompt("PIN:"); if (p === "mono2026") setIsAdmin(true); }} tipoArrozHoy={tipoArrozHoy} />
+      <Header accesoSecreto={() => { const p = window.prompt("PIN:"); if (p === "mono2026") setIsAdmin(true); }} tipoArrozHoy={["lunes","miércoles","viernes"].includes(hoy) ? "Pollo" : "Cerdo"} />
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', flexWrap: 'wrap' }}>
           {["fritos", "bebidas", "desayunos", "arroces"].map(cat => (
-            <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '10px 20px', borderRadius: '50px', border: `2px solid ${MONO_NARANJA}`, background: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_NARANJA, fontWeight: 'bold', cursor: 'pointer', textTransform: 'capitalize' }}>{cat}</button>
+            <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '10px 22px', borderRadius: '50px', border: `2px solid ${MONO_NARANJA}`, background: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_NARANJA, fontWeight: '900', cursor: 'pointer', textTransform: 'capitalize' }}>{cat}</button>
           ))}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
           {productos.filter(p => p.categoria === categoriaActiva).map(p => (
-            <ProductCard key={p.id} p={p} tiendaAbierta={tiendaAbierta} hoveredCardId={hoveredCardId} setHoveredCardId={setHoveredCardId} tamanosJugo={tamanosJugo} setTamanosJugo={setTamanosJugo} sabores={sabores} setSabores={setSabores} opcionesDesayuno={opcionesDesayuno} setOpcionesDesayuno={setOpcionesDesayuno} acompañanteArroz={acompañanteArroz} setAcompañanteArroz={setAcompañanteArroz} conHuevo={conHuevo} setConHuevo={setConHuevo} conQueso={conQueso} setConQueso={setConQueso} cantidades={cantidades} sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})} restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})} agregarAlCarrito={() => agregarAlCarrito(p)} huevoObj={extrasArroz.find(e => e.id === 'huevo')} quesoObj={extrasArroz.find(e => e.id === 'queso')} />
+            <ProductCard key={p.id} p={p} tiendaAbierta={tiendaAbierta} hoveredCardId={null} setHoveredCardId={() => {}} tamanosJugo={tamanosJugo} setTamanosJugo={setTamanosJugo} sabores={sabores} setSabores={setSabores} opcionesDesayuno={opcionesDesayuno} setOpcionesDesayuno={setOpcionesDesayuno} acompañanteArroz={acompañanteArroz} setAcompañanteArroz={setAcompañanteArroz} conHuevo={conHuevo} setConHuevo={setConHuevo} conQueso={conQueso} setConQueso={setConQueso} cantidades={cantidades} sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})} restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})} agregarAlCarrito={() => agregarAlCarrito(p)} huevoObj={extrasArroz.find(e => e.id === 'huevo')} quesoObj={extrasArroz.find(e => e.id === 'queso')} />
           ))}
         </div>
         <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `1px solid ${MONO_AMARILLO}` }}>
-          <h3 style={{ textAlign: 'center', color: MONO_NARANJA, fontWeight: '900' }}>🧂 ¿Qué salsas deseas?</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
+          <h3 style={{ textAlign: 'center', color: MONO_NARANJA, fontWeight: '900', fontSize: '28px', marginBottom: '20px' }}>🧂 ¿Qué salsas deseas?</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
             {salsas.map(s => (
               <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '50px', border: 'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : MONO_AMARILLO, color: salsasElegidas.includes(s.nombre) ? 'white' : MONO_TEXTO, fontWeight: 'bold', cursor: 'pointer' }}>
-                <img src={s.imagen} style={{ width: '20px', height: '20px', borderRadius: '50%' }} alt={s.nombre} /> {s.nombre}
+                <img src={s.imagen} style={{ width: '22px', height: '22px', borderRadius: '50%' }} alt={s.nombre} /> {s.nombre}
               </button>
             ))}
           </div>
