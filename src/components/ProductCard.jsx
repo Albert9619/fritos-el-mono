@@ -12,35 +12,23 @@ export default function ProductCard({
   const todoAgotado = !p?.disponible;
   const isHovered = hoveredCardId === p?.id;
   
-  // 🥤 Lógica corregida para el precio de los jugos
- // --- Dentro de ProductCard.jsx ---
+  // ==========================================
+  // 🥤 LÓGICA DE PRECIO DINÁMICO
+  // ==========================================
+  let precioMostrar = p?.precio || 0;
+  let necesitaSeleccion = false;
 
-let precioMostrar = p?.precio || 0;
-
-if (p?.esJugo && p?.tamanos) {
-  const tamSeleccionado = tamanosJugo[p.id];
-  if (tamSeleccionado) {
-    // Si eligió tamaño (ej. Grande), buscamos su precio en la lista de tamaños
-    const tamObj = p.tamanos.find(t => t.nombre === tamSeleccionado);
-    precioMostrar = tamObj ? tamObj.precio : 0;
-  } else {
-    // Si NO ha elegido tamaño, podemos mostrar el precio del más pequeño por defecto
-    // o dejarlo en el precio base (que es 0)
-    precioMostrar = p.tamanos[0]?.precio || 0; 
+  if (p?.esJugo && p?.tamanos) {
+    const tamSeleccionado = tamanosJugo[p.id];
+    if (tamSeleccionado) {
+      const tamObj = p.tamanos.find(t => t.nombre === tamSeleccionado);
+      precioMostrar = tamObj ? tamObj.precio : 0;
+    } else {
+      // Si no hay tamaño elegido, mostramos 0 y activamos el aviso
+      precioMostrar = 0;
+      necesitaSeleccion = true;
+    }
   }
-}
-
-// Ahora el render del precio (donde dice $0) debe ser así:
-<p style={{ 
-  color: MONO_NARANJA, 
-  fontWeight: '900', 
-  fontSize: '26px', 
-  margin: '0 0 20px 0', 
-  paddingBottom: '10px', 
-  borderBottom: `2px dashed ${MONO_AMARILLO}` 
-}}>
-  {precioMostrar > 0 ? `$${precioMostrar.toLocaleString('es-CO')}` : "Selecciona tamaño"}
-</p>
 
   return (
     <div 
@@ -62,19 +50,31 @@ if (p?.esJugo && p?.tamanos) {
         alt={p?.nombre} 
       />
       
-      {todoAgotado && ( <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10 }}>AGOTADO 🚫</div> )}
+      {todoAgotado && ( 
+        <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10 }}>
+          AGOTADO 🚫
+        </div> 
+      )}
 
       <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800' }}>{p?.nombre}</h3>
         
-        {/* Aquí es donde fallaba el toLocaleString si el precio era undefined */}
-        <p style={{ color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: `2px dashed ${MONO_AMARILLO}` }}>
-          ${(precioMostrar || 0).toLocaleString('es-CO')}
+        {/* 💰 VISUALIZACIÓN DEL PRECIO */}
+        <p style={{ 
+          color: MONO_NARANJA, 
+          fontWeight: '900', 
+          fontSize: '26px', 
+          margin: '0 0 20px 0', 
+          paddingBottom: '10px', 
+          borderBottom: `2px dashed ${MONO_AMARILLO}` 
+        }}>
+          {necesitaSeleccion ? "Selecciona tamaño" : `$${(precioMostrar || 0).toLocaleString('es-CO')}`}
         </p>
         
         {!todoAgotado && tiendaAbierta && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             
+            {/* OPCIONES DE ARROZ */}
             {p?.esArroz && (
               <div style={{ background: MONO_AMARILLO, padding: '15px', borderRadius: '18px', border: `1px solid rgba(249, 115, 22, 0.2)` }}>
                 <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width: '100%', padding: '12px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px' }}>
@@ -93,6 +93,7 @@ if (p?.esJugo && p?.tamanos) {
               </div>
             )}
 
+            {/* OPCIONES DE SABOR (Empanadas/Papas) */}
             {p?.opciones && (
               <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} value={sabores[p.id] || ""} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px' }}>
                 <option value="">-- Elige el Sabor --</option>
@@ -104,8 +105,13 @@ if (p?.esJugo && p?.tamanos) {
               </select>
             )}
 
+            {/* SELECTOR DE TAMAÑO (Jugos) */}
             {p?.tamanos && (
-              <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} value={tamanosJugo[p.id] || ""} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `2px solid ${MONO_NARANJA}`, fontSize: '16px', fontWeight: 'bold' }}>
+              <select 
+                onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} 
+                value={tamanosJugo[p.id] || ""} 
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `2px solid ${MONO_NARANJA}`, fontSize: '16px', fontWeight: 'bold' }}
+              >
                 <option value="">-- Elije Tamaño --</option>
                 {p.tamanos.map(tam => (
                   <option key={tam.nombre} value={tam.nombre} disabled={!tam.disponible}>
@@ -115,6 +121,7 @@ if (p?.esJugo && p?.tamanos) {
               </select>
             )}
 
+            {/* SELECTOR DE CANTIDAD */}
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fcfcfc', padding: '12px', borderRadius: '15px', border: '1px solid #eee'}}>
               <label style={{fontSize: '16px', fontWeight: 'bold', color: '#555'}}>Cantidad:</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -128,6 +135,7 @@ if (p?.esJugo && p?.tamanos) {
               </div>
             </div>
 
+            {/* BOTÓN DE COMPRA */}
             <div 
               onClick={() => agregarAlCarrito(p)} 
               style={{ background: MONO_NARANJA, color: 'white', textAlign: 'center', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(249, 115, 22, 0.2)', userSelect: 'none' }}
