@@ -12,9 +12,7 @@ export default function ProductCard({
   const todoAgotado = !p?.disponible;
   const isHovered = hoveredCardId === p?.id;
   
-  // ==========================================
   // 🥤 LÓGICA DE PRECIO DINÁMICO
-  // ==========================================
   let precioMostrar = p?.precio || 0;
   let necesitaSeleccion = false;
 
@@ -24,7 +22,6 @@ export default function ProductCard({
       const tamObj = p.tamanos.find(t => t.nombre === tamSeleccionado);
       precioMostrar = tamObj ? tamObj.precio : 0;
     } else {
-      // Si no hay tamaño elegido, mostramos 0 y activamos el aviso
       precioMostrar = 0;
       necesitaSeleccion = true;
     }
@@ -40,29 +37,22 @@ export default function ProductCard({
         position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease', 
         transform: isHovered && tiendaAbierta ? 'translateY(-8px)' : 'translateY(0)', 
         border: isHovered && tiendaAbierta ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`, 
-        display: 'flex', flexDirection: 'column' 
+        display: 'flex', flexDirection: 'column', height: '100%'
       }}
     >
-      {/* --- Cambia la etiqueta <img> por esta --- */}
-<img 
-  src={p?.imagen} 
-  alt={p?.nombre} 
-  style={{ 
-    width: '100%', 
-    height: '210px', 
-    // 👇 ESTO ES LO NUEVO 👇
-    // Si es arroz, usa 'contain' para mostrarla completa sin cortar.
-    // Si no, usa 'cover' para que llene todo el espacio (empanadas, etc.).
-    objectFit: p?.esArroz ? 'contain' : 'cover', 
-    
-    // Añadimos un fondo gris muy suave solo si es 'contain' para que no se vea el hueco blanco
-    backgroundColor: p?.esArroz ? '#f9f9f9' : 'transparent',
-    padding: p?.esArroz ? '10px' : '0', // Un pequeño margen si es arroz
-    
-    filter: todoAgotado ? 'grayscale(1)' : 'none',
-    transition: 'all 0.3s ease'
-  }} 
-/>
+      {/* 📸 IMAGEN UNIFICADA */}
+      <img 
+        src={p?.imagen} 
+        alt={p?.nombre} 
+        style={{ 
+          width: '100%', 
+          height: '200px', // Altura fija para que todas las tarjetas se vean iguales
+          objectFit: 'cover', // Corta la imagen para llenar el cuadro sin estirarla
+          filter: todoAgotado ? 'grayscale(1)' : 'none',
+          transition: 'all 0.3s ease',
+          backgroundColor: '#f9f9f9'
+        }} 
+      />
       
       {todoAgotado && ( 
         <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10 }}>
@@ -71,7 +61,10 @@ export default function ProductCard({
       )}
 
       <div style={{ padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800' }}>{p?.nombre}</h3>
+        {/* Título con altura mínima para alinear precios */}
+        <div style={{ minHeight: '60px' }}>
+          <h3 style={{ margin: '0 0 5px 0', fontSize: '22px', fontWeight: '800', lineHeight: '1.2' }}>{p?.nombre}</h3>
+        </div>
         
         {/* 💰 VISUALIZACIÓN DEL PRECIO */}
         <p style={{ 
@@ -86,7 +79,7 @@ export default function ProductCard({
         </p>
         
         {!todoAgotado && tiendaAbierta && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: 'auto' }}>
             
             {/* OPCIONES DE ARROZ */}
             {p?.esArroz && (
@@ -107,7 +100,7 @@ export default function ProductCard({
               </div>
             )}
 
-            {/* OPCIONES DE SABOR (Empanadas/Papas) */}
+            {/* OPCIONES DE SABOR */}
             {p?.opciones && (
               <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} value={sabores[p.id] || ""} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '16px' }}>
                 <option value="">-- Elige el Sabor --</option>
@@ -119,7 +112,7 @@ export default function ProductCard({
               </select>
             )}
 
-            {/* SELECTOR DE TAMAÑO (Jugos) */}
+            {/* SELECTOR DE TAMAÑO */}
             {p?.tamanos && (
               <select 
                 onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} 
@@ -135,27 +128,27 @@ export default function ProductCard({
               </select>
             )}
 
-            {/* SELECTOR DE CANTIDAD */}
+            {/* CANTIDAD */}
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fcfcfc', padding: '12px', borderRadius: '15px', border: '1px solid #eee'}}>
               <label style={{fontSize: '16px', fontWeight: 'bold', color: '#555'}}>Cantidad:</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                <div onClick={() => restarCantidad(p?.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', background: MONO_AMARILLO, color: MONO_NARANJA, fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}>-</div>
+                <button onClick={() => restarCantidad(p?.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', background: MONO_AMARILLO, border: 'none', color: MONO_NARANJA, fontSize: '24px', fontWeight: 'bold', cursor: 'pointer' }}>-</button>
                 <input 
                   type="number" min="1" value={cantidades[p?.id] !== undefined ? cantidades[p?.id] : 1}
                   onChange={(e) => manejarInputCantidad(p?.id, e.target.value)} onBlur={() => corregirInputVacio(p?.id)}
                   style={{ width: '45px', textAlign: 'center', fontSize: '20px', fontWeight: '900', border: 'none', background: 'transparent', outline: 'none' }}
                 />
-                <div onClick={() => sumarCantidad(p?.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', background: MONO_NARANJA, color: 'white', fontSize: '22px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }}>+</div>
+                <button onClick={() => sumarCantidad(p?.id)} style={{ width: '35px', height: '35px', borderRadius: '50%', background: MONO_NARANJA, border: 'none', color: 'white', fontSize: '22px', fontWeight: 'bold', cursor: 'pointer' }}>+</button>
               </div>
             </div>
 
-            {/* BOTÓN DE COMPRA */}
-            <div 
+            {/* BOTÓN AÑADIR */}
+            <button 
               onClick={() => agregarAlCarrito(p)} 
-              style={{ background: MONO_NARANJA, color: 'white', textAlign: 'center', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(249, 115, 22, 0.2)', userSelect: 'none' }}
+              style={{ background: MONO_NARANJA, color: 'white', border: 'none', textAlign: 'center', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(249, 115, 22, 0.2)' }}
             >
               Añadir al Pedido 🥟
-            </div>
+            </button>
           </div>
         )}
       </div>
