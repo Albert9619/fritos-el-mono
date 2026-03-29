@@ -20,8 +20,36 @@ const productosBase = [
   { id: 7, nombre: "Palitos de Queso", precio: 2000, imagen: "/palito-queso.png", disponible: true, categoria: "fritos" },
   { id: 8, nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.png", disponible: true, categoria: "fritos" },
   
-  // 🥤 BEBIDAS
+  // 🥤 BEBIDAS (Actualizadas)
   { id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, imagen: "/jugo-natural.png", disponible: true, categoria: "bebidas", opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
+  { id: 10, nombre: "Agua Cielo Botella", precio: 2000, imagen: "/agua.png", disponible: true, categoria: "bebidas", descripcion: "620 mL" },
+  { 
+    id: 11, 
+    nombre: "Coca-Cola", 
+    esJugo: true, // Usamos esta marca para que active el selector de tamaños
+    precio: 0, 
+    imagen: "/cocacola.png", 
+    disponible: true, 
+    categoria: "bebidas",
+    tamanos: [
+      { nombre: "Mini 250 mL", precio: 2000, disponible: true },
+      { nombre: "Personal 400 mL", precio: 3500, disponible: true },
+      { nombre: "Mediana 1.5 L", precio: 6500, disponible: true }
+    ]
+  },
+  { 
+    id: 14, 
+    nombre: "Pony Malta", 
+    esJugo: true, 
+    precio: 0, 
+    imagen: "/malta.png", 
+    disponible: true, 
+    categoria: "bebidas",
+    tamanos: [
+      { nombre: "Mini 250 mL", precio: 2000, disponible: true },
+      { nombre: "Personal 400 mL", precio: 3500, disponible: true }
+    ]
+  },
 
   // 🍳 DESAYUNOS
   { id: 12, nombre: "Desayuno Tradicional", precio: 8000, esDesayuno: true, tipo: "tradicional", imagen: "/desayuno-huevo.png", disponible: true, categoria: "desayunos" },
@@ -30,22 +58,6 @@ const productosBase = [
   // 🍛 ARROCES
   { id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true, imagen: "/arroz-pollo.png", disponible: true, categoria: "arroces" }
 ];
-
-const extrasArrozBase = [
-  { id: 'tajada', nombre: "Tajadas", disponible: true, precio: 0 },
-  { id: 'yuca', nombre: "Yuca", disponible: true, precio: 0 },
-  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 },
-  { id: 'queso', nombre: "Queso Extra", disponible: true, precio: 1000 }
-];
-
-const salsasBase = [
-  { nombre: "Pique", disponible: true, imagen: "/pique.png" },
-  { nombre: "Salsa Roja", disponible: true, imagen: "/salsa-roja.png" },
-  { nombre: "Salsa Rosada", disponible: true, imagen: "/salsa-rosada.png" },
-  { nombre: "Suero", disponible: true, imagen: "/suero.png" },
-  { nombre: "Suero Picante", disponible: true, imagen: "/suero-picante.png" }
-];
-
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
