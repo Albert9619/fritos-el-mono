@@ -43,12 +43,26 @@ export default function ProductCard({
         display: 'flex', flexDirection: 'column' 
       }}
     >
-      {/* 📸 Imagen local desde la carpeta public */}
-      <img 
-        src={p?.imagen} 
-        style={{ width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none' }} 
-        alt={p?.nombre} 
-      />
+      {/* --- Cambia la etiqueta <img> por esta --- */}
+<img 
+  src={p?.imagen} 
+  alt={p?.nombre} 
+  style={{ 
+    width: '100%', 
+    height: '210px', 
+    // 👇 ESTO ES LO NUEVO 👇
+    // Si es arroz, usa 'contain' para mostrarla completa sin cortar.
+    // Si no, usa 'cover' para que llene todo el espacio (empanadas, etc.).
+    objectFit: p?.esArroz ? 'contain' : 'cover', 
+    
+    // Añadimos un fondo gris muy suave solo si es 'contain' para que no se vea el hueco blanco
+    backgroundColor: p?.esArroz ? '#f9f9f9' : 'transparent',
+    padding: p?.esArroz ? '10px' : '0', // Un pequeño margen si es arroz
+    
+    filter: todoAgotado ? 'grayscale(1)' : 'none',
+    transition: 'all 0.3s ease'
+  }} 
+/>
       
       {todoAgotado && ( 
         <div style={{ position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10 }}>
