@@ -16,12 +16,8 @@ const productosBase = [
   { id: 2, nombre: "Papa Rellena de la Casa", precio: 2500, imagen: "/papa-rellena.png", disponible: true, categoria: "fritos", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
   { id: 3, nombre: "Pastel de Pollo Hojaldrado", precio: 2500, imagen: "/pastel-pollo.png", disponible: true, categoria: "fritos" },
   { id: 4, nombre: "Arepa con Huevo y Carne", precio: 3500, imagen: "/arepa-huevo.png", disponible: true, categoria: "fritos" },
-  { id: 7, nombre: "Palitos de Queso Costeño", precio: 2000, imagen: "/palito-queso.png", disponible: true, categoria: "fritos" },
-  { id: 8, nombre: "Buñuelos Calientitos", precio: 1000, imagen: "/buñuelo.png", disponible: true, categoria: "fritos" },
   { id: 5, nombre: "Arroz Especial del Día", precio: 6000, esArroz: true, imagen: "/arroz-pollo.png", disponible: true, categoria: "arroces" },
-  { id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, imagen: "/jugo-natural.png", disponible: true, categoria: "bebidas", opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
-  { id: 10, nombre: "Gaseosa 350ml", precio: 2500, imagen: "/gaseosa.png", disponible: true, categoria: "bebidas" },
-  { id: 11, nombre: "Agua Mineral", precio: 2000, imagen: "/agua.png", disponible: true, categoria: "bebidas" }
+  { id: 6, nombre: "Jugo Natural Helado", esJugo: true, precio: 0, imagen: "/jugo-natural.png", disponible: true, categoria: "bebidas", opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] }
 ];
 
 const extrasArrozBase = [
@@ -32,7 +28,11 @@ const extrasArrozBase = [
 ];
 
 const salsasBase = [
-  { nombre: "🔥 Pique", disponible: true }, { nombre: "🍅 Salsa Roja", disponible: true }, { nombre: "🍥 Salsa Rosada", disponible: true }, { nombre: "🥛 Suero", disponible: true }, { nombre: "🌶️ Suero Picante", disponible: true }
+  { nombre: "Pique", disponible: true, imagen: "/pique.png" },
+  { nombre: "Salsa Roja", disponible: true, imagen: "/salsa-roja.png" },
+  { nombre: "Salsa Rosada", disponible: true, imagen: "/salsa-rosada.png" },
+  { nombre: "Suero", disponible: true, imagen: "/suero.png" },
+  { nombre: "Suero Picante", disponible: true, imagen: "/suero-picante.png" }
 ];
 
 export default function App() {
@@ -50,7 +50,7 @@ export default function App() {
   const [tamanosJugo, setTamanosJugo] = useState({});
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
   const [conHuevo, setConHuevo] = useState(false);
-  const [conQueso, setConQueso] = useState(false);
+  const [conQueso, setConQueso] = useState(false); // Nuevo
   const [salsasElegidas, setSalsasElegidas] = useState([]);
   const [hoveredCardId, setHoveredCardId] = useState(null);
   const [categoriaActiva, setCategoriaActiva] = useState("fritos");
@@ -68,24 +68,20 @@ export default function App() {
       precioFinal = tam.precio;
     }
     if (p.esArroz) {
-    if (!acompañanteArroz) return toast.error("Elige Tajada o Yuca");
-    if (conHuevo) precioFinal += 1000;
-    if (conQueso) precioFinal += 1000; // <--- NUEVO: Suma el queso
-  }
+      if (!acompañanteArroz) return toast.error("Elige acompañante");
+      if (conHuevo) precioFinal += 1000;
+      if (conQueso) precioFinal += 1000;
+    }
 
-  setPedido([...pedido, { 
-    idUnico: Date.now(), 
-    nombre: p.nombre, 
-    precioUnitario: precioFinal, 
-    detallesArroz: p.esArroz ? `(${acompañanteArroz}${conHuevo ? ' + Huevo' : ''}${conQueso ? ' + Queso' : ''})` : "", 
-    cantidad: cant, 
-    subtotal: precioFinal * cant 
-  }]);
-  toast.success("🥟 ¡Añadido!");
-};
+    setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioFinal, saborElegido: sabores[p.id] || "", detallesArroz: p.esArroz ? `(${acompañanteArroz}${conHuevo ? '+Huevo' : ''}${conQueso ? '+Queso' : ''})` : "", cantidad: cant, subtotal: precioFinal * cant }]);
+    toast.success("🥟 ¡Añadido!");
+  };
 
-    setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioFinal, cantidad: cant, subtotal: precioFinal * cant }]);
-    toast.success("Añadido");
+  const enviarWhatsApp = () => {
+    const total = pedido.reduce((acc, i) => acc + i.subtotal, 0);
+    const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.saborElegido} ${i.detallesArroz}`).join('\n');
+    const msg = `Pedido Fritos El Mono:\n${lista}\nSalsas: ${salsasElegidas.join(', ')}\nTotal: $${total}\nCliente: ${nombre}`;
+    window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
   if (isAdmin) return <AdminPanel setIsAdmin={setIsAdmin} tiendaAbierta={tiendaAbierta} setTiendaAbierta={setTiendaAbierta} productos={productos} setProductos={setProductos} salsas={salsas} extrasArroz={extrasArroz} />;
@@ -96,48 +92,31 @@ export default function App() {
       <Header accesoSecreto={() => { const p = window.prompt("PIN:"); if (p === "mono2026") setIsAdmin(true); }} tipoArrozHoy={tipoArrozHoy} />
       
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-        
-        {/* PESTAÑAS */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', flexWrap: 'wrap' }}>
           {["fritos", "bebidas", "arroces"].map(cat => (
-            <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '10px 20px', borderRadius: '50px', border: `2px solid ${MONO_NARANJA}`, background: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_NARANJA, fontWeight: 'bold', cursor: 'pointer', textTransform: 'capitalize' }}>
-              {cat}
-            </button>
+            <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '10px 20px', borderRadius: '50px', border: `2px solid ${MONO_NARANJA}`, background: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_NARANJA, fontWeight: 'bold', cursor: 'pointer' }}>{cat}</button>
           ))}
         </div>
 
-        {/* GRILLA FILTRADA */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
           {productos.filter(p => p.categoria === categoriaActiva).map(p => (
             <ProductCard 
               key={p.id} p={p} tiendaAbierta={tiendaAbierta} hoveredCardId={hoveredCardId} setHoveredCardId={setHoveredCardId}
               tamanosJugo={tamanosJugo} setTamanosJugo={setTamanosJugo} sabores={sabores} setSabores={setSabores}
-              acompañanteArroz={acompañanteArroz} setAcompañanteArroz={setAcompañanteArroz} conHuevo={conHuevo} setConHuevo={setConHuevo}
+              acompañanteArroz={acompañanteArroz} setAcompañanteArroz={setAcompañanteArroz} conHuevo={conHuevo} setConHuevo={setConHuevo} conQueso={conQueso} setConQueso={setConQueso}
               cantidades={cantidades} sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})}
               restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})}
               manejarInputCantidad={(id, v) => setCantidades({...cantidades, [id]: v === "" ? "" : parseInt(v)})}
               corregirInputVacio={(id) => { if (!cantidades[id]) setCantidades({...cantidades, [id]: 1}); }}
               agregarAlCarrito={() => agregarAlCarrito(p)}
-              tajadaObj={extrasArroz.find(e => e.id === 'tajada')} yucaObj={extrasArroz.find(e => e.id === 'yuca')} huevoObj={extrasArroz.find(e => e.id === 'huevo')}
+              tajadaObj={extrasArroz.find(e => e.id === 'tajada')} yucaObj={extrasArroz.find(e => e.id === 'yuca')} huevoObj={extrasArroz.find(e => e.id === 'huevo')} quesoObj={extrasArroz.find(e => e.id === 'queso')}
             />
           ))}
-        </div>
-
-        {/* SALSAS */}
-        <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `1px solid ${MONO_AMARILLO}` }}>
-          <h3 style={{ textAlign: 'center', color: MONO_NARANJA }}>🧂 Salsas</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'center' }}>
-            {salsas.map(s => (
-              <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} style={{ padding: '10px 20px', borderRadius: '50px', border: 'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : MONO_AMARILLO, color: salsasElegidas.includes(s.nombre) ? 'white' : MONO_TEXTO, fontWeight: 'bold', cursor: 'pointer' }}>
-                {s.nombre}
-              </button>
-            ))}
-          </div>
         </div>
       </main>
 
       {pedido.length > 0 && (
-        <Carrito pedido={pedido} total={pedido.reduce((acc, i) => acc + i.subtotal, 0)} nombre={nombre} setNombre={setNombre} direccion={direccion} setDireccion={setDireccion} metodoPago={metodoPago} setMetodoPago={setMetodoPago} vaciarCarrito={() => setPedido([])} />
+        <Carrito pedido={pedido} total={pedido.reduce((acc, i) => acc + i.subtotal, 0)} nombre={nombre} setNombre={setNombre} direccion={direccion} setDireccion={setDireccion} metodoPago={metodoPago} setMetodoPago={setMetodoPago} enviarWhatsApp={enviarWhatsApp} vaciarCarrito={() => setPedido([])} />
       )}
     </div>
   );
