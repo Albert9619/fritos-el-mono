@@ -83,20 +83,38 @@ export default function ProductCard({
         {/* ⚙️ SECCIÓN DE OPCIONES (Ajustada para el arroz) */}
         <div style={{ height: '140px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px' }}>
           
-          {p?.esArroz && (
-            <div style={{ background: MONO_AMARILLO, padding: '10px', borderRadius: '15px', border: `1px solid rgba(249, 115, 22, 0.1)` }}>
-              <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width: '100%', padding: '8px', borderRadius: '10px', border: `1px solid #ddd`, fontSize: '14px' }}>
-                <option value="">¿Tajada o Yuca?</option>
-                <option value="Tajadas" disabled={!tajadaObj?.disponible}>Tajadas {!tajadaObj?.disponible ? "🚫" : ""}</option>
-                <option value="Yuca" disabled={!yucaObj?.disponible}>Yuca {!yucaObj?.disponible ? "🚫" : ""}</option>
-              </select>
-              <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', cursor: 'pointer' }}>
-                <input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} style={{ accentColor: MONO_NARANJA, width: '18px', height: '18px' }} /> 
-                + Huevo ($1.000)
-              </label>
-            </div>
-          )}
+          {/* --- SECCIÓN DE ARROZ ACTUALIZADA --- */}
+{p?.esArroz && (
+  <div style={{ background: MONO_AMARILLO, padding: '12px', borderRadius: '15px', border: `1px solid rgba(249, 115, 22, 0.1)` }}>
+    <select 
+      onChange={(e) => setAcompañanteArroz(e.target.value)} 
+      value={acompañanteArroz} 
+      style={{width: '100%', padding: '8px', borderRadius: '10px', border: `1px solid #ddd`, fontSize: '14px', marginBottom: '10px' }}
+    >
+      <option value="">¿Tajada o Yuca?</option>
+      <option value="Tajadas" disabled={!tajadaObj?.disponible}>Tajadas {!tajadaObj?.disponible ? "🚫" : ""}</option>
+      <option value="Yuca" disabled={!yucaObj?.disponible}>Yuca {!yucaObj?.disponible ? "🚫" : ""}</option>
+    </select>
 
+    {/* Casilla de Huevo */}
+    <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', cursor: 'pointer' }}>
+      <input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} style={{ accentColor: MONO_NARANJA, width: '18px', height: '18px' }} /> 
+      + Huevo Extra ($1.000)
+    </label>
+
+    {/* Casilla de Queso (LA NUEVA OPCIÓN) */}
+    <label style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+      <input 
+        type="checkbox" 
+        checked={conQueso} 
+        onChange={(e) => setConQueso(e.target.checked)} 
+        disabled={!quesoObj?.disponible} // Por si se acaba el queso
+        style={{ accentColor: MONO_NARANJA, width: '18px', height: '18px' }} 
+      /> 
+      {quesoObj?.disponible ? `+ Queso Extra ($1.000)` : "🚫 Queso Agotado"}
+    </label>
+  </div>
+)}
           {p?.opciones && (
             <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} value={sabores[p.id] || ""} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: `1px solid #ddd`, fontSize: '15px' }}>
               <option value="">-- Elige el Sabor --</option>
