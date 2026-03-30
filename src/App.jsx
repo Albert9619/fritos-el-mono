@@ -11,6 +11,7 @@ const MONO_AMARILLO = "#fef3c7";
 const MONO_CREMA = "#fffbeb";
 const MONO_TEXTO = "#333333";
 
+// --- 📋 DATOS INICIALES ---
 const productosBase = [
   { id: 1, nombre: "Empanada Crujiente", precio: 1500, imagen: "/empanada.png", disponible: true, categoria: "fritos", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: 2, nombre: "Papa Rellena", precio: 2500, imagen: "/papa-rellena.png", disponible: true, categoria: "fritos", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
@@ -71,13 +72,14 @@ export default function App() {
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
   const [conHuevo, setConHuevo] = useState(false);
   const [conQueso, setConQueso] = useState(false);
+  const [salsasElegidas, setSalsasElegidas] = useState([]);
   const [categoriaActiva, setCategoriaActiva] = useState("fritos");
 
   const dias = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
   const hoy = dias[new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // --- FUNCIONES ADMIN ---
+  // --- 🔌 FUNCIONES ADMIN ---
   const toggleProducto = (id) => setProductos(prev => prev.map(p => p.id === id ? { ...p, disponible: !p.disponible } : p));
   const cambiarPrecioProducto = (id, n) => setProductos(prev => prev.map(p => p.id === id ? { ...p, precio: parseInt(n) || 0 } : p));
   const toggleSalsa = (nom) => setSalsas(prev => prev.map(s => s.nombre === nom ? { ...s, disponible: !s.disponible } : s));
@@ -115,17 +117,21 @@ export default function App() {
   const enviarWhatsApp = () => {
     let mensaje = `🧾 *NUEVO PEDIDO - MONO*\n👤 *Nombre:* ${nombre}\n📍 *Dirección:* ${direccion}\n💳 *Pago:* ${metodoPago}\n\n🍽️ *Detalle:*\n`;
     pedido.forEach(item => { mensaje += `- ${item.cantidad}x ${item.nombre}${item.saborElegido ? ' ('+item.saborElegido+')' : ''} ${item.detallesExtra}\n`; });
+    
+    if (salsasElegidas.length > 0) {
+      mensaje += `\n🧂 *Salsas:* ${salsasElegidas.join(", ")}\n`;
+    }
+
     mensaje += `\n💰 *Total: $${pedido.reduce((acc, i) => acc + i.subtotal, 0).toLocaleString('es-CO')}*`;
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(mensaje)}`, "_blank");
   };
 
-  // 🛒 TOTAL DE PRODUCTOS PARA EL BADGE
   const totalItems = pedido.reduce((acc, item) => acc + item.cantidad, 0);
 
   if (isAdmin) return <AdminPanel setIsAdmin={setIsAdmin} tiendaAbierta={tiendaAbierta} setTiendaAbierta={setTiendaAbierta} productos={productos} toggleProducto={toggleProducto} cambiarPrecioProducto={cambiarPrecioProducto} toggleSabor={toggleSabor} toggleTamano={toggleTamano} cambiarPrecioTamano={cambiarPrecioTamano} extrasArroz={extrasArroz} toggleExtraArroz={toggleExtraArroz} cambiarPrecioExtraArroz={cambiarPrecioExtraArroz} salsas={salsas} toggleSalsa={toggleSalsa} />;
 
   return (
-    <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '120px' }}>
+    <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '140px' }}>
       <Toaster position="top-center" />
       <Header accesoSecreto={() => { const pin = window.prompt("PIN:"); if (pin === "mono2026") setIsAdmin(true); }} tipoArrozHoy={tipoArrozHoy} />
       
@@ -135,24 +141,32 @@ export default function App() {
             <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '10px 22px', borderRadius: '50px', border: `2px solid ${MONO_NARANJA}`, background: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_NARANJA, fontWeight: '900', cursor: 'pointer', textTransform: 'capitalize' }}>{cat}</button>
           ))}
         </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
           {productos.filter(p => p.categoria === categoriaActiva).map(p => (
             <ProductCard key={p.id} p={p} tiendaAbierta={tiendaAbierta} tamanosJugo={tamanosJugo} setTamanosJugo={setTamanosJugo} sabores={sabores} setSabores={setSabores} opcionesDesayuno={opcionesDesayuno} setOpcionesDesayuno={setOpcionesDesayuno} acompañanteArroz={acompañanteArroz} setAcompañanteArroz={setAcompañanteArroz} conHuevo={conHuevo} setConHuevo={setConHuevo} conQueso={conQueso} setConQueso={setConQueso} cantidades={cantidades} sumarCantidad={(id) => setCantidades(prev => ({...prev, [id]: (prev[id] || 1) + 1}))} restarCantidad={(id) => setCantidades(prev => ({...prev, [id]: Math.max(1, (prev[id] || 1) - 1)}))} agregarAlCarrito={() => agregarAlCarrito(p)} huevoObj={extrasArroz.find(e => e.id === 'huevo')} quesoObj={extrasArroz.find(e => e.id === 'queso')} />
           ))}
         </div>
+
+        {/* --- 🧂 SECCIÓN SALSAS (RECUPERADA) --- */}
+        <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `1px solid ${MONO_AMARILLO}` }}>
+          <h3 style={{ textAlign: 'center', color: MONO_NARANJA, fontWeight: '900', fontSize: '28px', marginBottom: '20px' }}>🧂 ¿Qué salsas deseas?</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
+            {salsas.map(s => (
+              <button key={s.nombre} onClick={() => { if(s.disponible) setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre]) }} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '50px', border: 'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'), color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#aaa'), fontWeight: 'bold', cursor: s.disponible ? 'pointer' : 'not-allowed' }}>
+                <img src={s.imagen} style={{ width: '22px', height: '22px', borderRadius: '50%' }} alt={s.nombre} /> {s.nombre} {!s.disponible && "🚫"}
+              </button>
+            ))}
+          </div>
+        </div>
       </main>
 
-      {/* 🛒 BOTÓN FLOTANTE DINÁMICO */}
+      {/* 🛒 BOTÓN FLOTANTE */}
       {pedido.length > 0 && (
         <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: '400px', zIndex: 1000 }}>
-          <button 
-            onClick={() => { document.getElementById('seccion-carrito')?.scrollIntoView({ behavior: 'smooth' }); }}
-            style={{ width: '100%', background: MONO_NARANJA, color: 'white', border: 'none', padding: '18px', borderRadius: '20px', fontSize: '18px', fontWeight: '900', boxShadow: '0 10px 25px rgba(249, 115, 22, 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-          >
+          <button onClick={() => { document.getElementById('seccion-carrito')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ width: '100%', background: MONO_NARANJA, color: 'white', border: 'none', padding: '18px', borderRadius: '20px', fontSize: '18px', fontWeight: '900', boxShadow: '0 10px 25px rgba(249, 115, 22, 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ background: 'white', color: MONO_NARANJA, width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>
-                {totalItems}
-              </span>
+              <span style={{ background: 'white', color: MONO_NARANJA, width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>{totalItems}</span>
               🛒 Ver mi Pedido
             </div>
             <span>${pedido.reduce((acc, i) => acc + i.subtotal, 0).toLocaleString('es-CO')}</span>
