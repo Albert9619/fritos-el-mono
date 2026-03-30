@@ -172,8 +172,8 @@ export default function App() {
 
     if (p.esArroz) {
       if (!acompañanteArroz) return alert("Por favor elige Tajadas o Yuca");
-      const huevoExtra = extrasArrozMostrar.find(e => e.id === 'huevo');
-      const quesoExtra = extrasArrozMostrar.find(e => e.id === 'queso');
+      const huevoExtra = extrasArroz.find(e => e.id === 'huevo');
+      const quesoExtra = extrasArroz.find(e => e.id === 'queso');
       
       if (conHuevo && huevoExtra) precioBase += huevoExtra.precio;
       if (conQueso && quesoExtra) precioBase += quesoExtra.precio;
