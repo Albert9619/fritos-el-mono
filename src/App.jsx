@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { db } from './firebaseConfig';
-import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore"; 
+import { collection, onSnapshot, doc, updateDoc, getDocs } from "firebase/firestore"; 
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
 import Header from './components/Header';
@@ -25,17 +25,14 @@ export default function App() {
   const [categoriaActiva, setCategoriaActiva] = useState("Fritos");
 
   useEffect(() => {
-    // 1. Escuchar fritos
     const unsubProd = onSnapshot(collection(db, "productos"), (snapshot) => {
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      console.log("Productos cargados:", docs); // Mira esto en la consola del navegador
       setProductos(docs);
     }, (error) => {
       console.error("Error en Firebase Productos:", error);
       toast.error("Error al leer productos");
     });
 
-    // 2. Escuchar interruptor (Colección: ajuste)
     const unsubTienda = onSnapshot(doc(db, "ajuste", "tienda"), (snapshot) => {
       if (snapshot.exists()) {
         setTiendaAbierta(snapshot.data().abierta);
@@ -47,13 +44,53 @@ export default function App() {
     return () => { unsubProd(); unsubTienda(); };
   }, []);
 
+  // 🔥 ESTA ES LA FUNCIÓN QUE ARREGLA LOS ARROCES Y LAS OPCIONES
+  const ejecutarMantenimiento = async () => {
+    const cargando = toast.loading("Actualizando el menú del Mono...");
+    try {
+      const querySnapshot = await getDocs(collection(db, "productos"));
+      
+      const promesas = querySnapshot.docs.map(async (documento) => {
+        const p = documento.data();
+        const docRef = doc(db, "productos", documento.id);
+        let cambios = {};
+
+        // 1. Corregir Categoría "Arroz" a "Arroces"
+        if (p.categoria === "Arroz") {
+          cambios.categoria = "Arroces";
+        }
+
+        // 2. Si es arroz, ponerle las opciones de Pollo, Cerdo y Paisa
+        if (p.categoria === "Arroz" || p.categoria === "Arroces" || p.esArroz) {
+          cambios.opciones = ["Pollo", "Cerdo", "Paisa"];
+        }
+
+        // 3. Asegurar que esté disponible
+        if (p.disponible === undefined) {
+          cambios.disponible = true;
+        }
+
+        if (Object.keys(cambios).length > 0) {
+          return updateDoc(docRef, cambios);
+        }
+      });
+
+      await Promise.all(promesas);
+      toast.dismiss(cargando);
+      toast.success("¡Base de Datos Actualizada! 🐒🔥");
+    } catch (error) {
+      toast.dismiss(cargando);
+      toast.error("Error al actualizar");
+      console.error(error);
+    }
+  };
+
   const toggleTiendaGlobal = async () => {
     try {
       const tiendaRef = doc(db, "ajuste", "tienda");
       await updateDoc(tiendaRef, { abierta: !tiendaAbierta });
       toast.success(tiendaAbierta ? "🔴 Tienda Cerrada" : "🟢 Tienda Abierta");
     } catch (e) { 
-      console.error(e);
       toast.error("No tienes permiso para cambiar esto"); 
     }
   };
@@ -62,13 +99,11 @@ export default function App() {
     <HashRouter>
       <Toaster position="top-center" />
       
-      {/* 🚫 BLOQUEO GLOBAL */}
       {!tiendaAbierta && window.location.hash !== "#/admin" && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 99999, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: 'white', textAlign: 'center', padding: '20px', backdropFilter: 'blur(5px)' }}>
           <h1 style={{ fontSize: '4rem' }}>🐒</h1>
           <h2 style={{ fontSize: '2rem', color: '#fbbf24' }}>¡EL MONO ESTÁ CERRADO!</h2>
           <p>Estamos preparando más fritos. Vuelve pronto.</p>
-          <button onClick={() => window.location.reload()} style={{marginTop: '20px', padding: '10px', borderRadius: '10px', border: 'none'}}>Reintentar conexión</button>
         </div>
       )}
 
@@ -79,12 +114,6 @@ export default function App() {
             
             <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
               
-              {/* BARRA DE DIAGNÓSTICO (Solo para que tú veas qué pasa) */}
-              <div style={{ backgroundColor: '#333', color: '#0f0', padding: '5px', fontSize: '10px', borderRadius: '5px', marginBottom: '10px', textAlign: 'center' }}>
-                DEBUG: {productos.length} productos cargados | Tienda: {tiendaAbierta ? "Abierta" : "Cerrada"}
-              </div>
-
-              {/* BOTONES DE CATEGORÍA */}
               <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px' }}>
                 {["Fritos", "Arroces", "Bebidas"].map(cat => (
                   <button 
@@ -97,7 +126,6 @@ export default function App() {
                 ))}
               </div>
 
-              {/* LISTA DE PRODUCTOS */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
                 {productos
                   .filter(p => p.categoria?.toLowerCase() === categoriaActiva.toLowerCase())
@@ -110,6 +138,14 @@ export default function App() {
                         style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '15px' }} 
                       />
                       <h3 style={{ margin: '15px 0 5px 0' }}>{p.nombre}</h3>
+                      
+                      {/* ✍️ Muestra las opciones si el producto las tiene */}
+                      {p.opciones && (
+                        <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '10px' }}>
+                          Opciones: {p.opciones.join(" - ")}
+                        </p>
+                      )}
+
                       <p style={{ fontWeight: 'bold', color: '#b91c1c', fontSize: '1.4rem', margin: '5px 0' }}>${p.precio}</p>
                       <button style={{ width: '100%', padding: '12px', backgroundColor: '#fbbf24', border: 'none', borderRadius: '12px', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer' }}>
                         Agregar al pedido
@@ -118,12 +154,16 @@ export default function App() {
                   ))}
               </div>
 
-              {productos.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '50px' }}>
-                   <p>Esperando a que Firebase responda... 🍗</p>
-                   <p style={{ fontSize: '0.8rem', color: 'gray' }}>Si esto no cambia, es que las REGLAS de Firebase están bloqueando el acceso.</p>
-                </div>
-              )}
+              {/* ⚠️ BOTÓN DE MANTENIMIENTO TEMPORAL */}
+              <div style={{ marginTop: '50px', textAlign: 'center' }}>
+                <button 
+                  onClick={ejecutarMantenimiento}
+                  style={{ fontSize: '10px', opacity: 0.5, background: 'none', border: '1px solid gray', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}
+                >
+                  Mantenimiento del Menú 🐒
+                </button>
+              </div>
+
             </main>
           </div>
         } />
