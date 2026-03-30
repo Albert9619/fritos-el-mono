@@ -391,7 +391,7 @@ export default function App() {
 
             return (
               <div key={p.id} onMouseEnter={() => setHoveredCardId(p.id)} onMouseLeave={() => setHoveredCardId(null)} style={{background: 'white', borderRadius: '28px', padding: '0', boxShadow: isHovered && tiendaAbierta ? '0 20px 40px rgba(0,0,0,0.12)' : '0 10px 20px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease', transform: isHovered && tiendaAbierta ? 'translateY(-8px)' : 'translateY(0)', border: isHovered && tiendaAbierta ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`, display: 'flex', flexDirection: 'column'}}>
-                <img src={p.esArroz ? "/arroz-pollo.jpg" : p.imagen} onError={(e) => e.target.src = "https://via.placeholder.com/400x300?text=El+Mono"} style={{width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none'}} alt={p.nombre} />
+               <img src={p.imagen} onError={(e) => e.target.src = "https://via.placeholder.com/400x300?text=El+Mono"} style={{width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none'}} alt={p.nombre} />
                 {todoAgotado && ( <div style={{position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10}}>AGOTADO🚫</div> )}
 
                 <div style={{padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
