@@ -42,6 +42,7 @@ export default function App() {
   // ==========================================
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
+  const [categoriaActiva, setCategoriaActiva] = useState("Fritos");
   
   // Ahora estos estados inician vacíos y se llenan con Firebase
   const [productos, setProductos] = useState([]);
@@ -343,6 +344,30 @@ export default function App() {
         <div style={{maxWidth: '800px', margin: '0 auto 30px', background: '#fee2e2', color: '#b91c1c', padding: '20px', borderRadius: '20px', textAlign: 'center', fontWeight: 'bold', border: '2px solid #ef4444'}}>
           🔴 Actualmente estamos cerrados. ¡Vuelve pronto a hacer tu pedido!
         </div>
+        {/* 🔘 MENÚ DE CATEGORÍAS */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px 20px', maxWidth: '800px', margin: '0 auto 30px' }}>
+        {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
+          <button 
+            key={cat}
+            onClick={() => setCategoriaActiva(cat)}
+            style={{ 
+              padding: '12px 25px', 
+              borderRadius: '25px', 
+              border: 'none', 
+              backgroundColor: categoriaActiva === cat ? MONO_NARANJA : '#ffffff', 
+              color: categoriaActiva === cat ? 'white' : MONO_TEXTO,
+              fontWeight: 'bold', 
+              fontSize: '16px',
+              cursor: 'pointer', 
+              boxShadow: categoriaActiva === cat ? '0 4px 15px rgba(249, 115, 22, 0.4)' : '0 2px 8px rgba(0,0,0,0.05)',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
       )}
 
       {productos.length === 0 && (
@@ -353,20 +378,20 @@ export default function App() {
       )}
 
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px', opacity: tiendaAbierta ? 1 : 0.6}}>
-        {productos.map(p => {
-          const todoAgotado = !p.disponible;
-          const isHovered = hoveredCardId === p.id;
-          
-          let precioMostrar = p.precio || 0;
-          if (p.esJugo && p.tamanos) {
-            const tamSeleccionado = tamanosJugo[p.id];
-            if (tamSeleccionado) {
-              const tamObj = p.tamanos.find(t => t.nombre === tamSeleccionado);
-              precioMostrar = tamObj ? tamObj.precio : p.tamanos[0].precio;
-            } else {
-              precioMostrar = p.tamanos[0].precio;
+        {productos
+          .filter(p => {
+            // Filtro inteligente por si falta la categoría en Firebase
+            let cat = p.categoria;
+            if (!cat) {
+              if (p.esArroz) cat = "Arroces";
+              else if (p.esJugo || p.nombre.includes("Agua") || p.nombre.includes("Cola") || p.nombre.includes("Malta")) cat = "Bebidas";
+              else if (p.esDesayuno) cat = "Desayunos";
+              else cat = "Fritos";
             }
-          }
+            return cat === categoriaActiva;
+          })
+          .map(p => {
+            // ... (AQUÍ SIGUE EL CÓDIGO QUE YA TIENES: const todoAgotado = !p.disponible;)
 
           return (
             <div key={p.id} onMouseEnter={() => setHoveredCardId(p.id)} onMouseLeave={() => setHoveredCardId(null)} style={{background: 'white', borderRadius: '28px', padding: '0', boxShadow: isHovered && tiendaAbierta ? '0 20px 40px rgba(0,0,0,0.12)' : '0 10px 20px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease', transform: isHovered && tiendaAbierta ? 'translateY(-8px)' : 'translateY(0)', border: isHovered && tiendaAbierta ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`, display: 'flex', flexDirection: 'column'}}>
