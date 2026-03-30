@@ -3,17 +3,25 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, updateDoc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS ORIGINALES (Para subir a Firebase)
+// 🔴 DATOS MAESTROS (Con Bebidas, Desayunos y Orden)
 // ==========================================
 const productosBase = [
-  { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.png", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
-  { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", imagen: "/papa-rellena.png", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
-  { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", imagen: "/pastel-pollo.png", disponible: true },
-  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", imagen: "/arepa-huevo.png", disponible: true },
-  { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", imagen: "/palito-queso.png", disponible: true },
-  { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", imagen: "/buñuelo.png", disponible: true },
-  { id: "5", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true,imagen: "/arroz-pollo.png", disponible: true },
-  { id: "6", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", esJugo: true, imagen: "/jugo-natural.png", disponible: true, opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] }
+  { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
+  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", imagen: "/arepa-huevo.jpg", disponible: true },
+  { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", imagen: "/papa-rellena.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
+  { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", imagen: "/pastel-pollo.jpg", disponible: true },
+  { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", imagen: "/palito-queso.jpg", disponible: true },
+  { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", imagen: "/buñuelo.jpg", disponible: true },
+  
+  { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno.jpg", disponible: true },
+  { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno-especial.jpg", disponible: true },
+  
+  { id: "5", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true, disponible: true },
+  
+  { id: "6", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", esJugo: true, imagen: "/jugo-natural.jpg", disponible: true, opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
+  { id: "b1", nombre: "Coca-Cola", precio: 3500, categoria: "Bebidas", imagen: "/coca-cola.jpg", disponible: true },
+  { id: "b2", nombre: "Pony Malta", precio: 2500, categoria: "Bebidas", imagen: "/pony.jpg", disponible: true },
+  { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", imagen: "/agua.jpg", disponible: true }
 ];
 
 const extrasArrozBase = [
@@ -37,21 +45,14 @@ const MONO_VERDE = "#16a34a";
 const MONO_TEXTO = "#333333";
 
 export default function App() {
-  // ==========================================
-  // ⚙️ ESTADOS
-  // ==========================================
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
-  
-  // ✅ ESTADO DEL MENÚ DE CATEGORÍAS
   const [categoriaActiva, setCategoriaActiva] = useState("Fritos");
   
-  // Estados de Firebase
   const [productos, setProductos] = useState([]);
   const [extrasArroz, setExtrasArroz] = useState([]);
   const [salsas, setSalsas] = useState([]);
 
-  // Estados del Carrito
   const [pedido, setPedido] = useState([]);
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
@@ -62,15 +63,11 @@ export default function App() {
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
   const [conHuevo, setConHuevo] = useState(false);
   const [salsasElegidas, setSalsasElegidas] = useState([]);
-  
   const [hoveredCardId, setHoveredCardId] = useState(null);
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // ==========================================
-  // 🔥 CONEXIÓN A FIREBASE
-  // ==========================================
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (snap) => setProductos(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (snap) => setExtrasArroz(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -78,26 +75,23 @@ export default function App() {
     const unsubTienda = onSnapshot(doc(db, "ajuste", "tienda"), (snap) => {
       if (snap.exists()) setTiendaAbierta(snap.data().abierta);
     });
-
     return () => { unsubProd(); unsubExtras(); unsubSalsas(); unsubTienda(); };
   }, []);
 
-  // --- ACCESO SEGURO ---
   const accesoSecreto = () => {
     const clave = window.prompt("🔐 Ingresa el PIN:");
     if (clave === "mono2026") { setIsAdmin(true); } 
     else if (clave !== null) { alert("❌ PIN incorrecto."); }
   };
 
-  // --- FUNCIONES ADMIN ---
   const restaurarBaseDeDatos = async () => {
-    if(!window.confirm("¿Seguro que quieres subir los productos originales a la base de datos?")) return;
+    if(!window.confirm("¿Seguro que quieres subir todo el menú y las salsas a Firebase?")) return;
     try {
       await updateDoc(doc(db, "ajuste", "tienda"), { abierta: true }).catch(() => setDoc(doc(db, "ajuste", "tienda"), { abierta: true }));
       productosBase.forEach(p => setDoc(doc(db, "productos", p.id), p));
       extrasArrozBase.forEach(e => setDoc(doc(db, "extrasArroz", e.id), e));
-      salsasBase.forEach(s => setDoc(doc(db, "salsas", s.nombre), s));
-      alert("✅ Base de datos restaurada con éxito.");
+      salsasBase.forEach(s => setDoc(doc(db, "salsas", s.nombre), s)); // Usamos el nombre como ID
+      alert("✅ Base de datos restaurada con éxito. ¡Refresca la página!");
     } catch (e) {
       alert("Error al restaurar.");
       console.error(e);
@@ -133,7 +127,6 @@ export default function App() {
   const cambiarPrecioExtraArroz = (e, nuevoPrecio) => actualizarEnFirebase("extrasArroz", e.id, { precio: parseInt(nuevoPrecio) || 0 });
   const toggleSalsa = (s) => actualizarEnFirebase("salsas", s.id, { disponible: !s.disponible });
 
-  // --- FUNCIONES CLIENTE ---
   const manejarSalsa = (salsaObj) => {
     if (!tiendaAbierta || !salsaObj || !salsaObj.disponible) return;
     setSalsasElegidas(prev => prev.includes(salsaObj.nombre) ? prev.filter(s => s !== salsaObj.nombre) : [...prev, salsaObj.nombre]);
@@ -234,17 +227,11 @@ export default function App() {
                 {tiendaAbierta ? 'Cerrar Negocio' : 'Abrir Negocio'}
               </button>
             </div>
+            {/* BOTÓN MÁGICO DE RESTAURACIÓN */}
+            <button onClick={restaurarBaseDeDatos} style={{width: '100%', marginTop: '15px', background: '#b91c1c', color: 'white', padding: '15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px'}}>
+              🔄 SUBIR DATOS A FIREBASE (Hundir solo 1 vez)
+            </button>
           </div>
-
-          {productos.length === 0 && (
-            <div style={{background: '#fee2e2', padding: '20px', borderRadius: '20px', marginBottom: '20px', textAlign: 'center', border: '2px dashed #b91c1c'}}>
-              <h3 style={{color: '#b91c1c', margin: '0 0 10px 0'}}>⚠️ Base de Datos Vacía</h3>
-              <p>Haz clic aquí para subir tus productos a Firebase.</p>
-              <button onClick={restaurarBaseDeDatos} style={{background: '#b91c1c', color: 'white', padding: '15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer'}}>
-                Subir mis datos a la nube ☁️
-              </button>
-            </div>
-          )}
 
           <div style={{background: 'white', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden', marginBottom: '20px'}}>
             <div style={{padding: '20px', background: MONO_AMARILLO, borderBottom: '1px solid #eee'}}><h3 style={{margin: 0}}>Productos Principales</h3></div>
@@ -308,7 +295,7 @@ export default function App() {
             <div style={{flex: '1 1 300px', background: 'white', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden', paddingBottom: '10px'}}>
               <div style={{padding: '15px 20px', background: MONO_AMARILLO, borderBottom: '1px solid #eee'}}><h3 style={{margin: 0}}>Salsas</h3></div>
               {salsas.map(s => (
-                <div key={s.nombre} style={{display: 'flex', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid #eee'}}>
+                <div key={s.id} style={{display: 'flex', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid #eee'}}>
                   <span>{s.nombre}</span>
                   <MiniSwitch activo={s.disponible} onClick={() => toggleSalsa(s)} />
                 </div>
@@ -340,23 +327,17 @@ export default function App() {
         </div>
       </header>
 
-      {/* ✅ BARRA DE MENÚ (FRITOS, BEBIDAS, ETC) */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px 20px', maxWidth: '800px', margin: '0 auto 30px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px 20px', maxWidth: '800px', margin: '0 auto 30px', whiteSpace: 'nowrap' }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
           <button 
             key={cat}
             onClick={() => setCategoriaActiva(cat)}
             style={{ 
-              padding: '12px 25px', 
-              borderRadius: '25px', 
-              border: 'none', 
+              padding: '12px 25px', borderRadius: '25px', border: 'none', 
               backgroundColor: categoriaActiva === cat ? MONO_NARANJA : '#ffffff', 
               color: categoriaActiva === cat ? 'white' : MONO_TEXTO,
-              fontWeight: 'bold', 
-              fontSize: '16px',
-              cursor: 'pointer', 
+              fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', 
               boxShadow: categoriaActiva === cat ? '0 4px 15px rgba(249, 115, 22, 0.4)' : '0 2px 8px rgba(0,0,0,0.05)',
-              whiteSpace: 'nowrap',
               transition: 'all 0.3s ease'
             }}
           >
@@ -379,12 +360,10 @@ export default function App() {
       )}
 
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px', opacity: tiendaAbierta ? 1 : 0.6}}>
-        
-        {/* ✅ AQUÍ ESTÁ EL FILTRO INTELIGENTE Y EL ORDENADOR */}
         {productos
           .filter(p => {
             let cat = p.categoria;
-            if (!cat) { // Si el producto no tiene categoria escrita, la adivina
+            if (!cat) { 
               if (p.esArroz) cat = "Arroces";
               else if (p.esJugo || p.nombre.toLowerCase().includes("agua") || p.nombre.toLowerCase().includes("cola") || p.nombre.toLowerCase().includes("malta")) cat = "Bebidas";
               else if (p.esDesayuno) cat = "Desayunos";
@@ -393,29 +372,16 @@ export default function App() {
             return cat === categoriaActiva;
           })
           .sort((a, b) => {
-            // 📌 ORDEN ESPECÍFICO PARA LOS FRITOS
-            const ordenFritos = [
-              "Empanada Crujiente",
-              "Arepa con Huevo y Carne",
-              "Papa Rellena de la Casa",
-              "Pastel de Pollo Hojaldrado",
-              "Palitos de Queso Costeño",
-              "Buñuelos Calientitos"
-            ];
-            
+            const ordenFritos = ["Empanada Crujiente", "Arepa con Huevo y Carne", "Papa Rellena de la Casa", "Pastel de Pollo Hojaldrado", "Palitos de Queso Costeño", "Buñuelos Calientitos"];
             let posA = ordenFritos.indexOf(a.nombre);
             let posB = ordenFritos.indexOf(b.nombre);
-            
-            // Si no están en la lista específica (pasa con las bebidas u otros), se mandan al final o se dejan igual
             if (posA === -1) posA = 999;
             if (posB === -1) posB = 999;
-            
             return posA - posB;
           })
           .map(p => {
             const todoAgotado = !p.disponible;
             const isHovered = hoveredCardId === p.id;
-            
             let precioMostrar = p.precio || 0;
             if (p.esJugo && p.tamanos) {
               const tamSeleccionado = tamanosJugo[p.id];
@@ -501,20 +467,25 @@ export default function App() {
           })}
       </div>
 
+      {/* ✅ AQUÍ ESTÁN LAS SALSAS COMO TÚ LAS TENÍAS */}
       {tiendaAbierta && (
         <div style={{maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)'}}>
           <h3 style={{color: MONO_NARANJA, margin: '0 0 25px 0', fontSize: '26px', fontWeight: '900'}}>🧂 ¿Qué salsas deseas?</h3>
-          <div style={{display: 'flex', flexWrap: 'wrap', gap: '15px'}}>
-            {salsas.map(salsaObj => {
-              const seleccionada = salsasElegidas.includes(salsaObj.nombre);
-              const agotada = !salsaObj.disponible;
-              return (
-                <button key={salsaObj.nombre} onClick={() => manejarSalsa(salsaObj)} disabled={agotada} style={{ padding: '14px 28px', borderRadius: '40px', fontSize: '17px', border: 'none', cursor: agotada ? 'not-allowed' : 'pointer', background: seleccionada ? MONO_NARANJA : (agotada ? '#f0f0f0' : MONO_AMARILLO), color: seleccionada ? 'white' : (agotada ? '#bbb' : MONO_TEXTO), fontWeight: seleccionada ? 'bold' : 'normal', transition: 'all 0.2s', boxShadow: seleccionada ? '0 5px 12px rgba(249, 115, 22, 0.4)' : '0 2px 5px rgba(0,0,0,0.05)', transform: seleccionada ? 'scale(1.08)' : 'scale(1)', textDecoration: agotada ? 'line-through' : 'none' }}>
-                  {seleccionada ? `✓ ${salsaObj.nombre}` : salsaObj.nombre} {agotada ? "🚫" : ""}
-                </button>
-              );
-            })}
-          </div>
+          {salsas.length === 0 ? (
+            <p style={{textAlign: 'center', color: '#666'}}>Buscando salsas en Firebase...</p>
+          ) : (
+            <div style={{display: 'flex', flexWrap: 'wrap', gap: '15px'}}>
+              {salsas.map(salsaObj => {
+                const seleccionada = salsasElegidas.includes(salsaObj.nombre);
+                const agotada = !salsaObj.disponible;
+                return (
+                  <button key={salsaObj.id} onClick={() => manejarSalsa(salsaObj)} disabled={agotada} style={{ padding: '14px 28px', borderRadius: '40px', fontSize: '17px', border: 'none', cursor: agotada ? 'not-allowed' : 'pointer', background: seleccionada ? MONO_NARANJA : (agotada ? '#f0f0f0' : MONO_AMARILLO), color: seleccionada ? 'white' : (agotada ? '#bbb' : MONO_TEXTO), fontWeight: seleccionada ? 'bold' : 'normal', transition: 'all 0.2s', boxShadow: seleccionada ? '0 5px 12px rgba(249, 115, 22, 0.4)' : '0 2px 5px rgba(0,0,0,0.05)', transform: seleccionada ? 'scale(1.08)' : 'scale(1)', textDecoration: agotada ? 'line-through' : 'none' }}>
+                    {seleccionada ? `✓ ${salsaObj.nombre}` : salsaObj.nombre} {agotada ? "🚫" : ""}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
