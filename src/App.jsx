@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { db } from './firebaseConfig';
-import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore"; // Importamos lo necesario
+import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore"; 
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
 import Header from './components/Header';
@@ -22,7 +22,6 @@ const extrasArrozBase = [
   { id: 'queso', nombre: "Queso Extra", disponible: true, precio: 1000 }
 ];
 
-// 🔐 AdminGuard protege solo /admin
 function AdminGuard({ children }) {
   const [acceso, setAcceso] = useState(false);
   const navigate = useNavigate();
@@ -39,13 +38,12 @@ function AdminGuard({ children }) {
   return acceso ? children : <div style={{ padding: '50px', textAlign: 'center' }}>Verificando...</div>;
 }
 
-// Layouts
 function AdminLayout({ children }) {
   return <div style={{ minHeight: '100vh', width: '100%', backgroundColor: '#fff', padding: '20px' }}>{children}</div>;
 }
 
 function ClientLayout({ children }) {
-  return <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '140px' }}>{children}</div>;
+  return <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '140px', position: 'relative' }}>{children}</div>;
 }
 
 export default function App() {
@@ -57,79 +55,86 @@ export default function App() {
     return g ? JSON.parse(g) : [];
   });
   
-  // 🔘 Estado de la tienda (Empieza en true por defecto)
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
 
-  const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
-  const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
-
-  // 🔥 ESCUCHAR FIREBASE EN TIEMPO REAL
   useEffect(() => {
-    // 1. Escuchar Productos
     const unsubProd = onSnapshot(collection(db, "productos"), (snapshot) => {
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setProductos(docs);
     });
 
-    // 2. Escuchar Interruptor de Tienda (Colección ajustes -> documento tienda)
     const unsubTienda = onSnapshot(doc(db, "ajustes", "tienda"), (snapshot) => {
       if (snapshot.exists()) {
         setTiendaAbierta(snapshot.data().abierta);
       }
     });
 
-    return () => {
-      unsubProd();
-      unsubTienda();
-    };
+    return () => { unsubProd(); unsubTienda(); };
   }, []);
 
   useEffect(() => {
     localStorage.setItem('pedido_mono', JSON.stringify(pedido));
   }, [pedido]);
 
-  // 🕹️ FUNCIÓN PARA CAMBIAR EL ESTADO GLOBAL (Manda la orden a Firebase)
   const toggleTiendaGlobal = async () => {
     try {
       const tiendaRef = doc(db, "ajustes", "tienda");
       await updateDoc(tiendaRef, { abierta: !tiendaAbierta });
       toast.success(tiendaAbierta ? "🔴 Tienda Cerrada" : "🟢 Tienda Abierta");
     } catch (error) {
-      console.error("Error al cambiar estado:", error);
-      toast.error("No se pudo conectar con Firebase");
+      toast.error("Error de conexión");
     }
   };
 
-  // Preparamos las props para el admin
-  const adminProps = { 
-    tiendaAbierta, 
-    setTiendaAbierta: toggleTiendaGlobal, // Usamos la función de Firebase
-    productos, 
-    salsas, 
-    extrasArroz 
-  };
+  const adminProps = { tiendaAbierta, setTiendaAbierta: toggleTiendaGlobal, productos, salsas, extrasArroz };
 
   return (
     <HashRouter>
       <Toaster position="top-center" />
       <Routes>
-        {/* Vista cliente */}
         <Route path="/" element={
           <ClientLayout>
-            <Header accesoSecreto={() => {}} tipoArrozHoy={tipoArrozHoy} />
-            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-              {/* Si la tienda está cerrada, puedes mostrar un mensaje global aquí */}
+            <Header accesoSecreto={() => {}} tipoArrozHoy={"Pollo"} />
+            
+            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px', position: 'relative' }}>
+              
+              {/* 🛡️ ESTO ES LO QUE BLOQUEA EL CELULAR */}
               {!tiendaAbierta && (
-                <div style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '15px', borderRadius: '10px', textAlign: 'center', marginBottom: '20px', fontWeight: 'bold' }}>
-                  🚫 LO SENTIMOS, LA TIENDA ESTÁ CERRADA POR AHORA
+                <div style={{
+                  position: 'fixed',
+                  top: 0, left: 0, right: 0, bottom: 0,
+                  backgroundColor: 'rgba(0,0,0,0.7)',
+                  zIndex: 9999,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  color: 'white',
+                  textAlign: 'center',
+                  padding: '20px',
+                  backdropFilter: 'blur(5px)'
+                }}>
+                  <span style={{ fontSize: '60px' }}>😴</span>
+                  <h1 style={{ fontSize: '2rem', marginBottom: '10px' }}>¡LO SENTIMOS!</h1>
+                  <p style={{ fontSize: '1.2rem' }}>El Mono está descansando o ya cerramos por hoy.</p>
+                  <p style={{ backgroundColor: '#fbbf24', color: 'black', padding: '10px 20px', borderRadius: '20px', marginTop: '20px', fontWeight: 'bold' }}>
+                    Vuelve pronto para los mejores fritos
+                  </p>
                 </div>
               )}
-              {/* Aquí van tus componentes de categorías y productos */}
+
+              <div style={{ opacity: tiendaAbierta ? 1 : 0.2, pointerEvents: tiendaAbierta ? 'auto' : 'none' }}>
+                {/* AQUÍ PEGA TUS COMPONENTES DE CATEGORÍAS Y PRODUCTOS 
+                   (Ejemplo: <Categorias /> <ListaProductos />)
+                */}
+                <h2 style={{ textAlign: 'center', marginTop: '50px' }}>Menú de Hoy</h2>
+                <p style={{ textAlign: 'center' }}>Los productos aparecerán aquí si Firebase está conectado.</p>
+              </div>
+
             </main>
           </ClientLayout>
         } />
 
-        {/* Vista admin protegida */}
         <Route path="/admin" element={
           <AdminGuard>
             <AdminLayout>
