@@ -1,6 +1,9 @@
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
 
+// CORRECCIÓN DE RUTA
+import ProductCard from './ProductCard'; 
+
 export default function AdminPanel({ 
   setIsAdmin, tiendaAbierta, setTiendaAbierta, productos, toggleProducto, cambiarPrecioProducto, 
   toggleSabor, toggleTamano, cambiarPrecioTamano, extrasArroz, toggleExtraArroz, 
@@ -30,72 +33,18 @@ export default function AdminPanel({
           </button>
         </div>
 
-        {/* --- PRODUCTOS --- */}
         <div style={{ background: 'white', borderRadius: '25px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
           <div style={{ padding: '15px 20px', background: MONO_AMARILLO }}><h3 style={{ margin: 0 }}>Menú Principal</h3></div>
           {productos.map(p => (
-            <div key={p.id} style={{ borderBottom: '1px solid #eee', padding: '15px 20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 'bold' }}>{p.nombre}</span>
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  {!p.tamanos && <input type="number" value={p.precio || ""} onChange={(e) => cambiarPrecioProducto(p.id, e.target.value)} style={{ width: '70px', padding: '5px' }} />}
-                  <MiniSwitch activo={p.disponible} onClick={() => toggleProducto(p.id)} />
-                </div>
-              </div>
-              {/* Sabores */}
-              {p.opciones && (
-                <div style={{ marginTop: '10px', paddingLeft: '15px', borderLeft: '2px solid #f97316' }}>
-                  {p.opciones.map(opt => (
-                    <div key={opt.nombre} style={{ display: 'flex', justifyContent: 'space-between', margin: '5px 0' }}>
-                      <span style={{ fontSize: '13px' }}>{opt.nombre}</span>
-                      <MiniSwitch activo={opt.disponible} onClick={() => toggleSabor(p.id, opt.nombre)} />
-                    </div>
-                  ))}
-                </div>
-              )}
-              {/* Tamaños */}
-              {p.tamanos && (
-                <div style={{ marginTop: '10px', paddingLeft: '15px', borderLeft: '2px solid #f97316' }}>
-                  {p.tamanos.map(tam => (
-                    <div key={tam.nombre} style={{ display: 'flex', justifyContent: 'space-between', margin: '5px 0' }}>
-                      <span style={{ fontSize: '13px' }}>{tam.nombre}</span>
-                      <div style={{ display: 'flex', gap: '10px' }}>
-                        <input type="number" value={tam.precio || ""} onChange={(e) => cambiarPrecioTamano(p.id, tam.nombre, e.target.value)} style={{ width: '60px' }} />
-                        <MiniSwitch activo={tam.disponible} onClick={() => toggleTamano(p.id, tam.nombre)} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* --- EXTRAS ARROZ (AQUÍ ESTÁN TUS SWITCHES) --- */}
-        <div style={{ background: 'white', borderRadius: '25px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <div style={{ padding: '15px 20px', background: MONO_AMARILLO }}><h3 style={{ margin: 0 }}>Añadidos del Arroz</h3></div>
-          {extrasArroz.map(e => (
-            <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid #eee' }}>
-              <span>{e.nombre}</span>
-              <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                <input type="number" value={e.precio || ""} onChange={(ev) => cambiarPrecioExtraArroz(e.id, ev.target.value)} style={{ width: '65px', padding: '5px' }} />
-                <MiniSwitch activo={e.disponible} onClick={() => toggleExtraArroz(e.id)} />
+            <div key={p.id} style={{ borderBottom: '1px solid #eee', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 'bold' }}>{p.nombre}</span>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                {!p.tamanos && <input type="number" value={p.precio || ""} onChange={(e) => cambiarPrecioProducto(p.id, e.target.value)} style={{ width: '70px', padding: '5px' }} />}
+                <MiniSwitch activo={p.disponible} onClick={() => toggleProducto(p.id)} />
               </div>
             </div>
           ))}
         </div>
-
-        {/* --- SALSAS (AQUÍ ESTÁN TUS SWITCHES) --- */}
-        <div style={{ background: 'white', borderRadius: '25px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <div style={{ padding: '15px 20px', background: MONO_AMARILLO }}><h3 style={{ margin: 0 }}>Salsas</h3></div>
-          {salsas.map(s => (
-            <div key={s.nombre} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid #eee' }}>
-              <span>{s.nombre}</span>
-              <MiniSwitch activo={s.disponible} onClick={() => toggleSalsa(s.nombre)} />
-            </div>
-          ))}
-        </div>
-
       </div>
     </div>
   );
