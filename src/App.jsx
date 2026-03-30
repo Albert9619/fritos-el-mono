@@ -9,23 +9,39 @@ import AdminPanel from './components/AdminPanel';
 
 const MONO_CREMA = "#fffbeb";
 
+function AdminGuard({ children }) {
+  const [acceso, setAcceso] = useState(false);
+  const navigate = useNavigate();
+  useEffect(() => {
+    const pin = window.prompt("🔐 Acceso Restringido. Ingresa el PIN:");
+    if (pin === "mono2026") { setAcceso(true); } else { navigate("/"); }
+  }, [navigate]);
+  return acceso ? children : <div style={{ padding: '50px', textAlign: 'center' }}>Verificando...</div>;
+}
+
 export default function App() {
   const [productos, setProductos] = useState([]);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
-  const [categoriaActiva, setCategoriaActiva] = useState("Fritos"); // Empezamos en Fritos
+  const [categoriaActiva, setCategoriaActiva] = useState("Fritos");
 
   useEffect(() => {
     // 1. Escuchar fritos
     const unsubProd = onSnapshot(collection(db, "productos"), (snapshot) => {
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      console.log("Productos cargados:", docs); // Mira esto en la consola del navegador
       setProductos(docs);
+    }, (error) => {
+      console.error("Error en Firebase Productos:", error);
+      toast.error("Error al leer productos");
     });
 
-    // 2. Escuchar interruptor
-    const unsubTienda = onSnapshot(doc(db, "ajustes", "tienda"), (snapshot) => {
+    // 2. Escuchar interruptor (Colección: ajuste)
+    const unsubTienda = onSnapshot(doc(db, "ajuste", "tienda"), (snapshot) => {
       if (snapshot.exists()) {
         setTiendaAbierta(snapshot.data().abierta);
       }
+    }, (error) => {
+      console.error("Error en Firebase Ajuste:", error);
     });
 
     return () => { unsubProd(); unsubTienda(); };
@@ -33,10 +49,13 @@ export default function App() {
 
   const toggleTiendaGlobal = async () => {
     try {
-      const tiendaRef = doc(db, "ajustes", "tienda");
+      const tiendaRef = doc(db, "ajuste", "tienda");
       await updateDoc(tiendaRef, { abierta: !tiendaAbierta });
       toast.success(tiendaAbierta ? "🔴 Tienda Cerrada" : "🟢 Tienda Abierta");
-    } catch (e) { toast.error("Error en Firebase"); }
+    } catch (e) { 
+      console.error(e);
+      toast.error("No tienes permiso para cambiar esto"); 
+    }
   };
 
   return (
@@ -45,10 +64,11 @@ export default function App() {
       
       {/* 🚫 BLOQUEO GLOBAL */}
       {!tiendaAbierta && window.location.hash !== "#/admin" && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 99999, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: 'white', textAlign: 'center', padding: '20px' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 99999, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: 'white', textAlign: 'center', padding: '20px', backdropFilter: 'blur(5px)' }}>
           <h1 style={{ fontSize: '4rem' }}>🐒</h1>
-          <h2 style={{ fontSize: '2rem' }}>¡EL MONO ESTÁ CERRADO!</h2>
-          <p>Vuelve pronto por tus fritos favoritos.</p>
+          <h2 style={{ fontSize: '2rem', color: '#fbbf24' }}>¡EL MONO ESTÁ CERRADO!</h2>
+          <p>Estamos preparando más fritos. Vuelve pronto.</p>
+          <button onClick={() => window.location.reload()} style={{marginTop: '20px', padding: '10px', borderRadius: '10px', border: 'none'}}>Reintentar conexión</button>
         </div>
       )}
 
@@ -59,43 +79,68 @@ export default function App() {
             
             <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
               
-              {/* 📂 CATEGORÍAS */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
+              {/* BARRA DE DIAGNÓSTICO (Solo para que tú veas qué pasa) */}
+              <div style={{ backgroundColor: '#333', color: '#0f0', padding: '5px', fontSize: '10px', borderRadius: '5px', marginBottom: '10px', textAlign: 'center' }}>
+                DEBUG: {productos.length} productos cargados | Tienda: {tiendaAbierta ? "Abierta" : "Cerrada"}
+              </div>
+
+              {/* BOTONES DE CATEGORÍA */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px' }}>
                 {["Fritos", "Arroces", "Bebidas"].map(cat => (
                   <button 
                     key={cat}
                     onClick={() => setCategoriaActiva(cat)}
-                    style={{ padding: '10px 20px', borderRadius: '20px', border: 'none', backgroundColor: categoriaActiva === cat ? '#fbbf24' : '#e5e7eb', fontWeight: 'bold', cursor: 'pointer' }}
+                    style={{ padding: '10px 25px', borderRadius: '25px', border: 'none', backgroundColor: categoriaActiva === cat ? '#fbbf24' : '#fff', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
                   >
                     {cat}
                   </button>
                 ))}
               </div>
 
-              {/* 🍕 LISTA DE PRODUCTOS */}
+              {/* LISTA DE PRODUCTOS */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
                 {productos
-                  .filter(p => p.categoria === categoriaActiva)
+                  .filter(p => p.categoria?.toLowerCase() === categoriaActiva.toLowerCase())
                   .map(p => (
-                    <div key={p.id} style={{ backgroundColor: 'white', padding: '15px', borderRadius: '15px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', textAlign: 'center' }}>
-                      <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '10px' }} />
-                      <h3 style={{ margin: '10px 0' }}>{p.nombre}</h3>
-                      <p style={{ fontWeight: 'bold', color: '#b91c1c', fontSize: '1.2rem' }}>${p.precio}</p>
-                      <button style={{ width: '100%', padding: '10px', backgroundColor: '#fbbf24', border: 'none', borderRadius: '10px', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer' }}>
+                    <div key={p.id} style={{ backgroundColor: 'white', padding: '15px', borderRadius: '20px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)', textAlign: 'center' }}>
+                      <img 
+                        src={p.imagen} 
+                        alt={p.nombre} 
+                        onError={(e) => e.target.src = "https://via.placeholder.com/200?text=Frito+El+Mono"}
+                        style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '15px' }} 
+                      />
+                      <h3 style={{ margin: '15px 0 5px 0' }}>{p.nombre}</h3>
+                      <p style={{ fontWeight: 'bold', color: '#b91c1c', fontSize: '1.4rem', margin: '5px 0' }}>${p.precio}</p>
+                      <button style={{ width: '100%', padding: '12px', backgroundColor: '#fbbf24', border: 'none', borderRadius: '12px', fontWeight: 'bold', marginTop: '10px', cursor: 'pointer' }}>
                         Agregar al pedido
                       </button>
                     </div>
                   ))}
               </div>
 
-              {productos.length === 0 && <p style={{ textAlign: 'center' }}>Cargando productos desde Firebase...</p>}
+              {productos.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '50px' }}>
+                   <p>Esperando a que Firebase responda... 🍗</p>
+                   <p style={{ fontSize: '0.8rem', color: 'gray' }}>Si esto no cambia, es que las REGLAS de Firebase están bloqueando el acceso.</p>
+                </div>
+              )}
             </main>
           </div>
         } />
 
         <Route path="/admin" element={
-          <AdminPanel tiendaAbierta={tiendaAbierta} setTiendaAbierta={toggleTiendaGlobal} productos={productos} />
+          <AdminGuard>
+            <div style={{backgroundColor: '#fff', minHeight: '100vh'}}>
+              <AdminPanel 
+                tiendaAbierta={tiendaAbierta} 
+                setTiendaAbierta={toggleTiendaGlobal} 
+                productos={productos} 
+              />
+            </div>
+          </AdminGuard>
         } />
+
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </HashRouter>
   );
