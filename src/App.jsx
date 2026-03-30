@@ -104,6 +104,17 @@ export default function App() {
     } catch (e) {
       alert("Error al restaurar.");
       console.error(e);
+      // 🧀 FORZAMOS LA CREACIÓN DEL QUESO ESPECÍFICAMENTE
+      await setDoc(doc(db, "extrasArroz", "queso"), {
+        nombre: "Tajada de Queso",
+        precio: 1000,
+        disponible: true
+      });
+
+      alert("✅ ¡Queso añadido con éxito! Revisa el Panel de Admin.");
+    } catch (e) {
+      console.error(e);
+      alert("Error al subir el queso.");
     }
   };
 
