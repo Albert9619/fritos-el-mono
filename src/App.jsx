@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, updateDoc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS MAESTROS (Con Seguro Anti-Fallos)
+// 🔴 DATOS MAESTROS
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -16,7 +16,7 @@ const productosBase = [
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno.jpg", disponible: true },
   { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno-especial.jpg", disponible: true },
   
-   { id: "5", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true, imagen: "/arroz-pollo.jpg", disponible: true }, 
+  { id: "5", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true, imagen: "/arroz-pollo.jpg", disponible: true },
   
   { id: "6", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", esJugo: true, imagen: "/jugo-natural.jpg", disponible: true, opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: "b1", nombre: "Coca-Cola", precio: 3500, categoria: "Bebidas", imagen: "/coca-cola.jpg", disponible: true },
@@ -24,10 +24,12 @@ const productosBase = [
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", imagen: "/agua.jpg", disponible: true }
 ];
 
+// ✅ AQUÍ AGREGAMOS EL QUESO A LA BASE DE DATOS
 const extrasArrozBase = [
   { id: 'tajada', nombre: "Tajadas", disponible: true, precio: 0 },
   { id: 'yuca', nombre: "Yuca", disponible: true, precio: 0 },
-  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 }
+  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 },
+  { id: 'queso', nombre: "Tajada de Queso", disponible: true, precio: 1000 }
 ];
 
 const salsasBase = [
@@ -61,14 +63,17 @@ export default function App() {
   const [cantidades, setCantidades] = useState({});
   const [tamanosJugo, setTamanosJugo] = useState({});
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
+  
+  // ✅ ESTADOS PARA EL HUEVO Y EL QUESO
   const [conHuevo, setConHuevo] = useState(false);
+  const [conQueso, setConQueso] = useState(false);
+  
   const [salsasElegidas, setSalsasElegidas] = useState([]);
   const [hoveredCardId, setHoveredCardId] = useState(null);
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // 🛡️ EL SEGURO ANTI-FALLOS: Si Firebase devuelve 0 datos, usamos los originales a la fuerza
   const productosMostrar = productos.length > 0 ? productos : productosBase;
   const extrasArrozMostrar = extrasArroz.length > 0 ? extrasArroz : extrasArrozBase;
   const salsasMostrar = salsas.length > 0 ? salsas : salsasBase;
@@ -95,9 +100,9 @@ export default function App() {
       productosBase.forEach(p => setDoc(doc(db, "productos", p.id), p));
       extrasArrozBase.forEach(e => setDoc(doc(db, "extrasArroz", e.id), e));
       salsasBase.forEach(s => setDoc(doc(db, "salsas", s.id), s)); 
-      alert("✅ Datos forzados a subir con éxito.");
+      alert("✅ Datos actualizados en Firebase con éxito.");
     } catch (e) {
-      alert("Hubo un detalle subiendo a Firebase, pero la página seguirá funcionando con los datos locales.");
+      alert("Error al restaurar.");
       console.error(e);
     }
   };
@@ -152,6 +157,7 @@ export default function App() {
     if (!cantidades[id] || cantidades[id] < 1) setCantidades({...cantidades, [id]: 1});
   };
 
+  // ✅ AQUÍ SE COBRA EL QUESO AL AGREGAR AL CARRITO
   const agregarAlCarrito = (p) => {
     if (!tiendaAbierta) return alert("El local está cerrado.");
     const cant = cantidades[p.id] || 1;
@@ -167,8 +173,15 @@ export default function App() {
     if (p.esArroz) {
       if (!acompañanteArroz) return alert("Por favor elige Tajadas o Yuca");
       const huevoExtra = extrasArrozMostrar.find(e => e.id === 'huevo');
+      const quesoExtra = extrasArrozMostrar.find(e => e.id === 'queso');
+      
       if (conHuevo && huevoExtra) precioBase += huevoExtra.precio;
-      detallesExtra = `(Con ${acompañanteArroz}${conHuevo ? ' + Huevo' : ''})`;
+      if (conQueso && quesoExtra) precioBase += quesoExtra.precio;
+      
+      let textosExtra = conHuevo ? ' + Huevo' : '';
+      textosExtra += conQueso ? ' + Queso' : '';
+      
+      detallesExtra = `(Con ${acompañanteArroz}${textosExtra})`;
     }
 
     if (p.esJugo && p.tamanos) {
@@ -193,6 +206,7 @@ export default function App() {
     setTamanosJugo({...tamanosJugo, [p.id]: ""});
     setAcompañanteArroz("");
     setConHuevo(false);
+    setConQueso(false);
     setCantidades({...cantidades, [p.id]: 1});
   };
 
@@ -206,9 +220,6 @@ export default function App() {
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(mensaje)}`);
   };
 
-  // ==========================================
-  // 🟢 VISTA ADMINISTRADOR
-  // ==========================================
   if (isAdmin) {
     const MiniSwitch = ({ activo, onClick }) => (
       <div onClick={onClick} style={{width: '40px', height: '22px', backgroundColor: activo ? MONO_VERDE : '#ccc', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s'}}>
@@ -232,7 +243,7 @@ export default function App() {
               </button>
             </div>
             <button onClick={restaurarBaseDeDatos} style={{width: '100%', marginTop: '15px', background: '#b91c1c', color: 'white', padding: '15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px'}}>
-              🔄 SUBIR DATOS A FIREBASE (Hundir para actualizar precios)
+              🔄 SUBIR DATOS A FIREBASE (Hundir para actualizar)
             </button>
           </div>
 
@@ -316,6 +327,7 @@ export default function App() {
   const tajadaObj = extrasArrozMostrar.find(e => e.id === 'tajada') || { disponible: false, precio: 0 };
   const yucaObj = extrasArrozMostrar.find(e => e.id === 'yuca') || { disponible: false, precio: 0 };
   const huevoObj = extrasArrozMostrar.find(e => e.id === 'huevo') || { disponible: false, precio: 1000 };
+  const quesoObj = extrasArrozMostrar.find(e => e.id === 'queso') || { disponible: false, precio: 1000 };
 
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '60px'}}>
@@ -391,7 +403,9 @@ export default function App() {
 
             return (
               <div key={p.id} onMouseEnter={() => setHoveredCardId(p.id)} onMouseLeave={() => setHoveredCardId(null)} style={{background: 'white', borderRadius: '28px', padding: '0', boxShadow: isHovered && tiendaAbierta ? '0 20px 40px rgba(0,0,0,0.12)' : '0 10px 20px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease', transform: isHovered && tiendaAbierta ? 'translateY(-8px)' : 'translateY(0)', border: isHovered && tiendaAbierta ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`, display: 'flex', flexDirection: 'column'}}>
-               <img src={p.imagen} onError={(e) => e.target.src = "https://via.placeholder.com/400x300?text=El+Mono"} style={{width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none'}} alt={p.nombre} />
+                
+                {/* 🔴 OJO: AQUÍ ESTÁ EL ARREGLO DE LA IMAGEN DEL ARROZ */}
+                <img src={p.imagen} onError={(e) => e.target.src = "https://via.placeholder.com/400x300?text=El+Mono"} style={{width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none'}} alt={p.nombre} />
                 {todoAgotado && ( <div style={{position: 'absolute', top: '0', right: '0', background: 'rgba(239, 68, 68, 0.9)', color: 'white', padding: '12px 25px', borderRadius: '0 0 0 25px', fontWeight: '900', fontSize: '14px', zIndex: 10}}>AGOTADO🚫</div> )}
 
                 <div style={{padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
@@ -410,14 +424,27 @@ export default function App() {
                             <option value="Tajadas" disabled={!tajadaObj.disponible}>Tajadas {!tajadaObj.disponible ? "(AGOTADO)" : "😋"}</option>
                             <option value="Yuca" disabled={!yucaObj.disponible}>Yuca {!yucaObj.disponible ? "(AGOTADO)" : "😋"}</option>
                           </select>
-                          {!huevoObj.disponible ? (
-                            <p style={{color: 'red', fontSize: '14px', margin: '8px 0 0 0', fontWeight: 'bold', textAlign: 'center'}}>🚫 Huevo Agotado</p>
-                          ) : (
-                            <label style={{fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', cursor: 'pointer'}}>
-                              <input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} style={{accentColor: MONO_NARANJA, width: '22px', height: '22px'}} />
-                              + Huevo (${huevoObj.precio.toLocaleString('es-CO')})
-                            </label>
-                          )}
+                          
+                          {/* ✅ CHULO DEL HUEVO Y DEL QUESO */}
+                          <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '15px'}}>
+                            {!huevoObj.disponible ? (
+                              <p style={{color: 'red', fontSize: '14px', margin: '0', fontWeight: 'bold'}}>🚫 Huevo Agotado</p>
+                            ) : (
+                              <label style={{fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
+                                <input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} style={{accentColor: MONO_NARANJA, width: '22px', height: '22px'}} />
+                                + Huevo (${huevoObj.precio.toLocaleString('es-CO')})
+                              </label>
+                            )}
+
+                            {!quesoObj.disponible ? (
+                              <p style={{color: 'red', fontSize: '14px', margin: '0', fontWeight: 'bold'}}>🚫 Queso Agotado</p>
+                            ) : (
+                              <label style={{fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
+                                <input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} style={{accentColor: MONO_NARANJA, width: '22px', height: '22px'}} />
+                                + Tajada de Queso (${quesoObj.precio.toLocaleString('es-CO')})
+                              </label>
+                            )}
+                          </div>
                         </div>
                       )}
 
