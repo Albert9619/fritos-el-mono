@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
+import { db } from './firebaseConfig';
+import { doc, setDoc } from "firebase/firestore";
 
 import Header from './components/Header';
 import Carrito from './components/Carrito';
@@ -140,52 +142,75 @@ export default function App() {
 
   if (isAdmin) return <AdminPanel setIsAdmin={setIsAdmin} tiendaAbierta={tiendaAbierta} setTiendaAbierta={setTiendaAbierta} productos={productos} toggleProducto={toggleProducto} cambiarPrecioProducto={cambiarPrecioProducto} toggleSabor={toggleSabor} toggleTamano={toggleTamano} cambiarPrecioTamano={cambiarPrecioTamano} extrasArroz={extrasArroz} toggleExtraArroz={toggleExtraArroz} cambiarPrecioExtraArroz={cambiarPrecioExtraArroz} salsas={salsas} toggleSalsa={toggleSalsa} />;
 
+  // 🔥 FUNCIÓN SEMILLA: Sube tus productos locales a Firebase
+  const subirProductosAFirebase = async () => {
+    try {
+      toast.loading("Subiendo fritos a la nube...");
+      // Recorremos la lista de productosBase que definimos al inicio
+      for (const p of productosBase) {
+        // Usamos el ID como nombre del documento para que no se repitan
+        await setDoc(doc(db, "productos", p.id.toString()), p);
+      }
+      toast.dismiss();
+      toast.success("¡Base de datos cargada con éxito! 🚀");
+    } catch (error) {
+      console.error("Error al sembrar:", error);
+      toast.error("Hubo un error al subir los datos");
+    }
+  };
+
+  
   return (
     <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '140px' }}>
       <Toaster position="top-center" />
       <Header accesoSecreto={() => { const pin = window.prompt("PIN:"); if (pin === "mono2026") setIsAdmin(true); }} tipoArrozHoy={tipoArrozHoy} />
       
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', flexWrap: 'wrap' }}>
-          {["fritos", "bebidas", "desayunos", "arroces"].map(cat => (
-            <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '10px 22px', borderRadius: '50px', border: `2px solid ${MONO_NARANJA}`, background: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_NARANJA, fontWeight: '900', cursor: 'pointer', textTransform: 'capitalize' }}>{cat}</button>
-          ))}
-        </div>
+  
+  {/* 🚨 BOTÓN TEMPORAL PARA SUBIR A FIREBASE - BÓRRALO DESPUÉS DE USARLO */}
+  <div style={{ textAlign: 'center', marginBottom: '30px', padding: '15px', border: '2px dashed red', borderRadius: '20px' }}>
+    <p style={{ fontWeight: 'bold', color: 'red', marginBottom: '10px' }}>⚠️ SOLO DALE CLIC UNA VEZ PARA CARGAR LOS PRODUCTOS</p>
+    <button 
+      onClick={subirProductosAFirebase} 
+      style={{ 
+        background: '#dc2626', 
+        color: 'white', 
+        padding: '12px 25px', 
+        borderRadius: '12px', 
+        fontWeight: '900', 
+        border: 'none', 
+        cursor: 'pointer',
+        boxShadow: '0 4px 10px rgba(220, 38, 38, 0.3)'
+      }}
+    >
+      🚀 INICIALIZAR BASE DE DATOS
+    </button>
+  </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px' }}>
-          {productos.filter(p => p.categoria === categoriaActiva).map(p => (
-            <ProductCard key={p.id} p={p} tiendaAbierta={tiendaAbierta} tamanosJugo={tamanosJugo} setTamanosJugo={setTamanosJugo} sabores={sabores} setSabores={setSabores} opcionesDesayuno={opcionesDesayuno} setOpcionesDesayuno={setOpcionesDesayuno} acompañanteArroz={acompañanteArroz} setAcompañanteArroz={setAcompañanteArroz} conHuevo={conHuevo} setConHuevo={setConHuevo} conQueso={conQueso} setConQueso={setConQueso} cantidades={cantidades} sumarCantidad={(id) => setCantidades(prev => ({...prev, [id]: (prev[id] || 1) + 1}))} restarCantidad={(id) => setCantidades(prev => ({...prev, [id]: Math.max(1, (prev[id] || 1) - 1)}))} agregarAlCarrito={() => agregarAlCarrito(p)} huevoObj={extrasArroz.find(e => e.id === 'huevo')} quesoObj={extrasArroz.find(e => e.id === 'queso')} />
-          ))}
-        </div>
+  {/* FILTROS DE CATEGORÍAS */}
+  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', flexWrap: 'wrap' }}>
+    {["fritos", "bebidas", "desayunos", "arroces"].map(cat => (
+      <button 
+        key={cat} 
+        onClick={() => setCategoriaActiva(cat)} 
+        style={{ 
+          padding: '10px 22px', 
+          borderRadius: '50px', 
+          border: `2px solid ${MONO_NARANJA}`, 
+          background: categoriaActiva === cat ? MONO_NARANJA : 'white', 
+          color: categoriaActiva === cat ? 'white' : MONO_NARANJA, 
+          fontWeight: '900', 
+          cursor: 'pointer', 
+          textTransform: 'capitalize' 
+        }}
+      >
+        {cat}
+      </button>
+    ))}
+  </div>
 
-        <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `1px solid ${MONO_AMARILLO}` }}>
-          <h3 style={{ textAlign: 'center', color: MONO_NARANJA, fontWeight: '900', fontSize: '28px', marginBottom: '20px' }}>🧂 ¿Qué salsas deseas?</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
-            {salsas.map(s => (
-              <button key={s.nombre} onClick={() => { if(s.disponible) setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre]) }} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '50px', border: 'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'), color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#aaa'), fontWeight: 'bold', cursor: s.disponible ? 'pointer' : 'not-allowed' }}>
-                <img src={s.imagen} style={{ width: '22px', height: '22px', borderRadius: '50%' }} alt={s.nombre} /> {s.nombre} {!s.disponible && "🚫"}
-              </button>
-            ))}
-          </div>
-        </div>
-      </main>
-
-      {/* 🛒 BOTÓN FLOTANTE */}
-      {pedido.length > 0 && (
-        <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: '400px', zIndex: 1000 }}>
-          <button onClick={() => { document.getElementById('seccion-carrito')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ width: '100%', background: MONO_NARANJA, color: 'white', border: 'none', padding: '18px', borderRadius: '20px', fontSize: '18px', fontWeight: '900', boxShadow: '0 10px 25px rgba(249, 115, 22, 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ background: 'white', color: MONO_NARANJA, width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>{totalItems}</span>
-              🛒 Ver mi Pedido
-            </div>
-            <span>${pedido.reduce((acc, i) => acc + i.subtotal, 0).toLocaleString('es-CO')}</span>
-          </button>
-        </div>
-      )}
-
-      <div id="seccion-carrito">
-        {pedido.length > 0 && <Carrito pedido={pedido} total={pedido.reduce((acc, i) => acc + i.subtotal, 0)} nombre={nombre} setNombre={setNombre} direccion={direccion} setDireccion={setDireccion} metodoPago={metodoPago} setMetodoPago={setMetodoPago} vaciarCarrito={() => { setPedido([]); localStorage.removeItem('pedido_mono'); }} enviarWhatsApp={enviarWhatsApp} />}
-      </div>
-    </div>
+  {/* ... AQUÍ SIGUE EL RESTO DE TU CÓDIGO (GRID DE PRODUCTOS, ETC.) ... */}
+</main>
+    
   );
 }
