@@ -380,7 +380,7 @@ export default function App() {
 
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px', opacity: tiendaAbierta ? 1 : 0.6}}>
         
-        {/* ✅ AQUÍ ESTÁ EL FILTRO INTELIGENTE PARA QUE LOS BOTONES FUNCIONEN */}
+        {/* ✅ AQUÍ ESTÁ EL FILTRO INTELIGENTE Y EL ORDENADOR */}
         {productos
           .filter(p => {
             let cat = p.categoria;
@@ -391,6 +391,26 @@ export default function App() {
               else cat = "Fritos";
             }
             return cat === categoriaActiva;
+          })
+          .sort((a, b) => {
+            // 📌 ORDEN ESPECÍFICO PARA LOS FRITOS
+            const ordenFritos = [
+              "Empanada Crujiente",
+              "Arepa con Huevo y Carne",
+              "Papa Rellena de la Casa",
+              "Pastel de Pollo Hojaldrado",
+              "Palitos de Queso Costeño",
+              "Buñuelos Calientitos"
+            ];
+            
+            let posA = ordenFritos.indexOf(a.nombre);
+            let posB = ordenFritos.indexOf(b.nombre);
+            
+            // Si no están en la lista específica (pasa con las bebidas u otros), se mandan al final o se dejan igual
+            if (posA === -1) posA = 999;
+            if (posB === -1) posB = 999;
+            
+            return posA - posB;
           })
           .map(p => {
             const todoAgotado = !p.disponible;
