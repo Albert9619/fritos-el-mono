@@ -21,7 +21,7 @@ export default function ProductCard({
     precioMostrar += 1000;
   }
 
-  // 🧐 ¿TIENE OPCIONES ESTE PRODUCTO?
+  // 🧐 ESTO ES LO QUE ARREGLA EL AGUA Y EL PASTEL
   const tieneOpciones = p?.esDesayuno || p?.esArroz || p?.opciones || p?.tamanos;
 
   return (
@@ -29,16 +29,16 @@ export default function ProductCard({
       background: 'white', 
       borderRadius: '28px', 
       overflow: 'hidden', 
-      // 👇 ALTURA DINÁMICA: Si no tiene opciones, es más bajito (380px). Si tiene, crece (560px).
+      // 👇 CAMBIO AQUÍ: Ya no es 600px fijo. Ahora es dinámico.
       minHeight: tieneOpciones ? '560px' : '380px', 
       display: 'flex', 
       flexDirection: 'column', 
       border: `2px solid #f0f0f0`, 
       boxShadow: '0 8px 15px rgba(0,0,0,0.03)',
-      transition: 'all 0.3s ease' 
+      transition: 'all 0.3s ease'
     }}>
       
-      {/* 📸 FOTO (Bajamos un pelín la altura de 200 a 180 para compactar) */}
+      {/* 📸 FOTO */}
       <div style={{ width: '100%', height: '180px', overflow: 'hidden' }}>
         <img 
           src={p?.imagen} 
@@ -52,85 +52,51 @@ export default function ProductCard({
         
         {/* 🏷️ TÍTULO Y PRECIO */}
         <div style={{ marginBottom: tieneOpciones ? '15px' : '5px' }}>
-          <h3 style={{ margin: '0 0 5px 0', fontSize: '19px', fontWeight: '800', lineHeight: '1.2' }}>{p?.nombre}</h3>
+          <h3 style={{ margin: '0 0 5px 0', fontSize: '19px', fontWeight: '800' }}>{p?.nombre}</h3>
           <p style={{ color: MONO_NARANJA, fontWeight: '900', fontSize: '22px', margin: '0' }}>
             ${(precioMostrar || 0).toLocaleString('es-CO')}
           </p>
         </div>
         
-        {/* 🛠️ SECCIÓN DE OPCIONES (Solo ocupa espacio si existen) */}
+        {/* 🛠️ OPCIONES (Solo si tiene) */}
         {tieneOpciones && (
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '10px', justifyContent: 'center', marginBottom: '15px' }}>
-            
-            {/* OPCIONES DESAYUNO */}
             {p?.esDesayuno && (
               <div style={{ background: MONO_AMARILLO, padding: '10px', borderRadius: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <select onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), acompañante: e.target.value}})} style={{ width: '100%', padding: '8px', borderRadius: '10px', border: '1px solid #ddd' }}>
+                <select onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), acompañante: e.target.value}})} style={{ width: '100%', padding: '8px', borderRadius: '10px' }}>
                   <option value="">¿Patacón o Arepa?</option>
                   <option value="Patacón">Patacón 🍌</option><option value="Arepa">Arepa 🫓</option>
                 </select>
-                <select onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), [p.tipo === 'tradicional' ? 'huevo' : 'proteina']: e.target.value}})} style={{ width: '100%', padding: '8px', borderRadius: '10px', border: '1px solid #ddd' }}>
-                  <option value="">{p.tipo === 'tradicional' ? 'Huevos' : 'Carne/Pollo'}</option>
+                <select onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), [p.tipo === 'tradicional' ? 'huevo' : 'proteina']: e.target.value}})} style={{ width: '100%', padding: '8px', borderRadius: '10px' }}>
+                  <option value="">¿Cómo los quieres?</option>
                   {p.tipo === 'tradicional' ? <><option value="Revueltos">Revueltos</option><option value="Pericos">Pericos</option></> : <><option value="Carne Desmechada">Carne</option><option value="Pollo Desmechado">Pollo</option></>}
                 </select>
-                <select onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), jugo: e.target.value}})} style={{ width: '100%', padding: '8px', borderRadius: '10px', border: '1px solid #ddd' }}>
+                <select onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), jugo: e.target.value}})} style={{ width: '100%', padding: '8px', borderRadius: '10px' }}>
                   <option value="">Sabor del Jugo</option>
                   <option value="Avena">Avena 🥛</option><option value="Maracuyá">Maracuyá 🍋</option>
                 </select>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', color: MONO_NARANJA }}>
                   <input type="checkbox" checked={opcionesDesayuno[p.id]?.agrandarJugo || false} onChange={(e) => setOpcionesDesayuno({...opcionesDesayuno, [p.id]: {...(opcionesDesayuno[p.id] || {}), agrandarJugo: e.target.checked}})} />
-                  🥤 ¡Agrandar Jugo (+$1.000)!
+                  🥤 Agrandar Jugo (+$1.000)
                 </label>
               </div>
             )}
-
-            {/* OPCIONES ARROZ */}
-            {p?.esArroz && (
-              <div style={{ background: MONO_AMARILLO, padding: '10px', borderRadius: '15px' }}>
-                <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width: '100%', padding: '8px', borderRadius: '10px', border: '1px solid #ddd' }}>
-                  <option value="">Acompañante</option>
-                  <option value="Tajadas">Tajadas 😋</option><option value="Yuca">Yuca 😋</option>
-                </select>
-                <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-                  <label style={{ fontSize: '12px' }}><input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} /> +Huevo</label>
-                  <label style={{ fontSize: '12px' }}><input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} /> +Queso</label>
-                </div>
-              </div>
-            )}
-
-            {/* SABORES GASEOSAS/EMPANADAS */}
-            {p?.opciones && <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid #ddd' }}><option value="">-- Sabor --</option>{p.opciones.map(opt => ( <option key={opt.nombre} value={opt.nombre} disabled={!opt.disponible}>{opt.nombre}</option> ))}</select>}
-            
-            {/* TAMAÑOS BEBIDAS */}
+            {p?.opciones && <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '10px' }}><option value="">-- Sabor --</option>{p.opciones.map(opt => ( <option key={opt.nombre} value={opt.nombre} disabled={!opt.disponible}>{opt.nombre}</option> ))}</select>}
             {p?.tamanos && <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '10px', border: `2px solid ${MONO_NARANJA}`, fontWeight: 'bold' }}><option value="">-- Presentación --</option>{p.tamanos.map(tam => ( <option key={tam.nombre} value={tam.nombre} disabled={!tam.disponible}>{tam.nombre} - ${tam.precio}</option> ))}</select>}
           </div>
         )}
 
-        {/* 🛒 FOOTER (CANTIDAD Y BOTÓN) */}
+        {/* 🛒 FOOTER */}
         <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <span style={{ fontWeight: 'bold', fontSize: '14px' }}>Cant:</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <button onClick={() => restarCantidad(p?.id)} style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#eee', border: 'none', cursor: 'pointer' }}>-</button>
+              <button onClick={() => restarCantidad(p?.id)} style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#eee', border: 'none' }}>-</button>
               <span style={{ fontWeight: '900', fontSize: '18px' }}>{cantidades[p?.id] || 1}</span>
-              <button onClick={() => sumarCantidad(p?.id)} style={{ width: '30px', height: '30px', borderRadius: '50%', background: MONO_NARANJA, color: 'white', border: 'none', cursor: 'pointer' }}>+</button>
+              <button onClick={() => sumarCantidad(p?.id)} style={{ width: '30px', height: '30px', borderRadius: '50%', background: MONO_NARANJA, color: 'white', border: 'none' }}>+</button>
             </div>
           </div>
-          <button 
-            onClick={() => agregarAlCarrito(p)} 
-            disabled={!tiendaAbierta || todoAgotado} 
-            style={{ 
-              width: '100%', 
-              background: todoAgotado ? '#ccc' : MONO_NARANJA, 
-              color: 'white', 
-              border: 'none', 
-              padding: '14px', 
-              borderRadius: '16px', 
-              fontWeight: '900', 
-              cursor: 'pointer',
-              fontSize: '15px'
-            }}
-          >
+          <button onClick={() => agregarAlCarrito(p)} disabled={!tiendaAbierta || todoAgotado} style={{ width: '100%', background: todoAgotado ? '#ccc' : MONO_NARANJA, color: 'white', border: 'none', padding: '14px', borderRadius: '16px', fontWeight: '900' }}>
             {todoAgotado ? "AGOTADO" : "AÑADIR AL PEDIDO"}
           </button>
         </div>
