@@ -1,9 +1,6 @@
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
 
-// CORRECCIÓN DEL IMPORT (Línea 5)
-import ProductCard from './ProductCard'; 
-
 export default function AdminPanel({ 
   setIsAdmin, tiendaAbierta, setTiendaAbierta, productos, toggleProducto, cambiarPrecioProducto, 
   toggleSabor, toggleTamano, cambiarPrecioTamano, extrasArroz, toggleExtraArroz, 
@@ -23,24 +20,19 @@ export default function AdminPanel({
   return (
     <div style={{ backgroundColor: '#f0f2f5', minHeight: '100vh', padding: '20px', fontFamily: 'sans-serif' }}>
       <Toaster position="top-center" />
-      <div style={{ maxWidth: '700px', margin: '0 auto' }}>
-        <button onClick={() => setIsAdmin(false)} style={{ marginBottom: '20px', padding: '10px 15px', borderRadius: '10px', border: 'none', background: MONO_TEXTO, color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
-          ← Volver a la Tienda
-        </button>
+      <div style={{ maxWidth: '750px', margin: '0 auto' }}>
+        <button onClick={() => setIsAdmin(false)} style={{ marginBottom: '20px', padding: '10px 15px', borderRadius: '10px', border: 'none', background: MONO_TEXTO, color: 'white', fontWeight: 'bold', cursor: 'pointer' }}> ← Volver </button>
         
         <div style={{ background: 'white', padding: '25px', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', marginBottom: '20px' }}>
           <h1 style={{ color: MONO_NARANJA, margin: '0 0 10px 0' }}>Panel de Control ⚙️</h1>
-          <div style={{ padding: '20px', borderRadius: '15px', background: tiendaAbierta ? '#dcfce7' : '#fee2e2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong style={{ fontSize: '18px' }}>ESTADO: {tiendaAbierta ? '🟢 ABIERTO' : '🔴 CERRADO'}</strong>
-            <button onClick={() => setTiendaAbierta(!tiendaAbierta)} style={{ background: MONO_TEXTO, color: 'white', border: 'none', padding: '12px 20px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
-              {tiendaAbierta ? 'Cerrar Negocio' : 'Abrir Negocio'}
-            </button>
-          </div>
+          <button onClick={() => setTiendaAbierta(!tiendaAbierta)} style={{ width: '100%', padding: '15px', borderRadius: '15px', border: 'none', background: tiendaAbierta ? MONO_VERDE : 'red', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
+            {tiendaAbierta ? '🟢 TIENDA ABIERTA' : '🔴 TIENDA CERRADA'}
+          </button>
         </div>
 
-        {/* LISTA DE PRODUCTOS */}
-        <div style={{ background: 'white', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden', marginBottom: '20px' }}>
-          <div style={{ padding: '20px', background: MONO_AMARILLO, borderBottom: '1px solid #eee' }}><h3 style={{ margin: 0 }}>Gestión de Menú</h3></div>
+        {/* --- PRODUCTOS --- */}
+        <div style={{ background: 'white', borderRadius: '25px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <div style={{ padding: '15px 20px', background: MONO_AMARILLO }}><h3 style={{ margin: 0 }}>Menú Principal</h3></div>
           {productos.map(p => (
             <div key={p.id} style={{ borderBottom: '1px solid #eee', padding: '15px 20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -78,6 +70,32 @@ export default function AdminPanel({
             </div>
           ))}
         </div>
+
+        {/* --- EXTRAS ARROZ (AQUÍ ESTÁN TUS SWITCHES) --- */}
+        <div style={{ background: 'white', borderRadius: '25px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <div style={{ padding: '15px 20px', background: MONO_AMARILLO }}><h3 style={{ margin: 0 }}>Añadidos del Arroz</h3></div>
+          {extrasArroz.map(e => (
+            <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid #eee' }}>
+              <span>{e.nombre}</span>
+              <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <input type="number" value={e.precio || ""} onChange={(ev) => cambiarPrecioExtraArroz(e.id, ev.target.value)} style={{ width: '65px', padding: '5px' }} />
+                <MiniSwitch activo={e.disponible} onClick={() => toggleExtraArroz(e.id)} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* --- SALSAS (AQUÍ ESTÁN TUS SWITCHES) --- */}
+        <div style={{ background: 'white', borderRadius: '25px', overflow: 'hidden', marginBottom: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <div style={{ padding: '15px 20px', background: MONO_AMARILLO }}><h3 style={{ margin: 0 }}>Salsas</h3></div>
+          {salsas.map(s => (
+            <div key={s.nombre} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 20px', borderBottom: '1px solid #eee' }}>
+              <span>{s.nombre}</span>
+              <MiniSwitch activo={s.disponible} onClick={() => toggleSalsa(s.nombre)} />
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   );
