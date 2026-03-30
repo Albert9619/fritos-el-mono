@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 *.jpg
 public/logo-fritos-el-mono
+src/firebaseConfig.js
