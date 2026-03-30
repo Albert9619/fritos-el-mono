@@ -22,7 +22,7 @@ const extrasArrozBase = [
   { id: 'queso', nombre: "Queso Extra", disponible: true, precio: 1000 }
 ];
 
-// 🔐 AdminGuard antes de App
+// 🔐 AdminGuard protege solo /admin
 function AdminGuard({ children }) {
   const [acceso, setAcceso] = useState(false);
   const navigate = useNavigate();
@@ -61,19 +61,16 @@ export default function App() {
   const [productos, setProductos] = useState([]);
   const [salsas, setSalsas] = useState(salsasBase);
   const [extrasArroz, setExtrasArroz] = useState(extrasArrozBase);
-
-  // Pedidos
   const [pedido, setPedido] = useState(() => {
     const g = localStorage.getItem('pedido_mono');
     return g ? JSON.parse(g) : [];
   });
-
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // Firebase en tiempo real
+  // 🔴 Firebase en tiempo real
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "productos"), (snapshot) => {
       const docs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -86,26 +83,24 @@ export default function App() {
     localStorage.setItem('pedido_mono', JSON.stringify(pedido));
   }, [pedido]);
 
-  const adminProps = {
-    tiendaAbierta, setTiendaAbierta,
-    productos, salsas, extrasArroz
-  };
+  const adminProps = { tiendaAbierta, setTiendaAbierta, productos, salsas, extrasArroz };
 
   return (
     <HashRouter>
       <Toaster position="top-center" />
       <Routes>
-        {/* Cliente */}
+
+        {/* Vista cliente */}
         <Route path="/" element={
           <ClientLayout>
-            <Header accesoSecreto={() => {}} tipoArrozHoy={tipoArrozHoy} />
+            <Header accesoSecreto={() => window.location.href = "/#/admin"} tipoArrozHoy={tipoArrozHoy} />
             <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
               {/* Aquí van tus categorías y productos */}
             </main>
           </ClientLayout>
         } />
 
-        {/* Admin separado */}
+        {/* Vista admin separada */}
         <Route path="/admin" element={
           <AdminGuard>
             <AdminLayout>
@@ -114,7 +109,7 @@ export default function App() {
           </AdminGuard>
         } />
 
-        {/* Redirección de cualquier otra ruta */}
+        {/* Redirección global */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </HashRouter>
