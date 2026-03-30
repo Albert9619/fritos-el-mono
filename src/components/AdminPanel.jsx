@@ -43,8 +43,6 @@ export default function AdminPanel({
                   <MiniSwitch activo={p.disponible} onClick={() => toggleProducto(p.id)} />
                 </div>
               </div>
-              
-              {/* AQUÍ ESTÁ EL CONTROLADOR DE CARNE, POLLO, ARROZ, ETC */}
               {p.opciones && (
                 <div style={{ marginTop: '10px', paddingLeft: '15px', borderLeft: '2px solid #f97316' }}>
                   {p.opciones.map(opt => (
@@ -55,8 +53,6 @@ export default function AdminPanel({
                   ))}
                 </div>
               )}
-
-              {/* TAMAÑOS DE GASEOSAS */}
               {p.tamanos && (
                 <div style={{ marginTop: '10px', paddingLeft: '15px', borderLeft: '2px solid #f97316' }}>
                   {p.tamanos.map(tam => (
