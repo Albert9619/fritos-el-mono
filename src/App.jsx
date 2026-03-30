@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 
 import Header from './components/Header';
 import Carrito from './components/Carrito';
@@ -132,45 +132,45 @@ export default function App() {
   if (isAdmin) return <AdminPanel setIsAdmin={setIsAdmin} tiendaAbierta={tiendaAbierta} setTiendaAbierta={setTiendaAbierta} productos={productos} toggleProducto={toggleProducto} cambiarPrecioProducto={cambiarPrecioProducto} extrasArroz={extrasArroz} toggleExtraArroz={toggleExtraArroz} salsas={salsas} toggleSalsa={toggleSalsa} />;
 
   return (
-  <BrowserRouter>
-    <Toaster position="top-center" />
-    
-    <Routes>
-      {/* 🏠 LA VISTA DEL CLIENTE (Lo que ya tienes) */}
-      <Route path="/" element={
-        <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '140px' }}>
-          <Header accesoSecreto={() => {}} tipoArrozHoy={tipoArrozHoy} />
-          
-          <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-             {/* AQUÍ VA TODO TU CÓDIGO DE CATEGORÍAS Y PRODUCTOS */}
-          </main>
+  <HashRouter>
+  <Toaster position="top-center" />
+  
+  <Routes>
+    {/* 🏠 LA VISTA DEL CLIENTE (Lo que ya tienes) */}
+    <Route path="/" element={
+      <div style={{ backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '140px' }}>
+        <Header accesoSecreto={() => {}} tipoArrozHoy={tipoArrozHoy} />
+        
+        <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+           {/* AQUÍ VA TODO TU CÓDIGO DE CATEGORÍAS Y PRODUCTOS */}
+        </main>
 
-          {/* AQUÍ VAN EL BOTÓN FLOTANTE Y EL CARRITO */}
-        </div>
-      } />
+        {/* AQUÍ VAN EL BOTÓN FLOTANTE Y EL CARRITO */}
+      </div>
+    } />
 
-      {/* 🔐 LA VISTA DEL ADMIN (fritos-el-mono/admin) */}
-      <Route path="/admin" element={
-        <AdminGuard isAdmin={isAdmin} setIsAdmin={setIsAdmin}>
-          <AdminPanel 
-            setIsAdmin={setIsAdmin} 
-            tiendaAbierta={tiendaAbierta} 
-            setTiendaAbierta={setTiendaAbierta} 
-            productos={productos} 
-            toggleProducto={toggleProducto} 
-            cambiarPrecioProducto={cambiarPrecioProducto}
-            extrasArroz={extrasArroz}
-            toggleExtraArroz={toggleExtraArroz}
-            salsas={salsas}
-            toggleSalsa={toggleSalsa}
-          />
-        </AdminGuard>
-      } />
+    {/* 🔐 LA VISTA DEL ADMIN (fritos-el-mono/admin) */}
+    <Route path="/admin" element={
+      <AdminGuard isAdmin={isAdmin} setIsAdmin={setIsAdmin}>
+        <AdminPanel 
+          setIsAdmin={setIsAdmin} 
+          tiendaAbierta={tiendaAbierta} 
+          setTiendaAbierta={setTiendaAbierta} 
+          productos={productos} 
+          toggleProducto={toggleProducto} 
+          cambiarPrecioProducto={cambiarPrecioProducto}
+          extrasArroz={extrasArroz}
+          toggleExtraArroz={toggleExtraArroz}
+          salsas={salsas}
+          toggleSalsa={toggleSalsa}
+        />
+      </AdminGuard>
+    } />
 
-      {/* Si escriben cualquier otra cosa, los manda al inicio */}
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
-  </BrowserRouter>
+    {/* Si escriben cualquier otra cosa, los manda al inicio */}
+    <Route path="*" element={<Navigate to="/" />} />
+  </Routes>
+</HashRouter>
 );
 }
 // 🛡️ Esto va al final del archivo, fuera de la función App
