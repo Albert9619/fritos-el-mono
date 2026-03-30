@@ -72,7 +72,6 @@ export default function App() {
   const [acompañanteArroz, setAcompañanteArroz] = useState("");
   const [conHuevo, setConHuevo] = useState(false);
   const [conQueso, setConQueso] = useState(false);
-  const [salsasElegidas, setSalsasElegidas] = useState([]);
   const [categoriaActiva, setCategoriaActiva] = useState("fritos");
 
   const dias = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
@@ -130,12 +129,12 @@ export default function App() {
             <ProductCard key={p.id} p={p} tiendaAbierta={tiendaAbierta} hoveredCardId={null} setHoveredCardId={() => {}} tamanosJugo={tamanosJugo} setTamanosJugo={setTamanosJugo} sabores={sabores} setSabores={setSabores} opcionesDesayuno={opcionesDesayuno} setOpcionesDesayuno={setOpcionesDesayuno} acompañanteArroz={acompañanteArroz} setAcompañanteArroz={setAcompañanteArroz} conHuevo={conHuevo} setConHuevo={setConHuevo} conQueso={conQueso} setConQueso={setConQueso} cantidades={cantidades} sumarCantidad={(id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1})} restarCantidad={(id) => setCantidades({...cantidades, [id]: Math.max(1, (cantidades[id] || 1) - 1)})} agregarAlCarrito={() => agregarAlCarrito(p)} huevoObj={extrasArroz.find(e => e.id === 'huevo')} quesoObj={extrasArroz.find(e => e.id === 'queso')} />
           ))}
         </div>
-        {/* --- 🧂 SECCIÓN SALSAS (RECUPERADA) --- */}
+        {/* --- 🧂 SECCIÓN SALSAS (PARA EL CLIENTE) --- */}
         <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `1px solid ${MONO_AMARILLO}` }}>
           <h3 style={{ textAlign: 'center', color: MONO_NARANJA, fontWeight: '900', fontSize: '28px', marginBottom: '20px' }}>🧂 ¿Qué salsas deseas?</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
             {salsas.map(s => (
-              <button key={s.nombre} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '50px', border: 'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : (s.disponible ? MONO_AMARILLO : '#f0f0f0'), color: salsasElegidas.includes(s.nombre) ? 'white' : (s.disponible ? MONO_TEXTO : '#aaa'), fontWeight: 'bold', cursor: s.disponible ? 'pointer' : 'not-allowed' }}>
+              <button key={s.nombre} onClick={() => { if(s.disponible) toast.success(`Salsa ${s.nombre} elegida`); }} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '50px', border: 'none', background: s.disponible ? MONO_AMARILLO : '#f0f0f0', color: s.disponible ? MONO_TEXTO : '#aaa', fontWeight: 'bold' }}>
                 <img src={s.imagen} style={{ width: '22px', height: '22px', borderRadius: '50%' }} alt={s.nombre} /> {s.nombre} {!s.disponible && "🚫"}
               </button>
             ))}
