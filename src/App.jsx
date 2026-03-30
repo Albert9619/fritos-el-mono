@@ -327,7 +327,7 @@ export default function App() {
   const tajadaObj = extrasArrozMostrar.find(e => e.id === 'tajada') || { disponible: false, precio: 0 };
   const yucaObj = extrasArrozMostrar.find(e => e.id === 'yuca') || { disponible: false, precio: 0 };
   const huevoObj = extrasArrozMostrar.find(e => e.id === 'huevo') || { disponible: false, precio: 1000 };
-  const quesoObj = extrasArrozMostrar.find(e => e.id === 'queso') || { disponible: false, precio: 1000 };
+  const quesoObj = extrasArroz.find(e => e.id === 'queso') || { disponible: true, precio: 1000 };
 
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '60px'}}>
@@ -437,13 +437,13 @@ export default function App() {
                             )}
 
                             {!quesoObj.disponible ? (
-                              <p style={{color: 'red', fontSize: '14px', margin: '0', fontWeight: 'bold'}}>🚫 Queso Agotado</p>
-                            ) : (
-                              <label style={{fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
-                                <input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} style={{accentColor: MONO_NARANJA, width: '22px', height: '22px'}} />
-                                + Tajada de Queso (${quesoObj.precio.toLocaleString('es-CO')})
-                              </label>
-                            )}
+      <p style={{color: 'red', fontSize: '14px', margin: '0', fontWeight: 'bold'}}>🚫 Queso Agotado</p>
+    ) : (
+      <label style={{fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginTop: '5px'}}>
+        <input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} style={{accentColor: MONO_NARANJA, width: '22px', height: '22px'}} />
+        + Tajada de Queso (${quesoObj.precio.toLocaleString('es-CO')})
+      </label>
+    )}
                           </div>
                         </div>
                       )}
