@@ -42,6 +42,7 @@ const extrasArrozBase = [
 ];
 
 export default function App() {
+  // --- 🧠 MEMORIA LOCAL (Cargando datos guardados) ---
   const [productos, setProductos] = useState(() => {
     const g = localStorage.getItem('productos_mono');
     return g ? JSON.parse(g) : productosBase;
@@ -54,14 +55,22 @@ export default function App() {
     const g = localStorage.getItem('extras_mono');
     return g ? JSON.parse(g) : extrasArrozBase;
   });
+  
+  // 🛒 AQUÍ ESTÁ EL TRUCO: Memoria para el Pedido
+  const [pedido, setPedido] = useState(() => {
+    const g = localStorage.getItem('pedido_mono');
+    return g ? JSON.parse(g) : [];
+  });
 
+  // 💾 GUARDADO AUTOMÁTICO
   useEffect(() => { localStorage.setItem('productos_mono', JSON.stringify(productos)); }, [productos]);
   useEffect(() => { localStorage.setItem('salsas_mono', JSON.stringify(salsas)); }, [salsas]);
   useEffect(() => { localStorage.setItem('extras_mono', JSON.stringify(extrasArroz)); }, [extrasArroz]);
+  useEffect(() => { localStorage.setItem('pedido_mono', JSON.stringify(pedido)); }, [pedido]);
 
+  // --- ESTADOS ---
   const [isAdmin, setIsAdmin] = useState(false);
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
-  const [pedido, setPedido] = useState([]);
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
   const [metodoPago, setMetodoPago] = useState("");
@@ -115,15 +124,16 @@ export default function App() {
   };
 
   const enviarWhatsApp = () => {
+    if (!nombre || !direccion || !metodoPago) return toast.error("Completa tus datos");
     let mensaje = `🧾 *NUEVO PEDIDO - MONO*\n👤 *Nombre:* ${nombre}\n📍 *Dirección:* ${direccion}\n💳 *Pago:* ${metodoPago}\n\n🍽️ *Detalle:*\n`;
     pedido.forEach(item => { mensaje += `- ${item.cantidad}x ${item.nombre}${item.saborElegido ? ' ('+item.saborElegido+')' : ''} ${item.detallesExtra}\n`; });
-    
-    if (salsasElegidas.length > 0) {
-      mensaje += `\n🧂 *Salsas:* ${salsasElegidas.join(", ")}\n`;
-    }
-
+    if (salsasElegidas.length > 0) mensaje += `\n🧂 *Salsas:* ${salsasElegidas.join(", ")}\n`;
     mensaje += `\n💰 *Total: $${pedido.reduce((acc, i) => acc + i.subtotal, 0).toLocaleString('es-CO')}*`;
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(mensaje)}`, "_blank");
+    
+    // Al enviar el pedido, limpiamos todo
+    setPedido([]);
+    localStorage.removeItem('pedido_mono');
   };
 
   const totalItems = pedido.reduce((acc, item) => acc + item.cantidad, 0);
@@ -148,7 +158,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* --- 🧂 SECCIÓN SALSAS (RECUPERADA) --- */}
         <div style={{ maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `1px solid ${MONO_AMARILLO}` }}>
           <h3 style={{ textAlign: 'center', color: MONO_NARANJA, fontWeight: '900', fontSize: '28px', marginBottom: '20px' }}>🧂 ¿Qué salsas deseas?</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'center' }}>
@@ -175,7 +184,7 @@ export default function App() {
       )}
 
       <div id="seccion-carrito">
-        {pedido.length > 0 && <Carrito pedido={pedido} total={pedido.reduce((acc, i) => acc + i.subtotal, 0)} nombre={nombre} setNombre={setNombre} direccion={direccion} setDireccion={setDireccion} metodoPago={metodoPago} setMetodoPago={setMetodoPago} vaciarCarrito={() => setPedido([])} enviarWhatsApp={enviarWhatsApp} />}
+        {pedido.length > 0 && <Carrito pedido={pedido} total={pedido.reduce((acc, i) => acc + i.subtotal, 0)} nombre={nombre} setNombre={setNombre} direccion={direccion} setDireccion={setDireccion} metodoPago={metodoPago} setMetodoPago={setMetodoPago} vaciarCarrito={() => { setPedido([]); localStorage.removeItem('pedido_mono'); }} enviarWhatsApp={enviarWhatsApp} />}
       </div>
     </div>
   );
