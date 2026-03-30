@@ -14,6 +14,10 @@ export default function Header({ accesoSecreto, tipoArrozHoy }) {
           Hoy Arroz de <span style={{color: MONO_NARANJA}}>{tipoArrozHoy}</span>
         </p>
       </div>
+      <button onClick={() => window.location.href = "/#/admin"}>
+  Panel Admin
+</button>
     </header>
+    
   );
 }
