@@ -141,13 +141,13 @@ export default function App() {
     let sabor = "";
     let detallesExtra = "";
 
-    if (p.opciones) {
-      sabor = sabores[p.id];
-      if (!sabor) return alert(`Por favor elige un sabor para: ${p.nombre}`);
-    }
-
+    // 🍚 LÓGICA ESPECIAL PARA EL ARROZ
     if (p.esArroz) {
       if (!acompañanteArroz) return alert("Por favor elige Tajadas o Yuca");
+      
+      // Asigna el sabor automáticamente según el día
+      sabor = `Arroz de ${tipoArrozHoy}`; 
+
       const huevoExtra = extrasArrozMostrar.find(e => e.id === 'huevo');
       const quesoExtra = extrasArrozMostrar.find(e => e.id === 'queso');
       
@@ -157,6 +157,11 @@ export default function App() {
       let textosExtra = conHuevo ? ' + Huevo' : '';
       textosExtra += conQueso ? ' + Queso' : '';
       detallesExtra = `(Con ${acompañanteArroz}${textosExtra})`;
+    } 
+    // 🥟 LÓGICA PARA OTROS PRODUCTOS CON SABOR (Empanadas, Papas, etc.)
+    else if (p.opciones) {
+      sabor = sabores[p.id];
+      if (!sabor) return alert(`Por favor elige un sabor para: ${p.nombre}`);
     }
 
     if (p.esJugo && p.tamanos) {
@@ -177,6 +182,7 @@ export default function App() {
       subtotal: precioBase * cant
     }]);
     
+    // Limpiar selecciones
     setSabores({...sabores, [p.id]: ""});
     setTamanosJugo({...tamanosJugo, [p.id]: ""});
     setAcompañanteArroz("");
@@ -184,7 +190,6 @@ export default function App() {
     setConQueso(false);
     setCantidades({...cantidades, [p.id]: 1});
   };
-
   const total = pedido.reduce((acc, item) => acc + item.subtotal, 0);
 
   const enviarWhatsApp = () => {
