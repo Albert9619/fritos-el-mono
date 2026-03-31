@@ -12,12 +12,9 @@ const productosBase = [
   { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", imagen: "/pastel-pollo.jpg", disponible: true },
   { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", imagen: "/palito-queso.jpg", disponible: true },
   { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", imagen: "/buñuelo.jpg", disponible: true },
-  
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno.jpg", disponible: true },
   { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno-especial.jpg", disponible: true },
-  
   { id: "5", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true, imagen: "/arroz-pollo.jpg", disponible: true },
-  
   { id: "6", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", esJugo: true, imagen: "/jugo-natural.jpg", disponible: true, opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: "b1", nombre: "Coca-Cola", precio: 3500, categoria: "Bebidas", imagen: "/coca-cola.jpg", disponible: true },
   { id: "b2", nombre: "Pony Malta", precio: 2500, categoria: "Bebidas", imagen: "/pony.jpg", disponible: true },
@@ -72,6 +69,7 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
+  // 🛡️ SEGURO ANTI-FALLOS: Si Firebase está vacío, usa los datos base
   const productosMostrar = productos.length > 0 ? productos : productosBase;
   const extrasArrozMostrar = extrasArroz.length > 0 ? extrasArroz : extrasArrozBase;
   const salsasMostrar = salsas.length > 0 ? salsas : salsasBase;
@@ -93,15 +91,18 @@ export default function App() {
   };
 
   const restaurarBaseDeDatos = async () => {
-    if(!window.confirm("¿Quieres actualizar el menú y asegurar que aparezca el Queso?")) return;
+    if(!window.confirm("¿Quieres actualizar todo el menú y forzar la aparición del QUESO?")) return;
     try {
       await updateDoc(doc(db, "ajuste", "tienda"), { abierta: true }).catch(() => setDoc(doc(db, "ajuste", "tienda"), { abierta: true }));
       
+      // Subir productos uno por uno
       for (const p of productosBase) { await setDoc(doc(db, "productos", p.id), p); }
+      // Subir extras (Queso, Huevo, etc.)
       for (const e of extrasArrozBase) { await setDoc(doc(db, "extrasArroz", e.id), e); }
+      // Subir salsas
       for (const s of salsasBase) { await setDoc(doc(db, "salsas", s.id || s.nombre), s); }
 
-      alert("✅ ¡Todo actualizado! El Queso ya debe aparecer en el Admin y en la compra.");
+      alert("✅ ¡Todo actualizado en Firebase! Refresca la página.");
     } catch (e) {
       console.error(e);
       alert("Error al restaurar.");
@@ -118,24 +119,9 @@ export default function App() {
   const toggleProducto = (p) => actualizarEnFirebase("productos", p.id, { disponible: !p.disponible });
   const cambiarPrecioProducto = (p, nuevoPrecio) => actualizarEnFirebase("productos", p.id, { precio: parseInt(nuevoPrecio) || 0 });
   
-  const toggleSabor = (p, saborNombre) => {
-    const nuevasOpciones = p.opciones.map(o => o.nombre === saborNombre ? { ...o, disponible: !o.disponible } : o);
-    actualizarEnFirebase("productos", p.id, { opciones: nuevasOpciones });
-  };
-  
-  const toggleTamano = (p, tamNombre) => {
-    const nuevosTamanos = p.tamanos.map(t => t.nombre === tamNombre ? { ...t, disponible: !t.disponible } : t);
-    actualizarEnFirebase("productos", p.id, { tamanos: nuevosTamanos });
-  };
-
-  const cambiarPrecioTamano = (p, tamNombre, nuevoPrecio) => {
-    const nuevosTamanos = p.tamanos.map(t => t.nombre === tamNombre ? { ...t, precio: parseInt(nuevoPrecio) || 0 } : t);
-    actualizarEnFirebase("productos", p.id, { tamanos: nuevosTamanos });
-  };
-
   const toggleExtraArroz = (e) => actualizarEnFirebase("extrasArroz", e.id, { disponible: !e.disponible });
   const cambiarPrecioExtraArroz = (e, nuevoPrecio) => actualizarEnFirebase("extrasArroz", e.id, { precio: parseInt(nuevoPrecio) || 0 });
-  const toggleSalsa = (s) => actualizarEnFirebase("salsas", s.id, { disponible: !s.disponible });
+  const toggleSalsa = (s) => actualizarEnFirebase("salsas", s.id || s.nombre, { disponible: !s.disponible });
 
   const manejarSalsa = (salsaObj) => {
     if (!tiendaAbierta || !salsaObj || !salsaObj.disponible) return;
@@ -146,16 +132,6 @@ export default function App() {
   const restarCantidad = (id) => {
     const actual = cantidades[id] || 1;
     if (actual > 1) setCantidades({...cantidades, [id]: actual - 1});
-  };
-
-  const manejarInputCantidad = (id, valor) => {
-    if (valor === "") { setCantidades({...cantidades, [id]: ""}); return; }
-    const num = parseInt(valor);
-    if (!isNaN(num) && num > 0) setCantidades({...cantidades, [id]: num});
-  };
-
-  const corregirInputVacio = (id) => {
-    if (!cantidades[id] || cantidades[id] < 1) setCantidades({...cantidades, [id]: 1});
   };
 
   const agregarAlCarrito = (p) => {
@@ -180,13 +156,12 @@ export default function App() {
       
       let textosExtra = conHuevo ? ' + Huevo' : '';
       textosExtra += conQueso ? ' + Queso' : '';
-      
       detallesExtra = `(Con ${acompañanteArroz}${textosExtra})`;
     }
 
     if (p.esJugo && p.tamanos) {
       const tamNombre = tamanosJugo[p.id];
-      if (!tamNombre) return alert("Por favor elige el tamaño del jugo");
+      if (!tamNombre) return alert("Por favor elige el tamaño");
       const tamObj = p.tamanos.find(t => t.nombre === tamNombre);
       if (tamObj) precioBase = tamObj.precio;
       detallesExtra = `(${tamNombre})`;
@@ -220,6 +195,9 @@ export default function App() {
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(mensaje)}`);
   };
 
+  // ==========================================
+  // 🟢 VISTA ADMINISTRADOR
+  // ==========================================
   if (isAdmin) {
     const MiniSwitch = ({ activo, onClick }) => (
       <div onClick={onClick} style={{width: '40px', height: '22px', backgroundColor: activo ? MONO_VERDE : '#ccc', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s'}}>
@@ -243,53 +221,37 @@ export default function App() {
               </button>
             </div>
             <button onClick={restaurarBaseDeDatos} style={{width: '100%', marginTop: '15px', background: '#b91c1c', color: 'white', padding: '15px', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px'}}>
-              🔄 SUBIR DATOS A FIREBASE (Hundir para actualizar)
+              🔄 SUBIR / REPARAR DATOS EN FIREBASE
             </button>
+          </div>
+
+          {/* LISTA DE EXTRAS (QUESO, HUEVO, etc.) */}
+          <div style={{background: 'white', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden', marginBottom: '20px'}}>
+             <div style={{padding: '15px 20px', background: MONO_AMARILLO, borderBottom: '1px solid #eee'}}><h3 style={{margin: 0}}>Extras del Arroz (Queso, Huevo, etc.)</h3></div>
+             {extrasArrozMostrar.map(e => (
+               <div key={e.id} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', borderBottom: '1px solid #eee'}}>
+                 <span>{e.nombre}</span>
+                 <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+                   <input type="number" value={e.precio || 0} onChange={(ev) => cambiarPrecioExtraArroz(e, ev.target.value)} style={{width: '65px', padding: '5px', borderRadius: '5px', border: '1px solid #ddd'}} />
+                   <MiniSwitch activo={e.disponible} onClick={() => toggleExtraArroz(e)} />
+                 </div>
+               </div>
+             ))}
           </div>
 
           <div style={{background: 'white', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden', marginBottom: '20px'}}>
             <div style={{padding: '20px', background: MONO_AMARILLO, borderBottom: '1px solid #eee'}}><h3 style={{margin: 0}}>Productos Principales</h3></div>
             {productosMostrar.map(p => (
-              <div key={p.id} style={{borderBottom: '2px solid #eee'}}>
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', gap: '10px'}}>
-                  <strong style={{fontSize: '16px', flexGrow: 1}}>{p.nombre}</strong>
-                  <input type="number" value={p.precio || ""} disabled={p.esJugo} onChange={(e) => cambiarPrecioProducto(p, e.target.value)} style={{width: '70px', padding: '5px', borderRadius: '5px', border: '1px solid #ddd', background: p.esJugo ? '#eee' : 'white'}} />
-                  <div style={{display:'flex', gap:'5px', alignItems:'center'}}>
-                    <span style={{fontSize: '12px', fontWeight: 'bold', color: p.disponible ? MONO_VERDE : 'red'}}>{p.disponible ? 'HAY' : 'AGOTADO'}</span>
+              <div key={p.id} style={{borderBottom: '2px solid #eee', padding: '20px'}}>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <strong style={{fontSize: '16px'}}>{p.nombre}</strong>
+                  <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
+                    <input type="number" value={p.precio || 0} onChange={(e) => cambiarPrecioProducto(p, e.target.value)} style={{width: '70px', padding: '5px', borderRadius: '5px', border: '1px solid #ddd'}} />
                     <MiniSwitch activo={p.disponible} onClick={() => toggleProducto(p)} />
                   </div>
                 </div>
-
-                {p.opciones && (
-                  <div style={{padding: '10px 20px', background: '#fafafa', borderTop: '1px dashed #ddd'}}>
-                    <span style={{fontSize: '12px', color: '#666', fontWeight: 'bold'}}>SABORES:</span>
-                    {p.opciones.map(opt => (
-                      <div key={opt.nombre} style={{display: 'flex', justifyContent: 'space-between', margin: '8px 0', paddingLeft: '15px'}}>
-                        <span style={{fontSize: '14px', color: opt.disponible ? '#333' : '#aaa'}}>- {opt.nombre}</span>
-                        <MiniSwitch activo={opt.disponible} onClick={() => toggleSabor(p, opt.nombre)} />
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             ))}
-          </div>
-
-          <div style={{display: 'flex', gap: '20px', flexWrap: 'wrap'}}>
-            <div style={{flex: '1 1 300px', background: 'white', borderRadius: '25px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden', paddingBottom: '10px'}}>
-              <div style={{padding: '15px 20px', background: MONO_AMARILLO, borderBottom: '1px solid #eee'}}><h3 style={{margin: 0}}>Extras del Arroz</h3></div>
-              {extrasArrozMostrar.map(e => (
-                <div key={e.id} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', borderBottom: '1px solid #eee'}}>
-                  <span>{e.nombre}</span>
-                  <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
-                    {e.precio !== undefined && (
-                      <input type="number" value={e.precio || ""} onChange={(ev) => cambiarPrecioExtraArroz(e, ev.target.value)} style={{width: '65px', padding: '5px', borderRadius: '5px', border: '1px solid #ddd'}} />
-                    )}
-                    <MiniSwitch activo={e.disponible} onClick={() => toggleExtraArroz(e)} />
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </div>
@@ -302,7 +264,7 @@ export default function App() {
   const tajadaObj = extrasArrozMostrar.find(e => e.id === 'tajada') || { disponible: false, precio: 0 };
   const yucaObj = extrasArrozMostrar.find(e => e.id === 'yuca') || { disponible: false, precio: 0 };
   const huevoObj = extrasArrozMostrar.find(e => e.id === 'huevo') || { disponible: false, precio: 1000 };
-  const quesoObj = extrasArrozMostrar.find(e => e.id === 'queso') || { disponible: true, precio: 1000 };
+  const quesoObj = extrasArrozMostrar.find(e => e.id === 'queso') || { disponible: false, precio: 1000 };
 
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '60px'}}>
@@ -317,85 +279,93 @@ export default function App() {
         </div>
       </header>
 
+      {/* TABS DE CATEGORÍAS */}
       <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px 20px', maxWidth: '800px', margin: '0 auto 30px', whiteSpace: 'nowrap' }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
           <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '12px 25px', borderRadius: '25px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : '#ffffff', color: categoriaActiva === cat ? 'white' : MONO_TEXTO, fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: categoriaActiva === cat ? '0 4px 15px rgba(249, 115, 22, 0.4)' : '0 2px 8px rgba(0,0,0,0.05)', transition: 'all 0.3s ease' }}>{cat}</button>
         ))}
       </div>
 
+      {/* PRODUCTOS */}
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px', opacity: tiendaAbierta ? 1 : 0.6}}>
         {productosMostrar
           .filter(p => {
-            let cat = p.categoria;
-            if (!cat) { 
-              if (p.esArroz) cat = "Arroces";
-              else if (p.esJugo || p.nombre.toLowerCase().includes("agua") || p.nombre.toLowerCase().includes("cola") || p.nombre.toLowerCase().includes("malta")) cat = "Bebidas";
-              else if (p.esDesayuno) cat = "Desayunos";
-              else cat = "Fritos";
-            }
-            return cat === categoriaActiva;
+             let cat = p.categoria || (p.esArroz ? "Arroces" : p.esDesayuno ? "Desayunos" : "Fritos");
+             return cat === categoriaActiva;
           })
-          .sort((a, b) => {
-            const ordenFritos = ["Empanada Crujiente", "Arepa con Huevo y Carne", "Papa Rellena de la Casa", "Pastel de Pollo Hojaldrado", "Palitos de Queso Costeño", "Buñuelos Calientitos"];
-            let posA = ordenFritos.indexOf(a.nombre); let posB = ordenFritos.indexOf(b.nombre);
-            return (posA === -1 ? 999 : posA) - (posB === -1 ? 999 : posB);
-          })
-          .map(p => {
-            const todoAgotado = !p.disponible;
-            const isHovered = hoveredCardId === p.id;
-            let precioMostrar = p.precio || 0;
-            if (p.esJugo && p.tamanos) {
-              const tamSeleccionado = tamanosJugo[p.id];
-              if (tamSeleccionado) {
-                const tamObj = p.tamanos.find(t => t.nombre === tamSeleccionado);
-                precioMostrar = tamObj ? tamObj.precio : p.tamanos[0].precio;
-              } else {
-                precioMostrar = p.tamanos[0].precio;
-              }
-            }
-
-            return (
-              <div key={p.id} onMouseEnter={() => setHoveredCardId(p.id)} onMouseLeave={() => setHoveredCardId(null)} style={{background: 'white', borderRadius: '28px', padding: '0', boxShadow: isHovered && tiendaAbierta ? '0 20px 40px rgba(0,0,0,0.12)' : '0 10px 20px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease', transform: isHovered && tiendaAbierta ? 'translateY(-8px)' : 'translateY(0)', border: isHovered && tiendaAbierta ? `2px solid ${MONO_NARANJA}` : `2px solid transparent`, display: 'flex', flexDirection: 'column'}}>
-                <img src={p.imagen} onError={(e) => e.target.src = "https://via.placeholder.com/400x300?text=El+Mono"} style={{width: '100%', height: '210px', objectFit: 'cover', filter: todoAgotado ? 'grayscale(1)' : 'none'}} alt={p.nombre} />
-                <div style={{padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
-                  <h3 style={{margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800'}}>{p.nombre}</h3>
-                  <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin: '0 0 20px 0', paddingBottom: '10px', borderBottom: `2px dashed ${MONO_AMARILLO}`}}>${precioMostrar.toLocaleString('es-CO')}</p>
-                  
-                  {!todoAgotado && tiendaAbierta && (
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-                      {p.esArroz && (
-                        <div style={{background: MONO_AMARILLO, padding: '15px', borderRadius: '18px', border: `1px solid rgba(249, 115, 22, 0.2)`}}>
-                          <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width:'100%', padding:'12px', borderRadius:'12px', border:`1px solid #ddd`, fontSize:'16px'}}>
-                            <option value="">¿Tajada o Yuca?</option>
-                            <option value="Tajadas" disabled={!tajadaObj.disponible}>Tajadas {!tajadaObj.disponible ? "(AGOTADO)" : "😋"}</option>
-                            <option value="Yuca" disabled={!yucaObj.disponible}>Yuca {!yucaObj.disponible ? "(AGOTADO)" : "😋"}</option>
-                          </select>
-                          <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '15px'}}>
-                            {!huevoObj.disponible ? <p style={{color: 'red', fontSize: '14px', fontWeight: 'bold'}}>🚫 Huevo Agotado</p> : (
-                              <label style={{fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
-                                <input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} style={{accentColor: MONO_NARANJA, width: '22px', height: '22px'}} />
-                                + Huevo (${huevoObj.precio.toLocaleString('es-CO')})
-                              </label>
-                            )}
-                            {/* ✅ BOTÓN DE QUESO ARREGLADO */}
-                            {!quesoObj.disponible ? <p style={{color: 'red', fontSize: '14px', fontWeight: 'bold'}}>🚫 Queso Agotado</p> : (
-                              <label style={{fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', marginTop: '5px'}}>
-                                <input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} style={{accentColor: MONO_NARANJA, width: '22px', height: '22px'}} />
-                                + Tajada de Queso (${quesoObj.precio.toLocaleString('es-CO')})
-                              </label>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      <button onClick={() => agregarAlCarrito(p)} style={{background: MONO_NARANJA, color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer'}}>Añadir al Pedido 🥟</button>
+          .map(p => (
+            <div key={p.id} style={{background: 'white', borderRadius: '28px', padding: '0', boxShadow: '0 10px 20px rgba(0,0,0,0.05)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column'}}>
+              <img src={p.imagen} onError={(e) => e.target.src = "https://via.placeholder.com/400x300?text=Fritos+El+Mono"} style={{width: '100%', height: '210px', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none'}} alt={p.nombre} />
+              <div style={{padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
+                <h3 style={{margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800'}}>{p.nombre}</h3>
+                <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px'}}>${p.precio.toLocaleString('es-CO')}</p>
+                
+                {p.esArroz && (
+                  <div style={{background: MONO_AMARILLO, padding: '15px', borderRadius: '18px', marginTop: '10px'}}>
+                    <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width:'100%', padding:'12px', borderRadius:'12px', border:`1px solid #ddd`}}>
+                      <option value="">¿Tajada o Yuca?</option>
+                      <option value="Tajadas" disabled={!tajadaObj.disponible}>Tajadas</option>
+                      <option value="Yuca" disabled={!yucaObj.disponible}>Yuca</option>
+                    </select>
+                    <div style={{marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                      <label style={{display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
+                        <input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} disabled={!huevoObj.disponible} />
+                        + Huevo Extra (${huevoObj.precio.toLocaleString('es-CO')})
+                      </label>
+                      {/* ✅ ESTE ES EL BOTÓN QUE BUSCÁBAMOS */}
+                      <label style={{display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
+                        <input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} disabled={!quesoObj.disponible} />
+                        + Tajada de Queso (${quesoObj.precio.toLocaleString('es-CO')})
+                      </label>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible} style={{background: MONO_NARANJA, color: 'white', border: 'none', padding: '16px', borderRadius: '15px', fontWeight: 'bold', marginTop: '15px', cursor: 'pointer'}}>{p.disponible ? 'Añadir al Pedido 🥟' : 'AGOTADO'}</button>
               </div>
-            );
-          })}
+            </div>
+          ))}
       </div>
-      {/* SALSAS, CARRITO Y FOOTER (Se mantienen igual para no dañar nada) */}
+
+      {/* SALSAS */}
+      {tiendaAbierta && (
+        <div style={{maxWidth: '850px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px'}}>
+          <h3 style={{color: MONO_NARANJA, margin: '0 0 25px 0'}}>🧂 ¿Qué salsas deseas?</h3>
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: '15px'}}>
+            {salsasMostrar.map(s => (
+              <button key={s.id || s.nombre} onClick={() => manejarSalsa(s)} disabled={!s.disponible} style={{ padding: '14px 28px', borderRadius: '40px', border: 'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : MONO_AMARILLO, color: salsasElegidas.includes(s.nombre) ? 'white' : MONO_TEXTO, cursor: 'pointer' }}>{s.nombre}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CARRITO (RESUMEN) */}
+      {pedido.length > 0 && (
+        <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}` }}>
+          <h2>Confirmar Pedido</h2>
+          {pedido.map(item => (
+            <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '10px 0' }}>
+              <span>{item.cantidad}x {item.nombre} {item.detallesArroz}</span>
+              <strong>${item.subtotal.toLocaleString('es-CO')}</strong>
+            </div>
+          ))}
+          <h2 style={{ textAlign: 'right', color: MONO_NARANJA }}>Total: ${total.toLocaleString('es-CO')}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+             <input type="text" placeholder="Tu Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{padding: '15px', borderRadius: '10px', border: '1px solid #ddd'}} />
+             <input type="text" placeholder="Dirección" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{padding: '15px', borderRadius: '10px', border: '1px solid #ddd'}} />
+             <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{padding: '15px', borderRadius: '10px', border: '1px solid #ddd'}}>
+               <option value="">¿Cómo pagas?</option>
+               <option value="Efectivo">Efectivo</option>
+               <option value="Nequi">Nequi</option>
+             </select>
+             <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '20px', borderRadius: '15px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer' }}>Enviar por WhatsApp 📲</button>
+          </div>
+        </div>
+      )}
+
+      <footer style={{ textAlign: 'center', padding: '40px 20px', color: '#666' }}>
+        <p>📍 Carepa, Antioquia | Hecho con ❤️ para El Mono</p>
+      </footer>
     </div>
   );
 }
