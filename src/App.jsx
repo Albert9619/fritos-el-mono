@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, updateDoc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS MAESTROS (Corregidos y Protegidos)
+// 🔴 DATOS MAESTROS
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -81,9 +81,7 @@ export default function App() {
   const [conQueso, setConQueso] = useState(false);
   const [salsasElegidas, setSalsasElegidas] = useState([]);
 
-  const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
-  const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
-
+  // Fallbacks (si Firebase está vacío)
   const productosMostrar = productos.length > 0 ? productos : productosBase;
   const extrasArrozMostrar = extrasArroz.length > 0 ? extrasArroz : extrasArrozBase;
   const salsasMostrar = salsas.length > 0 ? salsas : salsasBase;
@@ -108,26 +106,20 @@ export default function App() {
   };
 
   const restaurarBaseDeDatos = async () => {
-    if(!window.confirm("¿Restaurar todo el menú en Firebase?")) return;
+    if(!window.confirm("¿Restaurar todo el menú?")) return;
     try {
       await setDoc(doc(db, "ajuste", "tienda"), { abierta: true });
       for (const p of productosBase) await setDoc(doc(db, "productos", p.id), p);
       for (const e of extrasArrozBase) await setDoc(doc(db, "extrasArroz", e.id), e);
       for (const s of salsasBase) await setDoc(doc(db, "salsas", s.id), s);
-      alert("✅ ¡Menú Restaurado!");
-    } catch (e) { alert("Error al subir datos"); }
-  };
-
-  const sumarCantidad = (id) => setCantidades({...cantidades, [id]: (cantidades[id] || 1) + 1});
-  const restarCantidad = (id) => {
-    const actual = cantidades[id] || 1;
-    if (actual > 1) setCantidades({...cantidades, [id]: actual - 1});
+      alert("✅ Menú Sincronizado");
+    } catch (e) { alert("Error al conectar con Firebase"); }
   };
 
   const agregarAlCarrito = (p) => {
     if (!tiendaAbierta) return;
-    const cant = cantidades[p.id] || 1;
-    let precioBase = p.precio || 0;
+    const cant = Number(cantidades[p.id] || 1);
+    let precioBase = Number(p.precio || 0);
     let sabor = "";
     let detallesExtra = "";
 
@@ -135,8 +127,8 @@ export default function App() {
       if (p.esArroz) {
         if (!acompañanteArroz) return alert("Por favor elige Tajadas o Yuca");
         sabor = `Arroz de ${tipoArrozHoy}`;
-        const h = extrasArrozMostrar.find(e => e.id === 'huevo') || {precio: 1000};
-        const q = extrasArrozMostrar.find(e => e.id === 'queso') || {precio: 1000};
+        const h = extrasArrozMostrar.find(e => e.id === 'huevo') || { precio: 1000 };
+        const q = extrasArrozMostrar.find(e => e.id === 'queso') || { precio: 1000 };
         if (conHuevo) precioBase += h.precio;
         if (conQueso) precioBase += q.precio;
         detallesExtra = `(Con ${acompañanteArroz}${conHuevo ? ' + Huevo' : ''}${conQueso ? ' + Queso' : ''})`;
@@ -147,13 +139,12 @@ export default function App() {
 
       if (p.tamanos) {
         const tam = tamanosJugo[p.id];
-        if (!tam) return alert("Por favor elige el tamaño/presentación");
+        if (!tam) return alert("Por favor elige la presentación");
         const tObj = p.tamanos.find(t => t.nombre === tam);
-        if (tObj) precioBase = tObj.precio;
-        detallesExtra = `(${tam})`;
+        if (tObj) precioBase = Number(tObj.precio);
       }
 
-      setPedido([...pedido, { 
+      setPedido(prev => [...prev, { 
         idUnico: Date.now(), 
         nombre: p.nombre, 
         precioUnitario: precioBase, 
@@ -166,32 +157,26 @@ export default function App() {
       setNotificacion(`¡${p.nombre} añadido! 🥟`);
       setTimeout(() => setNotificacion(""), 2000);
       
-      // Limpiar estados temporales
-      setAcompañanteArroz(""); 
-      setConHuevo(false); 
-      setConQueso(false);
+      // Reset
+      setAcompañanteArroz(""); setConHuevo(false); setConQueso(false);
       setCantidades({...cantidades, [p.id]: 1});
-    } catch (error) {
-      console.error(error);
-      alert("Hubo un error al añadir el producto. Intenta de nuevo.");
+    } catch (e) {
+      console.error(e);
     }
   };
 
+  const totalPedido = pedido.reduce((acc, i) => acc + (Number(i.subtotal) || 0), 0);
+
   if (isAdmin) {
     return (
-      <div style={{padding: '20px', background: '#f0f2f5', minHeight: '100vh', fontFamily: 'sans-serif'}}>
-        <button onClick={() => setIsAdmin(false)} style={{padding:'10px', borderRadius:'10px', cursor:'pointer'}}>← Volver</button>
-        <button onClick={restaurarBaseDeDatos} style={{display:'block', marginTop:'20px', background:'red', color:'white', padding:'15px', borderRadius:'10px', fontWeight:'bold', border:'none', cursor:'pointer'}}>🔄 REPARAR TODO EL MENÚ</button>
-        <h2 style={{marginTop:'30px'}}>Control de Disponibilidad</h2>
+      <div style={{padding: '20px', fontFamily: 'sans-serif'}}>
+        <button onClick={() => setIsAdmin(false)}>← Volver</button>
+        <button onClick={restaurarBaseDeDatos} style={{display:'block', marginTop:'20px', background:'red', color:'white', padding:'10px', borderRadius:'10px', border:'none'}}>🔄 REPARAR BASE DE DATOS</button>
+        <h2 style={{marginTop:'20px'}}>Admin: Disponibilidad</h2>
         {productosMostrar.map(p => (
-          <div key={p.id} style={{background:'white', padding:'15px', marginBottom:'10px', borderRadius:'15px', display:'flex', justifyContent:'space-between', alignItems:'center', boxShadow:'0 2px 5px rgba(0,0,0,0.05)'}}>
-            <strong>{p.nombre}</strong>
-            <button 
-              onClick={() => updateDoc(doc(db, "productos", p.id), { disponible: !p.disponible })}
-              style={{padding:'10px', borderRadius:'10px', background: p.disponible ? MONO_VERDE : '#ccc', color:'white', border:'none', fontWeight:'bold', cursor:'pointer'}}
-            >
-              {p.disponible ? 'DISPONIBLE' : 'AGOTADO'}
-            </button>
+          <div key={p.id} style={{background:'white', padding:'10px', marginBottom:'5px', borderBottom:'1px solid #ddd', display:'flex', justifyContent:'space-between'}}>
+            <span>{p.nombre}</span>
+            <button onClick={() => updateDoc(doc(db, "productos", p.id), { disponible: !p.disponible })}>{p.disponible ? '🟢 HAY' : '🔴 AGOTADO'}</button>
           </div>
         ))}
       </div>
@@ -199,167 +184,123 @@ export default function App() {
   }
 
   return (
-    <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO}}>
+    <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '100px', color: MONO_TEXTO}}>
       
       {notificacion && (
-        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: MONO_VERDE, color: 'white', padding: '15px 30px', borderRadius: '50px', zIndex: 3000, fontWeight: 'bold', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-          {notificacion}
-        </div>
+        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: MONO_VERDE, color: 'white', padding: '15px 30px', borderRadius: '50px', zIndex: 3000, fontWeight: 'bold' }}>{notificacion}</div>
       )}
 
-      <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)'}}>
+      <header style={{textAlign: 'center', background: 'white', marginBottom: '30px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)'}}>
         <img src="/logo-fritos-el-mono.jpg" alt="Banner" style={{width: '100%', height: '220px', objectFit: 'cover'}} />
-        <h1 onDoubleClick={accesoSecreto} style={{color: MONO_NARANJA, margin: '15px 0', fontSize: '32px'}}>Fritos El Mono 🐒</h1>
-        <p style={{paddingBottom: '20px'}}>Hoy Arroz de <strong style={{color: MONO_NARANJA}}>{tipoArrozHoy}</strong></p>
+        <h1 onDoubleClick={accesoSecreto} style={{color: MONO_NARANJA, margin: '15px 0'}}>Fritos El Mono 🐒</h1>
+        <p>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
       </header>
 
-      {/* CATEGORÍAS */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px' }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
-          <button 
-            key={cat} 
-            onClick={() => setCategoriaActiva(cat)} 
-            style={{ padding: '12px 25px', borderRadius: '25px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_TEXTO, fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}
-          >
-            {cat}
-          </button>
+          <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '10px 20px', borderRadius: '20px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_TEXTO, fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>{cat}</button>
         ))}
       </div>
 
-      {/* LISTA DE PRODUCTOS */}
-      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px'}}>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '20px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px'}}>
         {productosMostrar
           .filter(p => (p.categoria || (p.esArroz ? "Arroces" : p.esDesayuno ? "Desayunos" : "Fritos")) === categoriaActiva)
           .map(p => (
-            <div key={p.id} style={{background: 'white', borderRadius: '25px', overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column'}}>
-              <img src={p.imagen} style={{width: '100%', height: '200px', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none'}} alt={p.nombre} />
-              <div style={{padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
-                <h3 style={{margin: '0 0 10px 0', fontSize: '22px'}}>{p.nombre}</h3>
+            <div key={p.id} style={{background: 'white', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column'}}>
+              <img src={p.imagen} style={{width: '100%', height: '180px', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none'}} alt={p.nombre} />
+              <div style={{padding: '20px', flexGrow: 1}}>
+                <h3 style={{margin: '0 0 10px 0'}}>{p.nombre}</h3>
                 
-                <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '24px', marginBottom: '15px'}}>
-                  {p.tamanos && p.tamanos.length > 0 
-                    ? `$${p.tamanos[0].precio.toLocaleString()} - $${p.tamanos[p.tamanos.length-1].precio.toLocaleString()}` 
-                    : `$${(p.precio || 0).toLocaleString('es-CO')}`}
+                <p style={{color: MONO_NARANJA, fontWeight: 'bold', fontSize: '22px'}}>
+                  {p.tamanos ? `$${p.tamanos[0].precio.toLocaleString()} - $${p.tamanos[p.tamanos.length-1].precio.toLocaleString()}` : `$${(p.precio || 0).toLocaleString()}`}
                 </p>
 
-                {/* OPCIONES DE ARROZ */}
                 {p.esArroz && (
-                  <div style={{background: MONO_AMARILLO, padding: '15px', borderRadius: '20px', marginBottom: '15px'}}>
-                    <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width:'100%', padding:'10px', borderRadius:'10px', border:'1px solid #ddd', marginBottom:'10px'}}>
-                      <option value="">¿Tajada o Yuca?</option>
-                      <option value="Tajadas">Tajadas</option>
-                      <option value="Yuca">Yuca</option>
+                  <div style={{background: MONO_AMARILLO, padding: '15px', borderRadius: '15px', marginTop: '10px'}}>
+                    <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width:'100%', padding:'8px', borderRadius:'8px', marginBottom:'10px'}}>
+                      <option value="">¿Acompañante?</option>
+                      <option value="Tajadas">Tajadas</option><option value="Yuca">Yuca</option>
                     </select>
-                    <label style={{display:'flex', alignItems:'center', gap:'10px', marginBottom:'5px'}}><input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} style={{width:'18px', height:'18px'}} /> + Huevo ($1.000)</label>
-                    <label style={{display:'flex', alignItems:'center', gap:'10px'}}><input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} style={{width:'18px', height:'18px'}} /> + Queso ($1.000)</label>
+                    <label style={{display:'block'}}><input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} /> + Huevo ($1.000)</label>
+                    <label style={{display:'block'}}><input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} /> + Queso ($1.000)</label>
                   </div>
                 )}
 
-                {/* OPCIONES DE SABOR / TAMAÑO */}
                 {p.opciones && (
-                  <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} value={sabores[p.id] || ""} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #ddd', marginBottom:'15px', fontSize:'16px'}}>
+                  <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} value={sabores[p.id] || ""} style={{width:'100%', padding:'10px', borderRadius:'10px', marginTop:'10px'}}>
                     <option value="">-- Elige Sabor --</option>
                     {p.opciones.map(opt => <option key={opt.nombre} value={opt.nombre} disabled={!opt.disponible}>{opt.nombre}</option>)}
                   </select>
                 )}
 
                 {p.tamanos && (
-                  <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} value={tamanosJugo[p.id] || ""} style={{width:'100%', padding:'12px', borderRadius:'15px', border:`2px solid ${MONO_NARANJA}`, marginBottom:'15px', fontWeight:'bold'}}>
-                    <option value="">-- Elige Presentación --</option>
-                    {p.tamanos.map(t => <option key={t.nombre} value={t.nombre} disabled={!t.disponible}>{t.nombre} - ${t.precio.toLocaleString()}</option>)}
+                  <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} value={tamanosJugo[p.id] || ""} style={{width:'100%', padding:'10px', borderRadius:'10px', marginTop:'10px', border:`2px solid ${MONO_NARANJA}`}}>
+                    <option value="">-- Elige Tamaño --</option>
+                    {p.tamanos.map(t => <option key={t.nombre} value={t.nombre}>{t.nombre} - ${t.precio.toLocaleString()}</option>)}
                   </select>
                 )}
 
-                {/* ✅ CONTROLES DE CANTIDAD (VUELVEN A APARECER) */}
-                <div style={{display:'flex', alignItems:'center', gap:'10px', marginTop:'auto'}}>
-                  <div style={{display:'flex', alignItems:'center', background:'#f0f2f5', borderRadius:'15px', padding:'5px'}}>
-                    <button onClick={() => restarCantidad(p.id)} style={{width:'35px', height:'35px', border:'none', background:'white', borderRadius:'10px', fontWeight:'bold', cursor:'pointer'}}>-</button>
-                    <span style={{padding:'0 15px', fontWeight:'bold', fontSize:'18px'}}>{cantidades[p.id] || 1}</span>
-                    <button onClick={() => sumarCantidad(p.id)} style={{width:'35px', height:'35px', border:'none', background: MONO_NARANJA, color:'white', borderRadius:'10px', fontWeight:'bold', cursor:'pointer'}}>+</button>
+                <div style={{display:'flex', alignItems:'center', gap:'10px', marginTop:'15px'}}>
+                  <div style={{display:'flex', alignItems:'center', background:'#f0f0f0', borderRadius:'10px'}}>
+                    <button onClick={() => restarCantidad(p.id)} style={{border:'none', background:'none', padding:'10px', fontWeight:'bold'}}>-</button>
+                    <span style={{fontWeight:'bold'}}>{cantidades[p.id] || 1}</span>
+                    <button onClick={() => sumarCantidad(p.id)} style={{border:'none', background:'none', padding:'10px', fontWeight:'bold'}}>+</button>
                   </div>
-                  
-                  <button 
-                    onClick={() => agregarAlCarrito(p)} 
-                    disabled={!p.disponible || !tiendaAbierta} 
-                    style={{flex:1, background: MONO_NARANJA, color: 'white', border: 'none', padding: '15px', borderRadius: '15px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer'}}
-                  >
-                    {p.disponible ? 'Añadir 🥟' : 'AGOTADO'}
-                  </button>
+                  <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible} style={{flex:1, background: MONO_NARANJA, color: 'white', border: 'none', padding: '12px', borderRadius: '10px', fontWeight: 'bold', cursor:'pointer'}}>Añadir 🥟</button>
                 </div>
               </div>
             </div>
           ))}
       </div>
 
-      {/* SALSAS */}
+      {/* 🧂 SALSAS (CORREGIDO: APARECEN SI HAY PEDIDO) */}
       {pedido.length > 0 && (
-        <div style={{maxWidth: '800px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', textAlign:'center', boxShadow:'0 10px 20px rgba(0,0,0,0.05)'}}>
-          <h3 style={{color: MONO_NARANJA, fontSize:'24px', margin:'0 0 15px 0'}}>🧂 ¿Deseas agregar salsas?</h3>
-          <div style={{display:'flex', flexWrap:'wrap', gap:'12px', justifyContent:'center'}}>
+        <div style={{maxWidth: '800px', margin: '40px auto', background: 'white', padding: '25px', borderRadius: '25px', textAlign:'center', boxShadow:'0 4px 10px rgba(0,0,0,0.05)'}}>
+          <h3 style={{color: MONO_NARANJA}}>🧂 ¿Qué salsas deseas?</h3>
+          <div style={{display:'flex', flexWrap:'wrap', gap:'10px', justifyContent:'center', marginTop:'15px'}}>
             {salsasMostrar.map(s => (
-              <button 
-                key={s.id} 
-                onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} 
-                style={{padding:'12px 22px', borderRadius:'25px', border:'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : MONO_AMARILLO, color: salsasElegidas.includes(s.nombre) ? 'white' : MONO_TEXTO, fontWeight:'bold', cursor:'pointer', transition:'0.3s'}}
-              >
-                {salsasElegidas.includes(s.nombre) ? `✓ ${s.nombre}` : s.nombre}
-              </button>
+              <button key={s.id} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} style={{padding:'10px 20px', borderRadius:'20px', border:'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : MONO_AMARILLO, color: salsasElegidas.includes(s.nombre) ? 'white' : 'black', cursor:'pointer', fontWeight:'bold'}}>{s.nombre}</button>
             ))}
           </div>
         </div>
       )}
 
       {/* CARRITO FLOTANTE */}
-      {pedido.length > 0 && tiendaAbierta && (
-        <a href="#carrito_seccion" style={{ position: 'fixed', bottom: '25px', right: '25px', background: MONO_TEXTO, color: 'white', padding: '15px 25px', borderRadius: '50px', textDecoration: 'none', fontWeight: 'bold', boxShadow: '0 8px 25px rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <span style={{fontSize: '12px', opacity: 0.8}}>🛒 Carrito ({pedido.length})</span>
-          <span style={{fontSize: '18px', color: MONO_NARANJA}}>${total.toLocaleString('es-CO')}</span>
+      {pedido.length > 0 && (
+        <a href="#carrito_seccion" style={{ position: 'fixed', bottom: '20px', right: '20px', background: MONO_TEXTO, color: 'white', padding: '15px 25px', borderRadius: '50px', textDecoration: 'none', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', zIndex: 100 }}>
+          🛒 Total: ${totalPedido.toLocaleString()}
         </a>
       )}
 
-      {/* RESUMEN DEL PEDIDO */}
+      {/* SECCIÓN RESUMEN */}
       {pedido.length > 0 && (
-        <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px'}}>
-            <h2 style={{margin:0, fontSize:'28px'}}>🥟 Tu Pedido</h2>
-            <button onClick={vaciarCarrito} style={{background:'#fee2e2', color:'#b91c1c', border:'none', padding:'10px 15px', borderRadius:'12px', fontWeight:'bold', cursor:'pointer'}}>Vaciar 🗑️</button>
+        <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '30px', border: `4px solid ${MONO_NARANJA}` }}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <h2>Tu Pedido</h2>
+            <button onClick={() => setPedido([])} style={{background:'red', color:'white', border:'none', padding:'8px 15px', borderRadius:'10px', cursor:'pointer'}}>Vaciar 🗑️</button>
           </div>
-          
           {pedido.map(item => (
-            <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', padding: '15px 0', borderBottom: '1px solid #eee', alignItems: 'center' }}>
-              <div style={{flex:1}}>
-                <span style={{fontSize:'18px'}}><strong>{item.cantidad}x </strong>{item.nombre}</span><br/>
-                <small style={{color: '#666'}}>{item.saborElegido} {item.detallesArroz}</small>
-              </div>
-              <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-                <strong style={{fontSize:'18px'}}>${item.subtotal.toLocaleString()}</strong>
-                <button onClick={() => setPedido(pedido.filter(i => i.idUnico !== item.idUnico))} style={{color:'red', border:'none', background:'#fff5f5', width:'35px', height:'35px', borderRadius:'50%', cursor:'pointer', fontWeight:'bold'}}>✕</button>
+            <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #eee' }}>
+              <span>{item.cantidad}x {item.nombre} <small>{item.saborElegido} {item.detallesArroz}</small></span>
+              <div>
+                <strong>${item.subtotal.toLocaleString()}</strong>
+                <button onClick={() => setPedido(pedido.filter(i => i.idUnico !== item.idUnico))} style={{marginLeft:'10px', color:'red', border:'none', background:'none', cursor:'pointer'}}>✕</button>
               </div>
             </div>
           ))}
-
-          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '36px', marginTop: '30px', borderTop:`3px dashed ${MONO_AMARILLO}`, paddingTop:'20px' }}>
-            Total: ${total.toLocaleString('es-CO')}
-          </h2>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '25px' }}>
-            <input type="text" placeholder="Tu Nombre Completo" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{padding:'18px', borderRadius:'15px', border:'1px solid #ddd', fontSize:'16px', background: MONO_CREMA}} />
-            <input type="text" placeholder="Dirección Exacta / Barrio" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{padding:'18px', borderRadius:'15px', border:'1px solid #ddd', fontSize:'16px', background: MONO_CREMA}} />
-            <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{padding:'18px', borderRadius:'15px', border:'1px solid #ddd', fontSize:'16px'}}>
-              <option value="">¿Cómo deseas pagar?</option>
-              <option value="Efectivo">Efectivo</option>
-              <option value="Nequi">Nequi</option>
+          <h2 style={{ textAlign: 'right', color: MONO_NARANJA }}>Total: ${totalPedido.toLocaleString()}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+            <input type="text" placeholder="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{padding:'12px', borderRadius:'10px', border:'1px solid #ddd'}} />
+            <input type="text" placeholder="Dirección" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{padding:'12px', borderRadius:'10px', border:'1px solid #ddd'}} />
+            <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{padding:'12px', borderRadius:'10px', border:'1px solid #ddd'}}>
+              <option value="">¿Cómo pagas?</option><option value="Efectivo">Efectivo</option><option value="Nequi">Nequi</option>
             </select>
-            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', padding: '22px', borderRadius: '20px', fontWeight: 'bold', fontSize: '20px', border:'none', cursor:'pointer', marginTop:'10px', boxShadow:'0 5px 15px rgba(22, 163, 74, 0.3)' }}>
-              Confirmar Pedido por WhatsApp 📲
-            </button>
+            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', padding: '15px', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer', border:'none', fontSize:'18px' }}>Pedir por WhatsApp 📲</button>
           </div>
         </div>
       )}
 
-      <footer style={{ textAlign: 'center', padding: '40px', color: '#888' }}>
-        <p>📍 Carepa, Antioquia - Fritos El Mono 🐒</p>
-      </footer>
+      <footer style={{ textAlign: 'center', padding: '30px', color: '#888' }}>📍 Carepa, Antioquia</footer>
     </div>
   );
 }
