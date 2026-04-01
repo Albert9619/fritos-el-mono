@@ -5,7 +5,11 @@ import { collection, onSnapshot, doc, updateDoc, setDoc } from "firebase/firesto
 // ==========================================
 // 🔴 DATOS MAESTROS (Corregidos con Sabores y Tamaños)
 // ==========================================
+// ==========================================
+// 🔴 DATOS MAESTROS (Actualizado con presentaciones de Bebidas)
+// ==========================================
 const productosBase = [
+  // ... (fritos, desayunos y arroces se mantienen igual)
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", imagen: "/arepa-huevo.jpg", disponible: true },
   { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", imagen: "/papa-rellena.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
@@ -15,12 +19,39 @@ const productosBase = [
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno.jpg", disponible: true },
   { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno-especial.jpg", disponible: true },
   { id: "5", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true, imagen: "/arroz-pollo.jpg", disponible: true },
+  
+  // 🥤 BEBIDAS ACTUALIZADAS
   { id: "6", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", esJugo: true, imagen: "/jugo-natural.jpg", disponible: true, 
     opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], 
     tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] 
   },
-  { id: "b1", nombre: "Coca-Cola", precio: 3500, categoria: "Bebidas", imagen: "/coca-cola.jpg", disponible: true },
-  { id: "b2", nombre: "Pony Malta", precio: 2500, categoria: "Bebidas", imagen: "/pony.jpg", disponible: true },
+  { 
+    id: "b1", 
+    nombre: "Coca-Cola", 
+    precio: 0, 
+    categoria: "Bebidas", 
+    imagen: "/coca-cola.jpg", 
+    disponible: true,
+    esJugo: true, // Reutilizamos la lógica de 'tamanos' que ya tienes programada
+    tamanos: [
+      { nombre: "Mini 250ml", precio: 2500, disponible: true },
+      { nombre: "Personal 400ml", precio: 3500, disponible: true },
+      { nombre: "Familiar 1.5L", precio: 6500, disponible: true }
+    ]
+  },
+  { 
+    id: "b2", 
+    nombre: "Pony Malta", 
+    precio: 0, 
+    categoria: "Bebidas", 
+    imagen: "/pony.jpg", 
+    disponible: true,
+    esJugo: true, // Reutilizamos la lógica de 'tamanos'
+    tamanos: [
+      { nombre: "Malta Mini 250ml", precio: 2500, disponible: true },
+      { nombre: "Malta Personal 400ml", precio: 3500, disponible: true }
+    ]
+  },
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", imagen: "/agua.jpg", disponible: true }
 ];
 
