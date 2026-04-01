@@ -5,11 +5,7 @@ import { collection, onSnapshot, doc, updateDoc, setDoc } from "firebase/firesto
 // ==========================================
 // 🔴 DATOS MAESTROS (Corregidos con Sabores y Tamaños)
 // ==========================================
-// ==========================================
-// 🔴 DATOS MAESTROS (Actualizado con presentaciones de Bebidas)
-// ==========================================
 const productosBase = [
-  // ... (fritos, desayunos y arroces se mantienen igual)
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", imagen: "/arepa-huevo.jpg", disponible: true },
   { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", imagen: "/papa-rellena.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
@@ -20,19 +16,13 @@ const productosBase = [
   { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno-especial.jpg", disponible: true },
   { id: "5", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true, imagen: "/arroz-pollo.jpg", disponible: true },
   
-  // 🥤 BEBIDAS ACTUALIZADAS
+  // 🥤 BEBIDAS CON TAMAÑOS
   { id: "6", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", esJugo: true, imagen: "/jugo-natural.jpg", disponible: true, 
     opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], 
     tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] 
   },
   { 
-    id: "b1", 
-    nombre: "Coca-Cola", 
-    precio: 0, 
-    categoria: "Bebidas", 
-    imagen: "/coca-cola.jpg", 
-    disponible: true,
-    esJugo: true, // Reutilizamos la lógica de 'tamanos' que ya tienes programada
+    id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", imagen: "/coca-cola.jpg", disponible: true,
     tamanos: [
       { nombre: "Mini 250ml", precio: 2500, disponible: true },
       { nombre: "Personal 400ml", precio: 3500, disponible: true },
@@ -40,13 +30,7 @@ const productosBase = [
     ]
   },
   { 
-    id: "b2", 
-    nombre: "Pony Malta", 
-    precio: 0, 
-    categoria: "Bebidas", 
-    imagen: "/pony.jpg", 
-    disponible: true,
-    esJugo: true, // Reutilizamos la lógica de 'tamanos'
+    id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", imagen: "/pony.jpg", disponible: true,
     tamanos: [
       { nombre: "Malta Mini 250ml", precio: 2500, disponible: true },
       { nombre: "Malta Personal 400ml", precio: 3500, disponible: true }
@@ -84,8 +68,6 @@ export default function App() {
   const [productos, setProductos] = useState([]);
   const [extrasArroz, setExtrasArroz] = useState([]);
   const [salsas, setSalsas] = useState([]);
-
-  // Notificación de producto añadido
   const [notificacion, setNotificacion] = useState("");
 
   const [pedido, setPedido] = useState(() => {
@@ -103,7 +85,6 @@ export default function App() {
   const [conHuevo, setConHuevo] = useState(false);
   const [conQueso, setConQueso] = useState(false);
   const [salsasElegidas, setSalsasElegidas] = useState([]);
-  const [hoveredCardId, setHoveredCardId] = useState(null);
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
@@ -182,9 +163,10 @@ export default function App() {
       if (!sabor) return alert(`Por favor elige un sabor para: ${p.nombre}`);
     }
 
-    if (p.esJugo && p.tamanos) {
+    // Lógica para cualquier producto con tamaños (Jugos, Coca-Cola, Pony)
+    if (p.tamanos) {
       const tamNombre = tamanosJugo[p.id];
-      if (!tamNombre) return alert("Por favor elige el tamaño");
+      if (!tamNombre) return alert("Por favor elige la presentación");
       const tamObj = p.tamanos.find(t => t.nombre === tamNombre);
       if (tamObj) precioBase = tamObj.precio;
       detallesExtra = `(${tamNombre})`;
@@ -200,7 +182,6 @@ export default function App() {
       subtotal: precioBase * cant
     }]);
 
-    // Mostrar mensaje verde
     setNotificacion(`¡${p.nombre} añadido! 🥟`);
     setTimeout(() => setNotificacion(""), 3000);
     
@@ -248,7 +229,6 @@ export default function App() {
             </div>
             <button onClick={restaurarBaseDeDatos} style={{width: '100%', marginTop: '15px', background: '#b91c1c', color: 'white', padding: '15px', borderRadius: '10px', border: 'none'}}>🔄 REPARAR BASE DE DATOS</button>
           </div>
-          {/* Admin Extras */}
           <div style={{background: 'white', borderRadius: '25px', padding: '20px', marginBottom: '20px'}}>
              <h3 style={{marginTop: 0}}>Extras y Salsas</h3>
              {extrasArrozMostrar.map(e => (
@@ -261,7 +241,6 @@ export default function App() {
                </div>
              ))}
           </div>
-          {/* Admin Productos */}
           <div style={{background: 'white', borderRadius: '25px', padding: '20px'}}>
             <h3>Productos Principales</h3>
             {productosMostrar.map(p => (
@@ -282,9 +261,8 @@ export default function App() {
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', color: MONO_TEXTO, paddingBottom: '100px'}}>
       
-      {/* 🟢 MENSAJE DE NOTIFICACIÓN FLOTANTE */}
       {notificacion && (
-        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: MONO_VERDE, color: 'white', padding: '15px 30px', borderRadius: '50px', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', zIndex: 2000, transition: 'all 0.5s' }}>
+        <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: MONO_VERDE, color: 'white', padding: '15px 30px', borderRadius: '50px', fontWeight: 'bold', boxShadow: '0 4px 15px rgba(0,0,0,0.2)', zIndex: 2000 }}>
           {notificacion}
         </div>
       )}
@@ -303,10 +281,6 @@ export default function App() {
         ))}
       </div>
 
-      {!tiendaAbierta && (
-        <div style={{maxWidth: '800px', margin: '0 auto 30px', background: '#fee2e2', color: '#b91c1c', padding: '20px', borderRadius: '20px', textAlign: 'center', fontWeight: 'bold', border: '2px solid #ef4444'}}>🔴 Cerrado temporalmente</div>
-      )}
-
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px'}}>
         {productosMostrar
           .filter(p => (p.categoria || (p.esArroz ? "Arroces" : p.esDesayuno ? "Desayunos" : "Fritos")) === categoriaActiva)
@@ -316,12 +290,10 @@ export default function App() {
               <div style={{padding: '20px', flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
                 <h3 style={{margin: '0 0 8px 0', fontSize: '22px', fontWeight: '800'}}>{p.nombre}</h3>
                 
-                {/* 🔵 MOSTRAR PRECIO BASE O RANGO SI ES JUGO */}
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', marginBottom: '15px'}}>
-                  {p.esJugo ? "$1.000 - $2.000" : `$${p.precio.toLocaleString('es-CO')}`}
+                  {p.tamanos ? `$${p.tamanos[0].precio.toLocaleString()} - $${p.tamanos[p.tamanos.length - 1].precio.toLocaleString()}` : `$${p.precio.toLocaleString('es-CO')}`}
                 </p>
 
-                {/* 🍚 OPCIONES DE ARROZ */}
                 {p.esArroz && (
                   <div style={{background: MONO_AMARILLO, padding: '15px', borderRadius: '18px', marginBottom: '15px'}}>
                     <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width:'100%', padding:'10px', borderRadius:'10px', marginBottom: '10px'}}>
@@ -336,7 +308,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 🥟 OPCIONES DE SABOR (EMPANADAS, PAPAS, JUGOS) */}
                 {p.opciones && (
                   <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} value={sabores[p.id] || ""} style={{width:'100%', padding:'12px', borderRadius:'12px', marginBottom: '15px'}}>
                     <option value="">-- Elige Sabor --</option>
@@ -344,10 +315,10 @@ export default function App() {
                   </select>
                 )}
 
-                {/* 🥤 OPCIONES DE TAMAÑO (JUGOS) */}
-                {p.esJugo && p.tamanos && (
-                  <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} value={tamanosJugo[p.id] || ""} style={{width:'100%', padding:'12px', borderRadius:'12px', marginBottom: '15px', border: `2px solid ${MONO_NARANJA}`}}>
-                    <option value="">-- Elige Tamaño --</option>
+                {/* ✅ Selector de Tamaño Universal (Coca, Pony, Jugos) */}
+                {p.tamanos && (
+                  <select onChange={(e) => setTamanosJugo({...tamanosJugo, [p.id]: e.target.value})} value={tamanosJugo[p.id] || ""} style={{width:'100%', padding:'12px', borderRadius:'12px', marginBottom: '15px', border: `2px solid ${MONO_NARANJA}`, fontWeight: 'bold'}}>
+                    <option value="">-- Elige Presentación --</option>
                     {p.tamanos.map(t => <option key={t.nombre} value={t.nombre} disabled={!t.disponible}>{t.nombre} - ${t.precio.toLocaleString()}</option>)}
                   </select>
                 )}
@@ -367,7 +338,6 @@ export default function App() {
           ))}
       </div>
 
-      {/* CARRITO FLOTANTE */}
       {pedido.length > 0 && tiendaAbierta && (
         <a href="#carrito_seccion" style={{ position: 'fixed', bottom: '25px', right: '25px', background: MONO_TEXTO, color: 'white', padding: '15px 25px', borderRadius: '50px', textDecoration: 'none', fontWeight: 'bold', boxShadow: '0 8px 25px rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span style={{fontSize: '12px', opacity: 0.8}}>🛒 Carrito ({pedido.length})</span>
@@ -375,7 +345,6 @@ export default function App() {
         </a>
       )}
 
-      {/* SECCIÓN RESUMEN CARRITO */}
       {pedido.length > 0 && tiendaAbierta && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto 60px', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.15)' }}>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
