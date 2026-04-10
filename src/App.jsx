@@ -17,7 +17,7 @@ const productosBase = [
   { id: "5", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true, imagen: "/arroz-pollo.jpg", disponible: true },
   { id: "6", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", imagen: "/jugo-natural.jpg", disponible: true, opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", imagen: "/coca-cola.jpg", disponible: true, tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }, { nombre: "Familiar 1.5L", precio: 6500, disponible: true }] },
-  { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", imagen: "/pony.jpg", disponible: true, tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }] },
+  { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", imagen: "/pony.jpg", disponible: true, tamanos: [{ nombre: "Malta Mini 250ml", precio: 2500, disponible: true }, { nombre: "Malta Personal 400ml", precio: 3500, disponible: true }] },
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", imagen: "/agua.jpg", disponible: true }
 ];
 
@@ -89,7 +89,6 @@ export default function App() {
     return () => { unsubProd(); unsubExtras(); unsubSalsas(); unsubTienda(); };
   }, []);
 
-  // FUNCIONES DE ACTUALIZACIÓN FIREBASE
   const actualizarDoc = (coleccion, id, datos) => updateDoc(doc(db, coleccion, id), datos).catch(e => console.error(e));
 
   const enviarWhatsApp = () => {
@@ -111,11 +110,14 @@ export default function App() {
       if (p.esArroz) {
         if (!acompañanteArroz) return alert("Elige Tajadas o Yuca");
         sabor = `Arroz de ${tipoArrozHoy}`;
-        const h = extrasArrozMostrar.find(e => e.id === 'huevo') || { precio: 1000 };
-        const q = extrasArrozMostrar.find(e => e.id === 'queso') || { precio: 1000 };
-        if (conHuevo) precioBase += Number(h.precio);
-        if (conQueso) precioBase += Number(q.precio);
-        detallesExtra = `(Con ${acompañanteArroz}${conHuevo ? ' + Huevo' : ''}${conQueso ? ' + Queso' : ''})`;
+        const h = extrasArrozMostrar.find(e => e.id === 'huevo') || { precio: 1000, disponible: true };
+        const q = extrasArrozMostrar.find(e => e.id === 'queso') || { precio: 1000, disponible: true };
+        
+        // Solo sumamos el precio si el extra está disponible en el admin
+        if (conHuevo && h.disponible) precioBase += Number(h.precio);
+        if (conQueso && q.disponible) precioBase += Number(q.precio);
+        
+        detallesExtra = `(Con ${acompañanteArroz}${conHuevo && h.disponible ? ' + Huevo' : ''}${conQueso && q.disponible ? ' + Queso' : ''})`;
       } else if (p.opciones) {
         sabor = sabores[p.id];
         if (!sabor) return alert("Por favor elige un sabor");
@@ -123,7 +125,7 @@ export default function App() {
 
       if (p.tamanos) {
         const tam = tamanosBebida[p.id];
-        if (!tam) return alert("Por favor elige el tamaño");
+        if (!tam) return alert("Por favor elige la presentación");
         const tObj = p.tamanos.find(t => t.nombre === tam);
         if (tObj) precioBase = Number(tObj.precio);
         detallesExtra = `(${tam})`;
@@ -152,7 +154,12 @@ export default function App() {
     } catch (e) { alert("Error"); }
   };
 
-  // 🟢 VISTA ADMINISTRADOR (CON SWITCHES Y PRECIOS)
+  // ✅ CONSTANTES DE EXTRAS (Buscamos en el estado de Firebase)
+  const huevoInfo = extrasArrozMostrar.find(e => e.id === 'huevo') || { disponible: true, precio: 1000 };
+  const quesoInfo = extrasArrozMostrar.find(e => e.id === 'queso') || { disponible: true, precio: 1000 };
+  const tajadaInfo = extrasArrozMostrar.find(e => e.id === 'tajada') || { disponible: true };
+  const yucaInfo = extrasArrozMostrar.find(e => e.id === 'yuca') || { disponible: true };
+
   if (isAdmin) {
     const MiniSwitch = ({ activo, onClick }) => (
       <div onClick={onClick} style={{width: '45px', height: '24px', backgroundColor: activo ? MONO_VERDE : '#ccc', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s'}}>
@@ -166,19 +173,18 @@ export default function App() {
           <button onClick={() => setIsAdmin(false)} style={{padding:'10px 20px', borderRadius:'10px', cursor:'pointer', marginBottom:'20px'}}>← Volver a la Tienda</button>
           
           <div style={{background:'white', padding:'25px', borderRadius:'25px', boxShadow:'0 4px 15px rgba(0,0,0,0.05)', marginBottom:'20px'}}>
-            <h1 style={{color: MONO_NARANJA, margin:0}}>Panel de Control ⚙️</h1>
-            <p>Estado del Negocio: <strong>{tiendaAbierta ? '🟢 ABIERTO' : '🔴 CERRADO'}</strong></p>
-            <button onClick={() => actualizarDoc("ajuste", "tienda", { abierta: !tiendaAbierta })} style={{background: MONO_TEXTO, color:'white', padding:'12px', borderRadius:'10px', border:'none', cursor:'pointer', fontWeight:'bold', width:'100%'}}>{tiendaAbierta ? 'Cerrar Negocio' : 'Abrir Negocio'}</button>
-            <button onClick={restaurarBaseDeDatos} style={{display:'block', marginTop:'15px', background:'#fee2e2', color:'#b91c1c', padding:'12px', borderRadius:'10px', fontWeight:'bold', border:'none', cursor:'pointer', width:'100%'}}>🔄 REPARAR / SUBIR DATOS A FIREBASE</button>
+            <h1 style={{color: MONO_NARANJA, margin:0}}>Admin 🐒</h1>
+            <p>Negocio: <strong>{tiendaAbierta ? 'ABIERT0' : 'CERRADO'}</strong></p>
+            <button onClick={() => actualizarDoc("ajuste", "tienda", { abierta: !tiendaAbierta })} style={{background: MONO_TEXTO, color:'white', padding:'12px', borderRadius:'10px', border:'none', cursor:'pointer', width:'100%'}}>{tiendaAbierta ? 'Cerrar Negocio' : 'Abrir Negocio'}</button>
           </div>
 
           <div style={{background:'white', borderRadius:'25px', padding:'20px', marginBottom:'20px'}}>
-            <h3 style={{marginTop:0, borderBottom:`2px solid ${MONO_AMARILLO}`, paddingBottom:'10px'}}>Extras (Arroz)</h3>
+            <h3>Extras Arroz</h3>
             {extrasArrozMostrar.map(e => (
               <div key={e.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid #eee'}}>
                 <span>{e.nombre}</span>
                 <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-                  <input type="number" value={e.precio} onChange={(ev) => actualizarDoc("extrasArroz", e.id, { precio: Number(ev.target.value) })} style={{width:'80px', padding:'5px', borderRadius:'5px', border:'1px solid #ddd'}} />
+                  {e.precio > 0 && <input type="number" value={e.precio} onChange={(ev) => actualizarDoc("extrasArroz", e.id, { precio: Number(ev.target.value) })} style={{width:'80px'}} />}
                   <MiniSwitch activo={e.disponible} onClick={() => actualizarDoc("extrasArroz", e.id, { disponible: !e.disponible })} />
                 </div>
               </div>
@@ -186,7 +192,7 @@ export default function App() {
           </div>
 
           <div style={{background:'white', borderRadius:'25px', padding:'20px', marginBottom:'20px'}}>
-            <h3 style={{marginTop:0, borderBottom:`2px solid ${MONO_AMARILLO}`, paddingBottom:'10px'}}>Salsas</h3>
+            <h3>Salsas</h3>
             {salsasMostrar.map(s => (
               <div key={s.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid #eee'}}>
                 <span>{s.nombre}</span>
@@ -196,17 +202,17 @@ export default function App() {
           </div>
 
           <div style={{background:'white', borderRadius:'25px', padding:'20px'}}>
-            <h3 style={{marginTop:0, borderBottom:`2px solid ${MONO_AMARILLO}`, paddingBottom:'10px'}}>Productos Principales</h3>
+            <h3>Menú Principal</h3>
             {productosMostrar.map(p => (
-              <div key={p.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'15px 0', borderBottom:'1px solid #eee'}}>
-                <div style={{flex:1}}><strong>{p.nombre}</strong><br/><small>{p.categoria}</small></div>
-                <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-                  {!p.tamanos && <input type="number" value={p.precio} onChange={(ev) => actualizarDoc("productos", p.id, { precio: Number(ev.target.value) })} style={{width:'80px', padding:'5px', borderRadius:'5px', border:'1px solid #ddd'}} />}
+              <div key={p.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:'1px solid #eee'}}>
+                <span>{p.nombre}</span>
+                <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
                   <MiniSwitch activo={p.disponible} onClick={() => actualizarDoc("productos", p.id, { disponible: !p.disponible })} />
                 </div>
               </div>
             ))}
           </div>
+          <button onClick={restaurarBaseDeDatos} style={{marginTop:'30px', color:'red', border:'none', background:'none', cursor:'pointer', fontSize:'12px', width:'100%'}}>Sincronizar Datos Maestros 🔄</button>
         </div>
       </div>
     );
@@ -224,9 +230,10 @@ export default function App() {
       <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)'}}>
         <img src="/logo-fritos-el-mono.jpg" alt="Banner" style={{width: '100%', height: '220px', objectFit: 'cover'}} />
         <h1 onDoubleClick={accesoSecreto} style={{color: MONO_NARANJA, margin: '15px 0', cursor:'pointer'}}>Fritos El Mono 🐒</h1>
-        <p style={{paddingBottom: '20px'}}>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
+        <p style={{paddingBottom: '20px'}}>Hoy Arroz de <strong style={{color: MONO_NARANJA}}>{tipoArrozHoy}</strong></p>
       </header>
 
+      {/* CATEGORÍAS */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px' }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
           <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '12px 25px', borderRadius: '25px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_TEXTO, fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>{cat}</button>
@@ -245,13 +252,24 @@ export default function App() {
                   {p.tamanos ? `$${p.tamanos[0].precio.toLocaleString()} - $${p.tamanos[p.tamanos.length-1].precio.toLocaleString()}` : `$${(Number(p.precio) || 0).toLocaleString()}`}
                 </p>
 
+                {/* ✅ LÓGICA DE ARROZ PROTEGIDA POR DISPONIBILIDAD */}
                 {p.esArroz && (
                   <div style={{background: MONO_AMARILLO, padding: '15px', borderRadius: '20px', marginBottom: '15px'}}>
                     <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width:'100%', padding:'10px', borderRadius:'10px', border:'1px solid #ddd', marginBottom:'10px'}}>
-                      <option value="">¿Tajada o Yuca?</option><option value="Tajadas">Tajadas</option><option value="Yuca">Yuca</option>
+                      <option value="">¿Acompañante?</option>
+                      <option value="Tajadas" disabled={!tajadaInfo.disponible}>Tajadas {!tajadaInfo.disponible && "(AGOTADO)"}</option>
+                      <option value="Yuca" disabled={!yucaInfo.disponible}>Yuca {!yucaInfo.disponible && "(AGOTADO)"}</option>
                     </select>
-                    <label style={{display:'block'}}><input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} /> + Huevo (${(extrasArrozMostrar.find(e=>e.id==='huevo')?.precio || 1000).toLocaleString()})</label>
-                    <label style={{display:'block'}}><input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} /> + Queso (${(extrasArrozMostrar.find(e=>e.id==='queso')?.precio || 1000).toLocaleString()})</label>
+                    
+                    {huevoInfo.disponible && (
+                      <label style={{display:'block'}}><input type="checkbox" checked={conHuevo} onChange={(e) => setConHuevo(e.target.checked)} /> + Huevo Extra (${huevoInfo.precio.toLocaleString()})</label>
+                    )}
+                    
+                    {quesoInfo.disponible && (
+                      <label style={{display:'block'}}><input type="checkbox" checked={conQueso} onChange={(e) => setConQueso(e.target.checked)} /> + Queso Extra (${quesoInfo.precio.toLocaleString()})</label>
+                    )}
+                    
+                    {!huevoInfo.disponible && !quesoInfo.disponible && <small style={{color:'gray'}}>Sin extras disponibles hoy.</small>}
                   </div>
                 )}
 
@@ -284,7 +302,7 @@ export default function App() {
 
       {pedido.length > 0 && (
         <div style={{maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '35px', textAlign:'center', boxShadow:'0 10px 20px rgba(0,0,0,0.05)'}}>
-          <h3 style={{color: MONO_NARANJA, fontSize:'24px', marginBottom:'15px'}}>🧂 ¿Qué salsas quieres?</h3>
+          <h3 style={{color: MONO_NARANJA, fontSize:'24px', marginBottom:'15px'}}>🧂 ¿Salsas?</h3>
           <div style={{display:'flex', flexWrap:'wrap', gap:'12px', justifyContent:'center'}}>
             {salsasMostrar.map(s => (
               <button key={s.id} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} style={{padding:'12px 25px', borderRadius:'25px', border:'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : MONO_AMARILLO, color: salsasElegidas.includes(s.nombre) ? 'white' : MONO_TEXTO, fontWeight:'bold', cursor:'pointer', opacity: s.disponible ? 1 : 0.5}} disabled={!s.disponible}>{s.nombre} {salsasElegidas.includes(s.nombre) && "✓"}</button>
@@ -293,18 +311,9 @@ export default function App() {
         </div>
       )}
 
-      {pedido.length > 0 && tiendaAbierta && (
-        <a href="#carrito_seccion" style={{ position: 'fixed', bottom: '25px', right: '25px', background: MONO_TEXTO, color: 'white', padding: '15px 25px', borderRadius: '50px', textDecoration: 'none', fontWeight: 'bold', boxShadow: '0 8px 25px rgba(0,0,0,0.4)', zIndex: 100 }}>
-          🛒 ${totalCarrito.toLocaleString()}
-        </a>
-      )}
-
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'20px'}}>
-            <h2 style={{margin:0}}>Tu Pedido</h2>
-            <button onClick={() => { if(window.confirm("¿Vaciar?")) setPedido([]) }} style={{background:'red', color:'white', border:'none', padding:'8px 15px', borderRadius:'10px', cursor:'pointer'}}>Vaciar 🗑️</button>
-          </div>
+          <h2 style={{margin:0}}>Tu Pedido</h2>
           {pedido.map(item => (
             <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #eee' }}>
               <span>{item.cantidad}x {item.nombre} <small>({item.saborElegido} {item.detallesArroz})</small></span>
