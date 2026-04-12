@@ -79,6 +79,15 @@ export default function App() {
     return () => { unsubProd(); unsubExtras(); unsubSalsas(); unsubTienda(); };
   }, []);
 
+  useEffect(() => {
+    const pedidoGuardado = localStorage.getItem("pedido_mono_storage");
+    if (pedidoGuardado) setPedido(JSON.parse(pedidoGuardado));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("pedido_mono_storage", JSON.stringify(pedido));
+  }, [pedido]);
+
   const fusionar = (base, fb) => {
     const mapa = {};
     base.forEach(p => mapa[p.id] = p);
@@ -232,7 +241,15 @@ export default function App() {
 
   // 🔵 VISTA CLIENTE
   return (
-    <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO}}>
+    <div style={{
+        fontFamily: 'system-ui, sans-serif', 
+        backgroundColor: '#fffcf5', 
+        minHeight: '100vh', 
+        paddingBottom: '120px', 
+        color: MONO_TEXTO,
+        filter: tiendaAbierta ? 'none' : 'grayscale(1) opacity(0.8)', // <--- TODO EN GRIS SI ESTÁ CERRADO
+        transition: 'filter 0.5s ease'
+    }}>
       <style>{`
         .card-mono { transition: 0.3s; }
         .card-mono:hover { transform: translateY(-10px); }
@@ -242,10 +259,22 @@ export default function App() {
         .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }
         .del-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; padding: 5px; }
       `}</style>
+
+      {/* 🔴 MENSAJE DE TIENDA CERRADA */}
+      {!tiendaAbierta && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', 
+          backgroundColor: '#ef4444', color: 'white', textAlign: 'center', 
+          padding: '15px', zIndex: 10001, fontWeight: '900', fontSize: '18px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+        }}>
+          🐒 El Mono está descansando. ¡Volvemos pronto!
+        </div>
+      )}
       
       {notificacion && <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold'}}>{notificacion}</div>}
       
-      {pedido.length > 0 && (
+      {pedido.length > 0 && tiendaAbierta && (
         <div onClick={() => document.getElementById('carrito_seccion')?.scrollIntoView({ behavior: 'smooth' })} style={{position: 'fixed', bottom: '30px', right: '30px', background: MONO_NARANJA, color: 'white', width: '75px', height: '75px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '32px', boxShadow: '0 10px 30px rgba(249, 115, 22, 0.5)', zIndex: 9999, cursor: 'pointer', border: '3px solid white'}}>🛒<span style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color: 'white', fontSize:'14px', minWidth:'22px', height:'22px', borderRadius:'50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', border: '2px solid white'}}>{pedido.length}</span></div>
       )}
 
@@ -273,7 +302,7 @@ export default function App() {
 
             return (
               <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', position: 'relative'}}>
-                <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover', filter: (!p.disponible || !tiendaAbierta) ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.src = "/logo-fritos-el-mono.jpg";}} />
+                <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} onError={(e) => {e.target.src = "/logo-fritos-el-mono.jpg";}} />
                 <h3 style={{margin: '10px 0 5px 0', fontWeight: '800'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 
@@ -319,7 +348,6 @@ export default function App() {
                    <span style={{fontWeight:'900', fontSize:'20px'}}>{cant}</span>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold'}}>+</button>
                 </div>
-                {/* BOTÓN ARREGLADO: Solo se deshabilita si es falso explícitamente */}
                 <button 
                   onClick={() => agregarAlCarrito(p)} 
                   disabled={p.disponible === false || !tiendaAbierta} 
@@ -332,7 +360,7 @@ export default function App() {
         })}
       </div>
       
-      {pedido.length > 0 && (
+      {pedido.length > 0 && tiendaAbierta && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '50px auto 100px', background: 'white', padding: '40px', borderRadius: '40px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '25px', alignItems:'center' }}>
             <h2 style={{ fontSize: '32px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
