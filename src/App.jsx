@@ -52,8 +52,8 @@ export default function App() {
   const [notificacion, setNotificacion] = useState("");
   const [pedido, setPedido] = useState(() => {
     try {
-      const guardado = localStorage.getItem("carrito_mono");
-      return guardado ? JSON.parse(guardado) : [];
+      const g = localStorage.getItem("carrito_mono");
+      return g ? JSON.parse(g) : [];
     } catch (e) { return []; }
   });
 
@@ -80,23 +80,28 @@ export default function App() {
   }, [pedido]);
 
   useEffect(() => {
-    const unsubProd = onSnapshot(collection(db, "productos"), (snap) => setProductos(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-    const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (snap) => setExtrasArroz(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-    const unsubSalsas = onSnapshot(collection(db, "salsas"), (snap) => setSalsas(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
-    const unsubTienda = onSnapshot(doc(db, "ajuste", "tienda"), (snap) => {
-      if (snap.exists()) setTiendaAbierta(snap.data().abierta);
-    });
+    const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductos(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+    const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasArroz(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+    const unsubSalsas = onSnapshot(collection(db, "salsas"), (s) => setSalsas(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+    const unsubTienda = onSnapshot(doc(db, "ajuste", "tienda"), (s) => { if (s.exists()) setTiendaAbierta(s.data().abierta); });
     return () => { unsubProd(); unsubExtras(); unsubSalsas(); unsubTienda(); };
   }, []);
 
-  const actualizarDoc = (coleccion, id, datos) => updateDoc(doc(db, coleccion, id), datos).catch(e => console.error(e));
+  // ✅ FUNCION BLINDADA: Usa setDoc con merge para evitar el error "No document to update"
+  const guardarCambio = async (col, id, datos) => {
+    try {
+      await setDoc(doc(db, col, id), datos, { merge: true });
+    } catch (e) {
+      console.error("Error al guardar:", e);
+    }
+  };
 
   const enviarWhatsApp = () => {
-    if (pedido.length === 0) return alert("El carrito está vacío");
-    if (!nombre || !direccion || !metodoPago) return alert("Llena tus datos de entrega");
-    const listaFritos = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.saborElegido ? '('+i.saborElegido+')' : ''} ${i.detallesArroz || ''}`).join('\n');
-    const mensaje = `¡Hola! Pedido Fritos El Mono 🐒:\n\n${listaFritos}\n\n🧂 Salsas: ${salsasElegidas.join(', ') || 'Ninguna'}\n\n*Total: $${(pedido.reduce((acc, i) => acc + i.subtotal, 0)).toLocaleString('es-CO')}*\n👤 Cliente: ${nombre}\n📍 Dirección: ${direccion}\n💰 Pago: ${metodoPago}`;
-    window.open(`https://wa.me/573148686455?text=${encodeURIComponent(mensaje)}`);
+    if (pedido.length === 0) return alert("Carrito vacío");
+    if (!nombre || !direccion || !metodoPago) return alert("Faltan datos");
+    const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.saborElegido ? '('+i.saborElegido+')' : ''} ${i.detallesArroz || ''}`).join('\n');
+    const msg = `¡Hola! Pedido Fritos El Mono 🐒:\n\n${lista}\n\n🧂 Salsas: ${salsasElegidas.join(', ') || 'Ninguna'}\n\n*Total: $${(pedido.reduce((acc, i) => acc + i.subtotal, 0)).toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
+    window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
   const agregarAlCarrito = (p) => {
@@ -110,26 +115,26 @@ export default function App() {
       if (p.esArroz) {
         if (!acompañanteArroz) return alert("Elige Tajadas o Yuca");
         sabor = `Arroz de ${tipoArrozHoy}`;
-        const h = extrasArrozMostrar.find(e => e.id === 'huevo') || { precio: 1000, disponible: true };
-        const q = extrasArrozMostrar.find(e => e.id === 'queso') || { precio: 1000, disponible: true };
-        if (conHuevo && h.disponible) precioBase += Number(h.precio);
-        if (conQueso && q.disponible) precioBase += Number(q.precio);
-        detallesExtra = `(Con ${acompañanteArroz}${conHuevo && h.disponible ? ' + Huevo' : ''}${conQueso && q.disponible ? ' + Queso' : ''})`;
+        const h = extrasArrozMostrar.find(e => e.id === 'huevo');
+        const q = extrasArrozMostrar.find(e => e.id === 'queso');
+        if (conHuevo && h?.disponible) precioBase += Number(h.precio);
+        if (conQueso && q?.disponible) precioBase += Number(q.precio);
+        detallesExtra = `(Con ${acompañanteArroz}${conHuevo && h?.disponible ? ' + Huevo' : ''}${conQueso && q?.disponible ? ' + Queso' : ''})`;
       } else if (p.opciones && !p.esArroz) {
         sabor = sabores[p.id];
-        if (!sabor) return alert("Por favor elige un sabor");
+        if (!sabor) return alert("Elige un sabor");
       }
 
       if (p.tamanos) {
         const tam = tamanosBebida[p.id];
-        if (!tam) return alert("Por favor elige el tamaño");
+        if (!tam) return alert("Elige el tamaño");
         const tObj = p.tamanos.find(t => t.nombre === tam);
         if (tObj) precioBase = Number(tObj.precio);
         detallesExtra = `(${tam})`;
       }
 
-      setPedido(prev => [...prev, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioBase, saborElegido: sabor, detallesArroz: detallesExtra, cantidad: cant, subtotal: precioBase * cant }]);
-      setNotificacion(`¡${p.nombre} añadido! 🥟`);
+      setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, precioUnitario: precioBase, saborElegido: sabor, detallesArroz: detallesExtra, cantidad: cant, subtotal: precioBase * cant }]);
+      setNotificacion(`¡Añadido! 🥟`);
       setTimeout(() => setNotificacion(""), 2000);
       setCantidades({...cantidades, [p.id]: 1});
     } catch (e) { alert("Error al añadir"); }
@@ -147,7 +152,7 @@ export default function App() {
       for (const p of productosBase) await setDoc(doc(db, "productos", p.id), p);
       for (const e of extrasArrozBase) await setDoc(doc(db, "extrasArroz", e.id), e);
       for (const s of salsasBase) await setDoc(doc(db, "salsas", s.id), s);
-      alert("✅ Menú Sincronizado");
+      alert("✅ Datos Sincronizados");
     } catch (e) { alert("Error"); }
   };
 
@@ -166,7 +171,7 @@ export default function App() {
           <div style={{background:'white', padding:'25px', borderRadius:'25px', boxShadow:'0 4px 15px rgba(0,0,0,0.05)', marginBottom:'20px'}}>
             <h1 style={{color: MONO_NARANJA}}>Admin 🐒</h1>
             <p>Negocio: <strong>{tiendaAbierta ? 'ABIERTO' : 'CERRADO'}</strong></p>
-            <button onClick={() => actualizarDoc("ajuste", "tienda", { abierta: !tiendaAbierta })} style={{background: MONO_TEXTO, color:'white', padding:'12px', borderRadius:'10px', width:'100%'}}>{tiendaAbierta ? 'Cerrar Negocio' : 'Abrir Negocio'}</button>
+            <button onClick={() => guardarCambio("ajuste", "tienda", { abierta: !tiendaAbierta })} style={{background: MONO_TEXTO, color:'white', padding:'12px', borderRadius:'10px', width:'100%'}}>{tiendaAbierta ? 'Cerrar Negocio' : 'Abrir Negocio'}</button>
           </div>
 
           <div style={{background:'white', borderRadius:'25px', padding:'20px', marginBottom:'20px'}}>
@@ -174,7 +179,7 @@ export default function App() {
             {extrasArrozMostrar.concat(salsasMostrar).map(e => (
               <div key={e.id} style={{display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid #eee'}}>
                 <span>{e.nombre}</span>
-                <MiniSwitch activo={e.disponible} onClick={() => actualizarDoc(e.id.startsWith('s') ? "salsas" : "extrasArroz", e.id, { disponible: !e.disponible })} />
+                <MiniSwitch activo={e.disponible} onClick={() => guardarCambio(e.id.startsWith('s') ? "salsas" : "extrasArroz", e.id, { disponible: !e.disponible })} />
               </div>
             ))}
           </div>
@@ -185,10 +190,9 @@ export default function App() {
               <div key={p.id} style={{padding:'15px 0', borderBottom:'2px solid #f0f0f0'}}>
                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                   <strong>{p.nombre}</strong>
-                  <MiniSwitch activo={p.disponible} onClick={() => actualizarDoc("productos", p.id, { disponible: !p.disponible })} />
+                  <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
                 </div>
                 
-                {/* 🛠️ SWITCHES PARA SABORES (EMPANADAS/PAPAS) */}
                 {p.opciones && (
                   <div style={{marginTop:'10px', background:'#f9f9f9', padding:'10px', borderRadius:'10px'}}>
                     <small>Gestionar Sabores:</small>
@@ -198,14 +202,13 @@ export default function App() {
                         <MiniSwitch activo={opt.disponible} onClick={() => {
                           const nuevasOp = [...p.opciones];
                           nuevasOp[index].disponible = !nuevasOp[index].disponible;
-                          actualizarDoc("productos", p.id, { opciones: nuevasOp });
+                          guardarCambio("productos", p.id, { opciones: nuevasOp });
                         }} />
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* 🛠️ SWITCHES PARA TAMAÑOS (BEBIDAS) */}
                 {p.tamanos && (
                   <div style={{marginTop:'10px', background:'#f0f7ff', padding:'10px', borderRadius:'10px'}}>
                     <small>Gestionar Tamaños:</small>
@@ -215,7 +218,7 @@ export default function App() {
                         <MiniSwitch activo={tam.disponible} onClick={() => {
                           const nuevosTam = [...p.tamanos];
                           nuevosTam[index].disponible = !nuevosTam[index].disponible;
-                          actualizarDoc("productos", p.id, { tamanos: nuevosTam });
+                          guardarCambio("productos", p.id, { tamanos: nuevosTam });
                         }} />
                       </div>
                     ))}
@@ -224,7 +227,7 @@ export default function App() {
               </div>
             ))}
           </div>
-          <button onClick={restaurarBaseDeDatos} style={{marginTop:'30px', color:'red', background:'none', border:'none', width:'100%', cursor:'pointer'}}>Sincronizar Datos 🔄</button>
+          <button onClick={restaurarBaseDeDatos} style={{marginTop:'30px', color:'red', background:'none', border:'none', width:'100%', cursor:'pointer'}}>Sincronizar Datos Maestros 🔄</button>
         </div>
       </div>
     );
@@ -273,7 +276,7 @@ export default function App() {
                   </div>
                 )}
 
-                {/* ✅ CORRECCION: SOLO MOSTRAR SI NO ES ARROZ Y TIENE OPCIONES DISPONIBLES */}
+                {/* ✅ Lógica de dropdown de sabor corregida para no salir en arroz */}
                 {p.opciones && !p.esArroz && (
                   <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} value={sabores[p.id] || ""} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #ddd', marginBottom:'15px'}}>
                     <option value="">-- Elige Sabor --</option>
@@ -300,6 +303,17 @@ export default function App() {
             </div>
           ))}
       </div>
+
+      {pedido.length > 0 && (
+        <div style={{maxWidth: '850px', margin: '40px auto', background: 'white', padding: '30px', borderRadius: '35px', textAlign:'center', boxShadow:'0 10px 20px rgba(0,0,0,0.05)'}}>
+          <h3 style={{color: MONO_NARANJA, fontSize:'24px', marginBottom:'15px'}}>🧂 ¿Qué salsas quieres?</h3>
+          <div style={{display:'flex', flexWrap:'wrap', gap:'12px', justifyContent:'center'}}>
+            {salsasMostrar.map(s => (
+              <button key={s.id} onClick={() => setSalsasElegidas(prev => prev.includes(s.nombre) ? prev.filter(x => x !== s.nombre) : [...prev, s.nombre])} style={{padding:'12px 25px', borderRadius:'25px', border:'none', background: salsasElegidas.includes(s.nombre) ? MONO_NARANJA : MONO_AMARILLO, color: salsasElegidas.includes(s.nombre) ? 'white' : MONO_TEXTO, fontWeight:'bold', cursor:'pointer', opacity: s.disponible ? 1 : 0.5}} disabled={!s.disponible}>{s.nombre} {salsasElegidas.includes(s.nombre) && "✓"}</button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
