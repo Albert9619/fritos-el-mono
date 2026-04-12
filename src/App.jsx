@@ -50,6 +50,7 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
+  // 🔄 FIREBASE
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -57,6 +58,7 @@ export default function App() {
     return () => { unsubProd(); unsubExtras(); unsubTienda(); };
   }, []);
 
+  // 💾 PERSISTENCIA
   useEffect(() => {
     const pedidoGuardado = localStorage.getItem("pedido_mono_storage");
     if (pedidoGuardado) setPedido(JSON.parse(pedidoGuardado));
@@ -110,18 +112,79 @@ export default function App() {
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
-  if (isAdmin) { /* Vista Admin igual al código base */ }
+  const MiniSwitch = ({ activo, onClick }) => (
+    <div onClick={onClick} style={{ width: '46px', height: '24px', backgroundColor: activo ? MONO_VERDE : '#cbd5e1', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}>
+      <div style={{ width: '18px', height: '18px', background: 'white', borderRadius: '50%', position: 'absolute', top: '3px', left: activo ? '25px' : '3px', transition: '0.3s cubic-bezier(0.18, 0.89, 0.35, 1.15)', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+    </div>
+  );
 
+  // 🟢 VISTA ADMIN (RESTAURADA)
+  if (isAdmin) {
+    return (
+      <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
+        <div style={{maxWidth:'800px', margin:'0 auto'}}>
+          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'30px', alignItems: 'center'}}>
+            <h1 style={{color: MONO_NARANJA, margin: 0}}>Panel Admin 🐒</h1>
+            <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+               <span style={{fontWeight:'bold'}}>Tienda Abierta:</span>
+               <MiniSwitch activo={tiendaAbierta} onClick={() => guardarCambio("ajuste", "tienda", { abierta: !tiendaAbierta })} />
+               <button onClick={() => setIsAdmin(false)} style={{padding:'10px 20px', borderRadius:'12px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Cerrar Panel</button>
+            </div>
+          </div>
+          {["Fritos", "Arroces", "Bebidas", "Desayunos"].map(cat => (
+            <div key={cat} style={{background:'white', padding:'25px', borderRadius:'25px', marginBottom:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)'}}>
+              <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'15px'}}>{cat}</h2>
+              {productosMostrar.filter(p => p.categoria === cat).map(p => (
+                <div key={p.id} style={{padding:'15px 0', borderBottom:'1px solid #f8fafc'}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                    <strong>{p.nombre}</strong>
+                    <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
+                      {!p.tamanos && <div>$ <input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'80px', padding:'5px', borderRadius:'8px', border:'1px solid #ddd'}} /></div>}
+                      <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
+                    </div>
+                  </div>
+                  {p.opciones && cat === "Fritos" && (
+                    <div style={{marginTop:'12px', display:'flex', flexWrap:'wrap', gap:'10px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
+                      {p.opciones.map((opt, idx) => (
+                        <div key={idx} style={{display:'flex', alignItems:'center', gap:'8px', background:'white', padding:'5px 10px', borderRadius:'10px', border:'1px solid #e2e8f0'}}>
+                          <small style={{fontWeight:'bold'}}>{opt.nombre}</small>
+                          <MiniSwitch activo={opt.disponible} onClick={() => {
+                            const n = [...p.opciones]; n[idx].disponible = !n[idx].disponible;
+                            guardarCambio("productos", p.id, { opciones: n });
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // 🔵 VISTA CLIENTE
   return (
     <div style={{fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO}}>
       
       <style>{`
         .card-mono { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .card-mono:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important; }
+        .img-mono { transition: transform 0.5s ease; }
+        .card-mono:hover .img-mono { transform: scale(1.08); }
         .price-tag { transition: all 0.2s ease; }
       `}</style>
 
-      {/* HEADER Y CATEGORÍAS IGUAL AL CÓDIGO BASE */}
+      {notificacion && (
+        <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold', boxShadow: '0 5px 15px rgba(0,0,0,0.2)'}}>{notificacion}</div>
+      )}
+
+      {pedido.length > 0 && (
+        <div onClick={() => document.getElementById('carrito_seccion')?.scrollIntoView({ behavior: 'smooth' })} style={{position: 'fixed', bottom: '30px', right: '30px', background: MONO_NARANJA, color: 'white', width: '75px', height: '75px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '32px', boxShadow: '0 10px 30px rgba(249, 115, 22, 0.5)', zIndex: 9999, cursor: 'pointer', border: '3px solid white'}}>🛒<span style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color: 'white', fontSize:'14px', minWidth:'22px', height:'22px', borderRadius:'50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', border: '2px solid white'}}>{pedido.length}</span></div>
+      )}
+
       <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 50px 50px', marginBottom: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden'}}>
         <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{width: '100%', height: '250px', objectFit: 'cover'}} />
         <div style={{padding: '30px 0'}}>
@@ -144,40 +207,28 @@ export default function App() {
             const cant = cantidades[p.id] || 1;
             const esFavorito = p.id === "4" || p.id === "lzEcQicq9WUrxw7FEaq7";
 
-            // 🧮 LÓGICA DE PRECIO DINÁMICO
-            // 1. Buscamos el precio base del tamaño elegido, o el primero por defecto, o el precio base del producto.
+            // PRECIO DINÁMICO EN TIEMPO REAL
             const precioUnitario = p.tamanos 
               ? (sel.tamano ? sel.tamano.precio : p.tamanos[0].precio)
               : (p.precio || 0);
-            
-            // 2. Multiplicamos por la cantidad elegida
             const precioTotalMostrado = precioUnitario * cant;
 
             return (
               <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', position: 'relative'}}>
-                
                 {esFavorito && (
                   <div style={{position:'absolute', top: '15px', left: '15px', zIndex: 10, background: '#ef4444', color: 'white', padding: '6px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: '900', boxShadow: '0 4px 10px rgba(239, 68, 68, 0.3)'}}>⭐ EL FAVORITO</div>
                 )}
-
                 <div style={{ width: '100%', height: '200px', borderRadius: '25px', overflow: 'hidden', marginBottom: '20px' }}>
-                  <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.onerror = null; e.target.src = "/logo-fritos-el-mono.jpg";}} />
+                  <img className="img-mono" src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.onerror = null; e.target.src = "/logo-fritos-el-mono.jpg";}} />
                 </div>
-
                 <h3 style={{margin: '0 0 5px 0', fontSize: '22px', fontWeight: '800'}}>{p.nombre}</h3>
-                
-                {/* 💰 PRECIO DINÁMICO AQUÍ */}
-                <p className="price-tag" style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '28px', margin:'0 0 20px 0'}}>
-                  ${precioTotalMostrado.toLocaleString()}
-                </p>
-
+                <p className="price-tag" style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '28px', margin:'0 0 20px 0'}}>${precioTotalMostrado.toLocaleString()}</p>
                 {p.categoria === "Fritos" && p.opciones && (
                   <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'15px', borderRadius:'20px', border:'2px solid #f8fafc', marginBottom:'15px', background:'#f8fafc', fontWeight: 'bold', outline: 'none'}}>
                     <option value="">-- ¿Qué sabor quieres? --</option>
                     {p.opciones.filter(opt => opt.disponible).map(opt => <option key={opt.nombre} value={opt.nombre}>{opt.nombre}</option>)}
                   </select>
                 )}
-
                 {p.tamanos && (
                   <select onChange={(e) => {
                     const t = p.tamanos.find(x => x.nombre === e.target.value);
@@ -187,7 +238,6 @@ export default function App() {
                     {p.tamanos.filter(t => t.disponible).map(t => <option key={t.nombre} value={t.nombre}>{t.nombre}</option>)}
                   </select>
                 )}
-
                 <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'20px', marginBottom:'20px', background:'#f8fafc', padding:'12px', borderRadius:'25px'}}>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'45px', height:'45px', borderRadius:'50%', border:'none', background:'white', fontWeight:'bold', fontSize: '20px', cursor:'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)'}}>-</button>
                    <span style={{fontWeight:'900', fontSize:'22px', minWidth: '35px', textAlign: 'center'}}>{cant}</span>
@@ -199,7 +249,6 @@ export default function App() {
         })}
       </div>
 
-      {/* CARRITO IGUAL AL CÓDIGO BASE */}
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '800px', margin: '60px auto 100px', background: 'white', padding: '40px', borderRadius: '50px', border: `6px solid ${MONO_NARANJA}`, boxShadow: '0 30px 60px rgba(0,0,0,0.12)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
