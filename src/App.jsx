@@ -45,7 +45,7 @@ const extrasArrozBase = [
   { id: 'queso', nombre: "Tajada de Queso", disponible: true, precio: 1000 }
 ];
 
-const salsasDisponibles = ["Rosada", "Tártara", "Ajo", "Picante"];
+const salsasMaestras = ["Rosada", "Tártara", "Ajo", "Picante"];
 
 const MONO_NARANJA = "#f97316";
 const MONO_VERDE = "#16a34a";
@@ -60,6 +60,7 @@ export default function App() {
   const [pedido, setPedido] = useState([]);
   const [selecciones, setSelecciones] = useState({});
   const [cantidades, setCantidades] = useState({});
+  const [salsasElegidas, setSalsasElegidas] = useState([]); // Salsas al final
   const [notificacion, setNotificacion] = useState("");
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
@@ -68,6 +69,7 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
+  // 🔄 FIREBASE
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -75,6 +77,7 @@ export default function App() {
     return () => { unsubProd(); unsubExtras(); unsubTienda(); };
   }, []);
 
+  // 💾 PERSISTENCIA
   useEffect(() => {
     const pedidoGuardado = localStorage.getItem("pedido_mono_storage");
     if (pedidoGuardado) setPedido(JSON.parse(pedidoGuardado));
@@ -125,25 +128,25 @@ export default function App() {
     if (sel.sabor) detalle += `${sel.sabor} `;
     if (sel.tamano) detalle += `${sel.tamano.nombre} `;
     if (sel.extras) detalle += `Extras: ${sel.extras.join(', ')} `;
-    if (sel.salsas && sel.salsas.length > 0) detalle += `Salsas: ${sel.salsas.join(', ')} `;
     if (p.categoria === "Desayunos") {
-        detalle += `(${sel.acompanamiento}, ${sel.huevos || sel.proteina}, Jugo: ${sel.jugo}${sel.agrandar ? ' Grande' : ''}, Queso inc.)`;
+        detalle += `(${sel.acompanamiento}, ${sel.huevos || sel.proteina}, Jugo: ${sel.jugo}${sel.agrandar ? ' Grande' : ''})`;
     }
 
     setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, cantidad: cant, subtotal, detalle }]);
     setCantidades({ ...cantidades, [p.id]: 1 });
-    setSelecciones({ ...selecciones, [p.id]: {} }); // Limpiar selección tras añadir
+    setSelecciones({ ...selecciones, [p.id]: {} });
     setNotificacion(`¡${cant}x ${p.nombre} añadido! 🥟`);
     setTimeout(() => setNotificacion(""), 2000);
   };
 
-  const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo el pedido?")) setPedido([]); };
+  const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo el pedido?")) { setPedido([]); setSalsasElegidas([]); } };
 
   const enviarWhatsApp = () => {
     if (!nombre || !direccion || !metodoPago) return alert("Faltan datos de entrega");
     const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.detalle}`).join('\n');
+    const salsasMsg = salsasElegidas.length > 0 ? `\n\n🧂 *Salsas:* ${salsasElegidas.join(', ')}` : "";
     const totalP = pedido.reduce((acc, i) => acc + i.subtotal, 0);
-    const msg = `¡Hola! Pedido Fritos El Mono 🐒:\n\n${lista}\n\n*Total: $${totalP.toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
+    const msg = `¡Hola! Pedido Fritos El Mono 🐒:\n\n${lista}${salsasMsg}\n\n*Total: $${totalP.toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
@@ -153,7 +156,7 @@ export default function App() {
     </div>
   );
 
-  // 🟢 VISTA ADMIN (RESTAURADA)
+  // 🟢 VISTA ADMIN (RESTAURADA TOTALMENTE)
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -193,18 +196,14 @@ export default function App() {
       <style>{`
         .card-mono { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .card-mono:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important; }
-        .opcion-btn { padding: 8px 12px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; }
+        .opcion-btn { padding: 10px 14px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 14px; font-weight: bold; }
         .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; }
-        .salsa-chip { padding: 5px 10px; border-radius: 10px; border: 1px solid #eee; background: #f9f9f9; font-size: 11px; cursor: pointer; }
-        .salsa-chip.active { background: #fee2e2; border-color: #f87171; color: #b91c1c; font-weight: bold; }
+        .salsa-chip { padding: 12px 20px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }
       `}</style>
-      
+
       {notificacion && (
         <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold', boxShadow: '0 5px 15px rgba(0,0,0,0.2)'}}>{notificacion}</div>
-      )}
-      
-      {pedido.length > 0 && (
-        <div onClick={() => document.getElementById('carrito_seccion')?.scrollIntoView({ behavior: 'smooth' })} style={{position: 'fixed', bottom: '30px', right: '30px', background: MONO_NARANJA, color: 'white', width: '75px', height: '75px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '32px', boxShadow: '0 10px 30px rgba(249, 115, 22, 0.5)', zIndex: 9999, cursor: 'pointer', border: '3px solid white'}}>🛒<span style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color: 'white', fontSize:'14px', minWidth:'22px', height:'22px', borderRadius:'50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', border: '2px solid white'}}>{pedido.length}</span></div>
       )}
 
       <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 50px 50px', marginBottom: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden'}}>
@@ -247,27 +246,11 @@ export default function App() {
                 <h3 style={{margin: '0 0 5px 0', fontWeight: '800', fontSize: '20px'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${totalDinamico.toLocaleString()}</p>
                 
-                {/* --- OPCIONES COMUNES --- */}
                 {p.categoria === "Fritos" && p.opciones && (
                   <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'14px', borderRadius:'18px', border:'2px solid #f8fafc', marginBottom:'15px', background:'#f8fafc', fontWeight: 'bold'}}>
                     <option value="">-- ¿Qué sabor? --</option>
                     {p.opciones.filter(opt => opt.disponible).map(opt => <option key={opt.nombre} value={opt.nombre}>{opt.nombre}</option>)}
                   </select>
-                )}
-
-                {(p.categoria === "Fritos" || p.categoria === "Desayunos") && (
-                    <div style={{marginBottom: '15px'}}>
-                        <div style={{fontSize: '11px', fontWeight: 'bold', marginBottom: '5px', color: '#888'}}>Añadir Salsas:</div>
-                        <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap'}}>
-                            {salsasDisponibles.map(s => (
-                                <button key={s} onClick={() => {
-                                    const salsas = sel.salsas || [];
-                                    const n = salsas.includes(s) ? salsas.filter(x => x !== s) : [...salsas, s];
-                                    setSelecciones({...selecciones, [p.id]: {...sel, salsas: n}});
-                                }} className={`salsa-chip ${sel.salsas?.includes(s) ? 'active' : ''}`}>{s}</button>
-                            ))}
-                        </div>
-                    </div>
                 )}
 
                 {p.tamanos && (
@@ -280,7 +263,6 @@ export default function App() {
                   </select>
                 )}
 
-                {/* --- ARROCES --- */}
                 {p.categoria === "Arroces" && (
                   <div style={{background: '#fef3c7', padding: '15px', borderRadius: '20px', marginBottom: '15px'}}>
                      {extrasMostrar.map(e => (
@@ -295,7 +277,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* --- DESAYUNOS --- */}
                 {p.categoria === "Desayunos" && (
                     <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px'}}>
                         <div style={{display: 'flex', gap: '5px'}}>
@@ -315,9 +296,9 @@ export default function App() {
                         </div>
                         <label style={{display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '900', background: '#f0fdf4', padding: '10px', borderRadius: '12px', cursor: 'pointer', border: '1px dashed #16a34a'}}>
                             <input type="checkbox" onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, agrandar: e.target.checked}})} />
-                            🥤 Agrandar Jugo (+1k)
+                            🥤 Agrandar Jugo (+1.000)
                         </label>
-                        <div style={{fontSize: '16px', color: MONO_VERDE, fontWeight: '900', textAlign: 'center'}}>🧀 ¡INCLUYE QUESO!</div>
+                        <div style={{fontSize: '22px', color: MONO_VERDE, fontWeight: '900', textAlign: 'center', marginTop: '5px'}}>🧀 ¡INCLUYE QUESO!</div>
                     </div>
                 )}
 
@@ -335,24 +316,40 @@ export default function App() {
       {/* SECCIÓN CARRITO */}
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '50px auto 100px', background: 'white', padding: '40px', borderRadius: '40px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.1)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
-            <h2 style={{ fontSize: '30px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
-            <button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '12px 25px', borderRadius: '15px', fontWeight: 'bold' }}>🗑️ Vaciar</button>
-          </div>
+          <h2 style={{ fontSize: '32px', fontWeight: '900', marginBottom: '25px' }}>🛒 Tu Pedido</h2>
+          
           {pedido.map(item => (
             <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0', alignItems: 'center' }}>
               <span style={{fontSize: '17px'}}><strong>{item.cantidad}x</strong> {item.nombre} <br /><small style={{color: '#666', fontWeight: 'bold'}}>{item.detalle}</small></span>
               <strong style={{fontSize: '18px'}}>${item.subtotal.toLocaleString()}</strong>
             </div>
           ))}
-          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '38px', fontWeight: '900', marginTop: '30px', borderTop: '4px dashed #eee', paddingTop: '20px' }}>Total: ${(pedido.reduce((acc, i) => acc + i.subtotal, 0)).toLocaleString()}</h2>
+
+          {/* 🧂 SECCIÓN DE SALSAS AL FINAL */}
+          <div style={{marginTop: '30px', padding: '25px', background: '#f8fafc', borderRadius: '25px', border: '1px solid #eee'}}>
+            <h3 style={{margin: '0 0 15px 0', fontSize: '20px', fontWeight: '900'}}>🧂 Elige tus salsas:</h3>
+            <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
+              {salsasMaestras.map(s => (
+                <button key={s} onClick={() => {
+                  const n = salsasElegidas.includes(s) ? salsasElegidas.filter(x => x !== s) : [...salsasElegidas, s];
+                  setSalsasElegidas(n);
+                }} className={`salsa-chip ${salsasElegidas.includes(s) ? 'active' : ''}`}>{s}</button>
+              ))}
+            </div>
+          </div>
+
+          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '42px', fontWeight: '900', marginTop: '30px', borderTop: '4px dashed #eee', paddingTop: '20px' }}>Total: ${(pedido.reduce((acc, i) => acc + i.subtotal, 0)).toLocaleString()}</h2>
+          
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
-            <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '16px' }} />
-            <input type="text" placeholder="Dirección" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '16px' }} />
-            <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '16px', fontWeight: 'bold' }}>
+            <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '18px' }} />
+            <input type="text" placeholder="Dirección en Carepa" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '18px' }} />
+            <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '18px', fontWeight: 'bold' }}>
               <option value="">-- ¿Cómo pagas? --</option><option value="Efectivo">Efectivo</option><option value="Nequi">Nequi</option>
             </select>
-            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '25px', fontWeight: '900', fontSize: '20px' }}>WhatsApp 📲</button>
+            <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
+                <button onClick={enviarWhatsApp} style={{ flex: 3, background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '25px', fontWeight: '900', fontSize: '20px', cursor: 'pointer' }}>WhatsApp 📲</button>
+                <button onClick={vaciarCarrito} style={{ flex: 1, background: '#fee2e2', color: '#dc2626', border: 'none', padding: '22px', borderRadius: '25px', fontWeight: 'bold', cursor: 'pointer' }}>🗑️</button>
+            </div>
           </div>
         </div>
       )}
