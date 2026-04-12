@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS MAESTROS (CON TUS ARCHIVOS)
+// 🔴 DATOS MAESTROS (CON TUS NOMBRES DE ARCHIVO)
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -47,6 +47,7 @@ export default function App() {
   const [direccion, setDireccion] = useState("");
   const [metodoPago, setMetodoPago] = useState("");
 
+  // ✅ SOLUCIÓN: Definimos la variable al inicio del componente
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
@@ -119,6 +120,7 @@ export default function App() {
     </div>
   );
 
+  // 🟢 VISTA ADMIN
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -150,8 +152,9 @@ export default function App() {
     );
   }
 
+  // 🔵 VISTA CLIENTE
   return (
-    <div style={{fontFamily: 'sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px'}}>
+    <div style={{fontFamily: 'sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO}}>
       {notificacion && (
         <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold', boxShadow: '0 5px 15px rgba(0,0,0,0.2)'}}>{notificacion}</div>
       )}
@@ -178,23 +181,17 @@ export default function App() {
             const cant = cantidades[p.id] || 1;
             return (
               <div key={p.id} style={{background: 'white', borderRadius: '30px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 15px rgba(0,0,0,0.05)', border:'1px solid #f1f5f9'}}>
-                {/* 🖼️ IMAGEN DEL PRODUCTO */}
+                {/* 🖼️ IMAGEN DEL PRODUCTO (USANDO TUS RUTAS) */}
                 <div style={{ width: '100%', height: '180px', borderRadius: '20px', overflow: 'hidden', marginBottom: '15px' }}>
-                  <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} onError={(e) => e.target.src = "https://via.placeholder.com/300x180?text=Fritos+El+Mono"} />
+                  <img 
+                    src={p.imagen} 
+                    alt={p.nombre} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} 
+                    onError={(e) => e.target.src = "/logo-fritos-el-mono.jpg"} // ✅ Cambiado placeholder por tu logo por seguridad
+                  />
                 </div>
                 <h3 style={{margin: '0 0 5px 0'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '24px', margin:'0 0 15px 0'}}>${(p.precio || (sel.tamano ? sel.tamano.precio : (p.tamanos ? p.tamanos[0].precio : 0))).toLocaleString()}</p>
-                
-                {p.categoria === "Fritos" && p.opciones && (
-                  <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #e2e8f0', marginBottom:'15px', background:'#f8fafc'}}><option value="">-- Elige Sabor --</option>{p.opciones.filter(opt => opt.disponible).map(opt => <option key={opt.nombre} value={opt.nombre}>{opt.nombre}</option>)}</select>
-                )}
-                {p.tamanos && (
-                  <select onChange={(e) => { const t = p.tamanos.find(x => x.nombre === e.target.value); setSelecciones({...selecciones, [p.id]: {...sel, tamano: t}}); }} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #e2e8f0', marginBottom:'15px'}}><option value="">-- Elige Tamaño --</option>{p.tamanos.filter(t => t.disponible).map(t => <option key={t.nombre} value={t.nombre}>{t.nombre}</option>)}</select>
-                )}
-                {p.categoria === "Arroces" && (
-                  <div style={{background: '#fef3c7', padding: '15px', borderRadius: '20px', marginBottom: '15px'}}>{extrasMostrar.map(e => (<label key={e.id} style={{display:'block', marginBottom:'5px', opacity: e.disponible ? 1 : 0.4}}><input type="checkbox" disabled={!e.disponible} onChange={(ev) => { const ex = sel.extras || []; const n = ev.target.checked ? [...ex, e.id] : ex.filter(x => x !== e.id); setSelecciones({...selecciones, [p.id]: {...sel, extras: n}}); }} /> {e.nombre} {e.precio > 0 && `(+$${e.precio})`}</label>))}</div>
-                )}
-                
                 <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'15px', marginBottom:'15px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}><button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'35px', height:'35px', borderRadius:'50%', border:'none', background:'white', fontWeight:'bold', cursor:'pointer'}}>-</button><span style={{fontWeight:'bold', fontSize:'18px'}}>{cant}</span><button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'35px', height:'35px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold', cursor:'pointer'}}>+</button></div>
                 <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible || !tiendaAbierta} style={{marginTop:'auto', background: p.disponible ? MONO_NARANJA : '#cbd5e1', color:'white', border:'none', padding:'15px', borderRadius:'18px', fontWeight:'bold', cursor:'pointer'}}>{p.disponible ? 'Añadir 🥟' : 'Agotado'}</button>
               </div>
