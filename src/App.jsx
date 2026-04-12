@@ -137,16 +137,37 @@ export default function App() {
   const eliminarDelCarrito = (idUnico) => setPedido(pedido.filter(i => i.idUnico !== idUnico));
   const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo?")) { setPedido([]); setSalsasElegidas([]); } };
 
+  // 🟢 MEJORA DE FORMATO WHATSAPP APLICADA AQUÍ
   const enviarWhatsApp = () => {
     if (!nombre || !direccion || !metodoPago) return alert("Faltan datos");
-    const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.detalle}`).join('\n');
-    const salsas = salsasElegidas.length > 0 ? `\n\n🧂 Salsas: ${salsasElegidas.join(', ')}` : "";
+    
+    const horaActual = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    const divisor = "━━━━━━━━━━━━━━━";
+    
+    const listaProductos = pedido.map(i => {
+      let texto = `• ${i.cantidad}x ${i.nombre}`;
+      // Si el detalle tiene Extras, lo formateamos con el gancho └
+      if (i.detalle.includes("Extras:")) {
+        const partes = i.detalle.split("Extras:");
+        const base = partes[0].trim();
+        const extras = partes[1].trim();
+        if (base) texto += ` (${base})`;
+        texto += `\n    └ Extras: ${extras}`;
+      } else if (i.detalle.trim()) {
+        texto += ` (${i.detalle.trim()})`;
+      }
+      return texto;
+    }).join('\n');
+
     const totalP = pedido.reduce((acc, i) => acc + i.subtotal, 0);
-    const msg = `¡Hola! Pedido Fritos El Mono 🐒:\n\n${lista}${salsas}\n\n*Total: $${totalP.toLocaleString()}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
+    const salsas = salsasElegidas.length > 0 ? `🍯 *Salsas:* ${salsasElegidas.join(', ')}` : "🍯 *Salsas:* Ninguna";
+
+    const msg = `🍽️ *Pedido - Fritos El Mono* 🐒\n🕒 ${horaActual}\n\n${divisor}\n\n🧾 *Productos:*\n\n${listaProductos}\n\n${divisor}\n\n${salsas}\n\n${divisor}\n\n💰 *Total: $${totalP.toLocaleString()}*\n\n${divisor}\n\n👤 *Cliente:* ${nombre}\n📍 *Dirección:* ${direccion}\n💳 *Pago:* ${metodoPago}`;
+    
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
-  // 🟢 VISTA ADMIN
+  // 🟢 VISTA ADMIN (SIN CAMBIOS)
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -239,7 +260,7 @@ export default function App() {
     );
   }
 
-  // 🔵 VISTA CLIENTE
+  // 🔵 VISTA CLIENTE (SIN CAMBIOS)
   return (
     <div style={{
         fontFamily: 'system-ui, sans-serif', 
@@ -260,14 +281,12 @@ export default function App() {
         .del-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; padding: 5px; }
       `}</style>
 
-      {/* 🐒 MENSAJE DE TIENDA CERRADA (ESTILO TARJETA) */}
       {!tiendaAbierta && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.1)', zIndex: 10001, display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '20px' }}>
           <div style={{ background: 'white', padding: '40px', borderRadius: '40px', boxShadow: '0 20px 50px rgba(0,0,0,0.15)', border: `4px solid ${MONO_NARANJA}`, maxWidth: '400px' }}>
             <span style={{ fontSize: '60px' }}>🐒💤</span>
             <h2 style={{ fontSize: '28px', fontWeight: '900', margin: '20px 0 10px', color: MONO_NARANJA }}>¡El Mono está descansando!</h2>
             <p style={{ fontWeight: 'bold', color: '#666', lineHeight: '1.5' }}>En este momento no estamos recibiendo pedidos. <br/>¡Vuelve pronto para calmar ese antojo!</p>
-            {/* Acceso admin oculto para el dueño */}
             <button onDoubleClick={() => { const pin = window.prompt("🔐 PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{ marginTop: '25px', background: 'none', border: 'none', color: '#eee', fontSize: '12px', cursor: 'default' }}>Admin</button>
           </div>
         </div>
@@ -307,7 +326,6 @@ export default function App() {
                 <h3 style={{margin: '10px 0 5px 0', fontWeight: '800'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 
-                {/* 🔴 SOLO MUESTRA EL SELECT SI NO ES ARROZ */}
                 {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
                   <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', marginBottom:'10px', background:'#f8fafc', fontWeight:'bold', border:'1px solid #eee'}}>
                     <option value="">-- Elige Sabor --</option>
@@ -350,13 +368,7 @@ export default function App() {
                    <span style={{fontWeight:'900', fontSize:'20px'}}>{cant}</span>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold'}}>+</button>
                 </div>
-                <button 
-                  onClick={() => agregarAlCarrito(p)} 
-                  disabled={p.disponible === false || !tiendaAbierta} 
-                  style={{background: (p.disponible !== false && tiendaAbierta) ? MONO_NARANJA : '#ccc', color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', fontSize:'16px', cursor:'pointer'}}
-                >
-                  Añadir 🛒
-                </button>
+                <button onClick={() => agregarAlCarrito(p)} disabled={p.disponible === false || !tiendaAbierta} style={{background: (p.disponible !== false && tiendaAbierta) ? MONO_NARANJA : '#ccc', color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', fontSize:'16px', cursor:'pointer'}}>Añadir 🛒</button>
               </div>
             );
         })}
