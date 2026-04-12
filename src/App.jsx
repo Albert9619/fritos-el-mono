@@ -34,6 +34,7 @@ const productosBase = [
   { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", imagen: "/jugo-natural.png", tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", imagen: "/cocacola.png", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }, { nombre: "Familiar", precio: 6500, disponible: true }] },
   { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", imagen: "/malta.png", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }] },
+  { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", imagen: "/agua.png" }, // Asegurado en Bebidas
   { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", imagen: "/arroz-pollo.png" }
 ];
 
@@ -44,8 +45,8 @@ const extrasArrozBase = [
   { id: 'queso', nombre: "Tajada de Queso", disponible: true, precio: 1000 }
 ];
 
-// 🍯 LISTA DE SALSAS ACTUALIZADA
-const salsasMaestras = ["Roja", "Rosada", "Pique", "Suero", "Suero Picante"];
+// 🍯 SALSAS ACTUALIZADAS CON EMOJIS
+const salsasMaestras = ["🔴 Roja", "💗 Rosada", "🔥 Pique", "🍶 Suero", "🍶🔥 Suero Picante"];
 
 const MONO_NARANJA = "#f97316";
 const MONO_VERDE = "#16a34a";
@@ -137,6 +138,10 @@ export default function App() {
     setTimeout(() => setNotificacion(""), 2000);
   };
 
+  const eliminarDelCarrito = (idUnico) => {
+    setPedido(pedido.filter(item => item.idUnico !== idUnico));
+  };
+
   const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo el pedido?")) { setPedido([]); setSalsasElegidas([]); } };
 
   const enviarWhatsApp = () => {
@@ -154,7 +159,7 @@ export default function App() {
     </div>
   );
 
-  // 🟢 VISTA ADMIN (RESTAURADA)
+  // 🟢 VISTA ADMIN (RESTAURADA TOTALMENTE)
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -179,8 +184,34 @@ export default function App() {
                       <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
                     </div>
                   </div>
+                  {p.opciones && (
+                    <div style={{marginTop:'10px', display:'flex', gap:'10px', flexWrap:'wrap'}}>
+                      {p.opciones.map((opt, idx) => (
+                        <div key={idx} style={{display:'flex', alignItems:'center', gap:'5px', background:'#f8fafc', padding:'5px 10px', borderRadius:'10px'}}>
+                          <small>{opt.nombre}</small>
+                          <MiniSwitch activo={opt.disponible} onClick={() => {
+                            const n = [...p.opciones]; n[idx].disponible = !n[idx].disponible;
+                            guardarCambio("productos", p.id, { opciones: n });
+                          }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
+              {cat === "Arroces" && (
+                <div style={{marginTop:'20px', borderTop:'1px dashed #ddd', paddingTop:'15px'}}>
+                  <h4 style={{margin:'0 0 10px 0'}}>Extras de Arroz:</h4>
+                  <div style={{display:'flex', gap:'15px', flexWrap:'wrap'}}>
+                    {extrasMostrar.map(ex => (
+                      <div key={ex.id} style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                        <small>{ex.nombre}</small>
+                        <MiniSwitch activo={ex.disponible} onClick={() => guardarCambio("extrasArroz", ex.id, { disponible: !ex.disponible })} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -198,6 +229,8 @@ export default function App() {
         .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; }
         .salsa-chip { padding: 12px 20px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 13px; }
         .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }
+        .del-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; padding: 5px; transition: 0.2s; }
+        .del-btn:hover { transform: scale(1.2); }
       `}</style>
       
       {notificacion && (
@@ -318,12 +351,18 @@ export default function App() {
       {/* SECCIÓN CARRITO */}
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '50px auto 100px', background: 'white', padding: '40px', borderRadius: '40px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: '900', marginBottom: '25px' }}>🛒 Tu Pedido</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+            <h2 style={{ fontSize: '32px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
+            <button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '12px 25px', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer' }}>🗑️ Vaciar Todo</button>
+          </div>
           
           {pedido.map(item => (
             <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0', alignItems: 'center' }}>
-              <span style={{fontSize: '17px'}}><strong>{item.cantidad}x</strong> {item.nombre} <br /><small style={{color: '#666', fontWeight: 'bold'}}>{item.detalle}</small></span>
-              <strong style={{fontSize: '18px'}}>${item.subtotal.toLocaleString()}</strong>
+              <span style={{fontSize: '17px', flex: 1}}><strong>{item.cantidad}x</strong> {item.nombre} <br /><small style={{color: '#666', fontWeight: 'bold'}}>{item.detalle}</small></span>
+              <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+                <strong style={{fontSize: '18px'}}>${item.subtotal.toLocaleString()}</strong>
+                <button onClick={() => eliminarDelCarrito(item.idUnico)} className="del-btn" title="Quitar este producto">❌</button>
+              </div>
             </div>
           ))}
 
@@ -349,8 +388,7 @@ export default function App() {
               <option value="">-- ¿Cómo pagas? --</option><option value="Efectivo">Efectivo</option><option value="Nequi">Nequi</option>
             </select>
             <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
-                <button onClick={enviarWhatsApp} style={{ flex: 3, background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '25px', fontWeight: '900', fontSize: '20px', cursor: 'pointer' }}>WhatsApp 📲</button>
-                <button onClick={vaciarCarrito} style={{ flex: 1, background: '#fee2e2', color: '#dc2626', border: 'none', padding: '22px', borderRadius: '25px', fontWeight: 'bold', cursor: 'pointer' }}>🗑️</button>
+                <button onClick={enviarWhatsApp} style={{ flex: 1, background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '25px', fontWeight: '900', fontSize: '22px', cursor: 'pointer' }}>WhatsApp 📲</button>
             </div>
           </div>
         </div>
