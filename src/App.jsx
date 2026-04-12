@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS MAESTROS (Sincronizados con tu carpeta public)
+// 🔴 DATOS MAESTROS (CÓDIGO BASE - SAGRADO)
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -42,6 +42,7 @@ export default function App() {
   const [selecciones, setSelecciones] = useState({});
   const [cantidades, setCantidades] = useState({});
   const [notificacion, setNotificacion] = useState("");
+
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
   const [metodoPago, setMetodoPago] = useState("");
@@ -49,6 +50,7 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
+  // 🔄 FIREBASE
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -56,6 +58,7 @@ export default function App() {
     return () => { unsubProd(); unsubExtras(); unsubTienda(); };
   }, []);
 
+  // 💾 PERSISTENCIA
   useEffect(() => {
     const pedidoGuardado = localStorage.getItem("pedido_mono_storage");
     if (pedidoGuardado) setPedido(JSON.parse(pedidoGuardado));
@@ -115,7 +118,7 @@ export default function App() {
     </div>
   );
 
-  // 🟢 VISTA ADMIN (IGUAL A TU CAPTURA)
+  // 🟢 VISTA ADMIN
   if (isAdmin) {
     return (
       <div style={{padding: '30px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -134,7 +137,7 @@ export default function App() {
               <h2 style={{fontSize: '24px', fontWeight: '900', marginBottom: '25px'}}>{cat}</h2>
               {productosMostrar.filter(p => p.categoria === cat).map(p => (
                 <div key={p.id} style={{padding:'20px 0', borderBottom:'1px solid #f1f5f9'}}>
-                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: p.opciones ? '15px' : '0'}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: (p.opciones || p.tamanos) ? '15px' : '0'}}>
                     <strong style={{fontSize: '18px'}}>{p.nombre}</strong>
                     <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
                       {!p.tamanos && (
@@ -147,9 +150,9 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* 📂 CAJA DE SABORES (Igual a image_75b643.png) */}
-                  {p.opciones && (
-                    <div style={{background: '#f8fafc', padding: '15px', borderRadius: '18px', display: 'flex', gap: '20px', flexWrap: 'wrap'}}>
+                  {/* 📂 CAJA DE SABORES (Fritos) */}
+                  {p.opciones && cat === "Fritos" && (
+                    <div style={{background: '#f8fafc', padding: '15px', borderRadius: '18px', display: 'flex', gap: '15px', flexWrap: 'wrap'}}>
                       {p.opciones.map((opt, idx) => (
                         <div key={idx} style={{display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '8px 15px', borderRadius: '12px', border: '1px solid #edf2f7'}}>
                           <span style={{fontSize: '14px', fontWeight: 'bold'}}>{opt.nombre}</span>
@@ -162,7 +165,7 @@ export default function App() {
                     </div>
                   )}
 
-                  {/* 🥤 TAMAÑOS BEBIDAS (Acomodados) */}
+                  {/* 🥤 TAMAÑOS BEBIDAS */}
                   {p.tamanos && (
                     <div style={{display: 'grid', gap: '10px', marginTop: '10px'}}>
                       {p.tamanos.map((t, idx) => (
@@ -184,6 +187,21 @@ export default function App() {
                   )}
                 </div>
               ))}
+
+              {/* ✅ AÑADIDOS DEL ARROZ (Tajadas, Yuca, Huevo, Queso) */}
+              {cat === "Arroces" && (
+                <div style={{marginTop:'25px', borderTop:'2px dashed #eee', paddingTop:'20px'}}>
+                  <h4 style={{margin:'0 0 15px 0', fontSize: '18px', color: MONO_NARANJA}}>Disponibilidad de Acompañamientos:</h4>
+                  <div style={{background: '#f8fafc', padding: '15px', borderRadius: '18px', display: 'flex', gap: '15px', flexWrap: 'wrap'}}>
+                    {extrasMostrar.map(extra => (
+                      <div key={extra.id} style={{display: 'flex', alignItems: 'center', gap: '10px', background: 'white', padding: '10px 15px', borderRadius: '12px', border: '1px solid #edf2f7'}}>
+                        <span style={{fontSize: '14px', fontWeight: 'bold'}}>{extra.nombre}</span>
+                        <MiniSwitch activo={extra.disponible} onClick={() => guardarCambio("extrasArroz", extra.id, { disponible: !extra.disponible })} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -191,10 +209,9 @@ export default function App() {
     );
   }
 
-  // 🔵 VISTA CLIENTE (PERFECCIONADA)
+  // 🔵 VISTA CLIENTE
   return (
     <div style={{fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO}}>
-      
       <style>{`
         .card-mono { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .card-mono:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important; }
@@ -202,15 +219,12 @@ export default function App() {
         .card-mono:hover .img-mono { transform: scale(1.08); }
         .price-tag { transition: all 0.2s ease; }
       `}</style>
-
       {notificacion && (
         <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold', boxShadow: '0 5px 15px rgba(0,0,0,0.2)'}}>{notificacion}</div>
       )}
-
       {pedido.length > 0 && (
         <div onClick={() => document.getElementById('carrito_seccion')?.scrollIntoView({ behavior: 'smooth' })} style={{position: 'fixed', bottom: '30px', right: '30px', background: MONO_NARANJA, color: 'white', width: '75px', height: '75px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '32px', boxShadow: '0 10px 30px rgba(249, 115, 22, 0.5)', zIndex: 9999, cursor: 'pointer', border: '3px solid white'}}>🛒<span style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color: 'white', fontSize:'14px', minWidth:'22px', height:'22px', borderRadius:'50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', border: '2px solid white'}}>{pedido.length}</span></div>
       )}
-
       <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 50px 50px', marginBottom: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden'}}>
         <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{width: '100%', height: '240px', objectFit: 'cover'}} />
         <div style={{padding: '25px 0'}}>
@@ -218,24 +232,18 @@ export default function App() {
             <div style={{display:'inline-block', marginTop: '10px', background: '#fff7ed', padding: '6px 20px', borderRadius: '20px', border: '1px solid #ffedd5', fontWeight: 'bold'}}>Arroz de Hoy: <span style={{color: MONO_NARANJA}}>{tipoArrozHoy}</span></div>
         </div>
       </header>
-
       <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '40px', overflowX:'auto', padding:'10px' }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
           <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '14px 28px', borderRadius: '30px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : '#333', fontWeight: 'bold', cursor:'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', transition: '0.3s' }}>{cat}</button>
         ))}
       </div>
-
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '30px', padding: '0 20px', maxWidth:'1300px', margin:'0 auto'}}>
         {productosMostrar.filter(p => (p.categoria || 'Fritos') === categoriaActiva).map(p => {
             const sel = selecciones[p.id] || {};
             const cant = cantidades[p.id] || 1;
             const esFavorito = p.id === "4" || p.id === "lzEcQicq9WUrxw7FEaq7";
-
-            const precioUnitario = p.tamanos 
-              ? (sel.tamano ? sel.tamano.precio : p.tamanos[0].precio)
-              : (p.precio || 0);
+            const precioUnitario = p.tamanos ? (sel.tamano ? sel.tamano.precio : p.tamanos[0].precio) : (p.precio || 0);
             const precioTotalMostrado = precioUnitario * cant;
-
             return (
               <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', position: 'relative'}}>
                 {esFavorito && (
@@ -261,6 +269,19 @@ export default function App() {
                     {p.tamanos.filter(t => t.disponible).map(t => <option key={t.nombre} value={t.nombre}>{t.nombre}</option>)}
                   </select>
                 )}
+                {p.categoria === "Arroces" && (
+                  <div style={{background: '#fef3c7', padding: '15px', borderRadius: '20px', marginBottom: '15px'}}>
+                     {extrasMostrar.map(e => (
+                       <label key={e.id} style={{display:'block', marginBottom:'5px', opacity: e.disponible ? 1 : 0.4}}>
+                         <input type="checkbox" disabled={!e.disponible} onChange={(ev) => {
+                           const ex = sel.extras || [];
+                           const n = ev.target.checked ? [...ex, e.id] : ex.filter(x => x !== e.id);
+                           setSelecciones({...selecciones, [p.id]: {...sel, extras: n}});
+                         }} /> {e.nombre} {e.precio > 0 && `(+$${e.precio})`}
+                       </label>
+                     ))}
+                  </div>
+                )}
                 <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'15px', marginBottom:'15px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:'white', fontWeight:'bold', fontSize: '18px', cursor: 'pointer'}}>-</button>
                    <span style={{fontWeight:'900', fontSize:'20px', minWidth: '30px', textAlign: 'center'}}>{cant}</span>
@@ -271,7 +292,6 @@ export default function App() {
             );
         })}
       </div>
-
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '50px auto 100px', background: 'white', padding: '40px', borderRadius: '40px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
