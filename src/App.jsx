@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS MAESTROS (Rutas sincronizadas con tu carpeta public)
+// 🔴 DATOS MAESTROS (CÓDIGO BASE - NO TOCAR)
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -75,20 +75,16 @@ export default function App() {
   const agregarAlCarrito = (p) => {
     const sel = selecciones[p.id] || {};
     const cant = cantidades[p.id] || 1;
-    
     if (p.opciones && !sel.sabor && p.categoria === "Fritos") return alert("Elige un sabor");
     if (p.tamanos && !sel.tamano) return alert("Elige el tamaño");
-
     let precioBase = p.precio || 0;
     if (sel.tamano) precioBase = sel.tamano.precio;
     const extrasPrice = (sel.extras || []).reduce((acc, id) => {
       const ex = extrasMostrar.find(e => e.id === id);
       return acc + (ex?.precio || 0);
     }, 0);
-
     const subtotal = (precioBase + extrasPrice) * cant;
     const detalle = `${sel.sabor || ''} ${sel.tamano?.nombre || ''} ${sel.extras ? ' Extras: '+sel.extras.join(', ') : ''}`;
-    
     setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, cantidad: cant, subtotal, detalle }]);
     setCantidades({ ...cantidades, [p.id]: 1 });
     setNotificacion(`¡${cant}x ${p.nombre} añadido! 🥟`);
@@ -105,24 +101,102 @@ export default function App() {
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
+  // ✅ COMPONENTE MINI SWITCH MEJORADO
+  const MiniSwitch = ({ activo, onClick }) => (
+    <div 
+      onClick={onClick} 
+      style={{
+        width: '44px', 
+        height: '24px', 
+        backgroundColor: activo ? MONO_VERDE : '#cbd5e1', 
+        borderRadius: '20px', 
+        position: 'relative', 
+        cursor: 'pointer', 
+        transition: 'all 0.3s ease'
+      }}
+    >
+      <div 
+        style={{
+          width: '18px', 
+          height: '18px', 
+          background: 'white', 
+          borderRadius: '50%', 
+          position: 'absolute', 
+          top: '3px', 
+          left: activo ? '23px' : '3px', 
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+        }}
+      />
+    </div>
+  );
+
+  // 🟢 VISTA ADMIN MEJORADA
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
         <div style={{maxWidth:'800px', margin:'0 auto'}}>
-          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'30px'}}>
-            <h1 style={{color: MONO_NARANJA}}>Admin 🐒</h1>
-            <button onClick={() => setIsAdmin(false)} style={{padding:'10px 20px', borderRadius:'12px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Salir</button>
+          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'30px', alignItems:'center'}}>
+            <h1 style={{color: MONO_NARANJA, margin:0}}>Panel Admin 🐒</h1>
+            <div style={{display:'flex', gap:'15px', alignItems:'center'}}>
+                <span>Tienda Abierta:</span>
+                <MiniSwitch activo={tiendaAbierta} onClick={() => guardarCambio("ajuste", "tienda", { abierta: !tiendaAbierta })} />
+                <button onClick={() => setIsAdmin(false)} style={{padding:'10px 20px', borderRadius:'12px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Salir</button>
+            </div>
           </div>
           {["Fritos", "Arroces", "Bebidas", "Desayunos"].map(cat => (
             <div key={cat} style={{background:'white', padding:'25px', borderRadius:'25px', marginBottom:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)'}}>
-              <h2>{cat}</h2>
+              <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'20px'}}>{cat}</h2>
               {productosMostrar.filter(p => p.categoria === cat).map(p => (
-                <div key={p.id} style={{padding:'10px 0', borderBottom:'1px solid #f8fafc', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                  <strong>{p.nombre}</strong>
-                  <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-                    {!p.tamanos && <div>$ <input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'80px'}} /></div>}
-                    <button onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} style={{background: p.disponible ? MONO_VERDE : '#ccc', color:'white', border:'none', padding:'5px 10px', borderRadius:'10px'}}>{p.disponible ? 'Activo' : 'Agotado'}</button>
+                <div key={p.id} style={{padding:'15px 0', borderBottom:'1px solid #f8fafc'}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                    <strong style={{fontSize:'18px'}}>{p.nombre}</strong>
+                    <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
+                      {!p.tamanos && <div>$ <input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'85px', padding:'5px', borderRadius:'8px', border:'1px solid #ddd'}} /></div>}
+                      <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'4px'}}>
+                        <small style={{fontSize:'10px', fontWeight:'bold', color: p.disponible ? MONO_VERDE : '#94a3b8'}}>{p.disponible ? 'ACTIVO' : 'AGOTADO'}</small>
+                        <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
+                      </div>
+                    </div>
                   </div>
+
+                  {/* AJUSTES DE SABORES (FRITOS) */}
+                  {p.opciones && cat === "Fritos" && (
+                    <div style={{marginTop:'15px', display:'flex', flexWrap:'wrap', gap:'10px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
+                        {p.opciones.map((opt, idx) => (
+                            <div key={idx} style={{display:'flex', alignItems:'center', gap:'10px', background:'white', padding:'5px 12px', borderRadius:'10px', border:'1px solid #e2e8f0'}}>
+                                <small>{opt.nombre}</small>
+                                <MiniSwitch activo={opt.disponible} onClick={() => {
+                                    const n = [...p.opciones]; n[idx].disponible = !n[idx].disponible;
+                                    guardarCambio("productos", p.id, { opciones: n });
+                                }} />
+                            </div>
+                        ))}
+                    </div>
+                  )}
+
+                  {/* AJUSTES DE TAMAÑOS (BEBIDAS) */}
+                  {p.tamanos && (
+                    <div style={{marginTop:'15px', display:'grid', gap:'10px'}}>
+                        {p.tamanos.map((t, idx) => (
+                            <div key={idx} style={{display:'flex', justifyContent:'space-between', alignItems:'center', background:'#f0f9ff', padding:'10px 15px', borderRadius:'12px'}}>
+                                <small style={{fontWeight:'bold'}}>{t.nombre}</small>
+                                <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+                                    <div style={{background:'white', padding:'5px 10px', borderRadius:'8px', border:'1px solid #bae6fd'}}>
+                                        $ <input type="number" defaultValue={t.precio} onBlur={(e) => {
+                                            const n = [...p.tamanos]; n[idx].precio = Number(e.target.value);
+                                            guardarCambio("productos", p.id, { tamanos: n });
+                                        }} style={{width:'70px', border:'none', textAlign:'center', fontWeight:'bold'}} />
+                                    </div>
+                                    <MiniSwitch activo={t.disponible} onClick={() => {
+                                        const n = [...p.tamanos]; n[idx].disponible = !n[idx].disponible;
+                                        guardarCambio("productos", p.id, { tamanos: n });
+                                    }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -132,28 +206,25 @@ export default function App() {
     );
   }
 
+  // 🔵 VISTA CLIENTE (SE MANTIENE IGUAL AL CÓDIGO BASE)
   return (
     <div style={{fontFamily: 'sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px'}}>
       {notificacion && (
         <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold', boxShadow: '0 5px 15px rgba(0,0,0,0.2)'}}>{notificacion}</div>
       )}
-
       {pedido.length > 0 && (
         <div onClick={() => document.getElementById('carrito_seccion')?.scrollIntoView({ behavior: 'smooth' })} style={{position: 'fixed', bottom: '30px', right: '30px', background: MONO_NARANJA, color: 'white', width: '70px', height: '70px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '32px', boxShadow: '0 10px 30px rgba(249, 115, 22, 0.5)', zIndex: 9999, cursor: 'pointer'}}>🛒<span style={{position:'absolute', top:'0', right:'0', background:'red', color: 'white', fontSize:'14px', minWidth:'22px', height:'22px', borderRadius:'50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold'}}>{pedido.length}</span></div>
       )}
-
       <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)'}}>
         <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{width: '100%', height: '220px', objectFit: 'cover'}} />
         <h1 onDoubleClick={() => { const pin = window.prompt("🔐 PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{color: MONO_NARANJA, cursor:'pointer', margin:'15px 0'}}>Fritos El Mono 🐒</h1>
         <div style={{paddingBottom:'20px'}}>Arroz de Hoy: <strong>{tipoArrozHoy}</strong></div>
       </header>
-
       <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', overflowX:'auto', padding:'10px' }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
           <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '12px 25px', borderRadius: '25px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : '#333', fontWeight: 'bold', cursor:'pointer' }}>{cat}</button>
         ))}
       </div>
-
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '20px', padding: '0 20px', maxWidth:'1200px', margin:'0 auto'}}>
         {productosMostrar.filter(p => (p.categoria || 'Fritos') === categoriaActiva).map(p => {
             const sel = selecciones[p.id] || {};
@@ -165,14 +236,12 @@ export default function App() {
                 </div>
                 <h3 style={{margin: '0 0 5px 0'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '24px', margin:'0 0 15px 0'}}>${(p.precio || (sel.tamano ? sel.tamano.precio : (p.tamanos ? p.tamanos[0].precio : 0))).toLocaleString()}</p>
-
                 {p.categoria === "Fritos" && p.opciones && (
                   <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #e2e8f0', marginBottom:'15px', background:'#f8fafc'}}>
                     <option value="">-- Elige Sabor --</option>
                     {p.opciones.filter(opt => opt.disponible).map(opt => <option key={opt.nombre} value={opt.nombre}>{opt.nombre}</option>)}
                   </select>
                 )}
-
                 {p.tamanos && (
                   <select onChange={(e) => {
                     const t = p.tamanos.find(x => x.nombre === e.target.value);
@@ -182,7 +251,6 @@ export default function App() {
                     {p.tamanos.filter(t => t.disponible).map(t => <option key={t.nombre} value={t.nombre}>{t.nombre}</option>)}
                   </select>
                 )}
-
                 {p.categoria === "Arroces" && (
                   <div style={{background: '#fef3c7', padding: '15px', borderRadius: '20px', marginBottom: '15px'}}>
                      {extrasMostrar.map(e => (
@@ -196,7 +264,6 @@ export default function App() {
                      ))}
                   </div>
                 )}
-
                 <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'15px', marginBottom:'15px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'35px', height:'35px', borderRadius:'50%', border:'none', background:'white', fontWeight:'bold'}}>-</button>
                    <span style={{fontWeight:'bold', fontSize:'18px'}}>{cant}</span>
@@ -207,7 +274,6 @@ export default function App() {
             );
         })}
       </div>
-
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto 100px', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.15)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
