@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS MAESTROS (CORREGIDOS SEGÚN TU FIREBASE)
+// 🔴 DATOS MAESTROS (PLAN B)
 // ==========================================
 const productosBase = [
   { id: "empanada", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -14,18 +14,33 @@ const productosBase = [
   { id: "buñuelo", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", imagen: "/buñuelo.jpg", disponible: true },
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno.jpg", disponible: true },
   { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", esDesayuno: true, imagen: "/desayuno-especial.jpg", disponible: true },
+  { id: "5", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true, imagen: "/arroz-pollo.jpg", disponible: true },
+  { id: "6", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", imagen: "/jugo-natural.jpg", disponible: true, opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", imagen: "/coca-cola.jpg", disponible: true, tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }, { nombre: "Familiar 1.5L", precio: 6500, disponible: true }] },
   { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", imagen: "/pony.jpg", disponible: true, tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }] },
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", imagen: "/agua.jpg", disponible: true }
 ];
 
-// IDs de Arroz y Jugos se detectarán automáticamente por su nombre
 const extrasArrozBase = [
   { id: 'tajada', nombre: "Tajadas", disponible: true, precio: 0 },
   { id: 'yuca', nombre: "Yuca", disponible: true, precio: 0 },
   { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 },
   { id: 'queso', nombre: "Tajada de Queso", disponible: true, precio: 1000 }
 ];
+
+const salsasBase = [
+  { id: "s1", nombre: "Pique", disponible: true },
+  { id: "s2", nombre: "Salsa Roja", disponible: true },
+  { id: "s3", nombre: "Salsa Rosada", disponible: true },
+  { id: "s4", nombre: "Suero", disponible: true },
+  { id: "s5", nombre: "Suero Picante", disponible: true }
+];
+
+const MONO_NARANJA = "#f97316";
+const MONO_AMARILLO = "#fef3c7";
+const MONO_CREMA = "#fffbeb";
+const MONO_VERDE = "#16a34a";
+const MONO_TEXTO = "#333333";
 
 export default function App() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -51,24 +66,27 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // ✅ LOGICA PARA EVITAR DUPLICADOS Y CODIGOS RAROS
-  // Si el nombre coincide, usamos los datos de Firebase pero mantenemos la estructura visual.
-  const fusionarProductos = () => {
-    let resultado = [...productosBase];
-    
-    productosFB.forEach(fbItem => {
-      const index = resultado.findIndex(p => p.id === fbItem.id || p.nombre === fbItem.nombre);
-      if (index !== -1) {
-        resultado[index] = { ...resultado[index], ...fbItem };
+  // ✅ FILTRO MAESTRO: Evita duplicados comparando NOMBRES
+  const obtenerListaLimpia = () => {
+    const mapa = {};
+    // Primero cargamos lo de la base (IDs 1, 2, 3...)
+    productosBase.forEach(p => mapa[p.nombre] = p);
+    // Luego sobreescribimos con lo de Firebase (IDs raros o empanada, etc)
+    productosFB.forEach(p => {
+      // Si el nombre ya existe en el mapa, actualizamos ese objeto con la info de FB
+      if (mapa[p.nombre]) {
+        mapa[p.nombre] = { ...mapa[p.nombre], ...p };
       } else {
-        resultado.push(fbItem); // Si es un jugo/arroz con ID raro, lo añade aquí
+        // Si es un producto nuevo de Firebase (ej. un Arroz con ID raro), lo añadimos
+        mapa[p.nombre] = p;
       }
     });
-    return resultado;
+    return Object.values(mapa);
   };
 
-  const productosMostrar = fusionarProductos();
+  const productosMostrar = obtenerListaLimpia();
   const extrasArrozMostrar = extrasFB.length > 0 ? extrasFB : extrasArrozBase;
+  const salsasMostrar = salsasFB.length > 0 ? salsasFB : salsasBase;
 
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -79,9 +97,8 @@ export default function App() {
   }, []);
 
   const guardarCambio = async (col, id, datos) => {
-    try {
-      await setDoc(doc(db, col, id), datos, { merge: true });
-    } catch (e) { console.error("Error:", e); }
+    try { await setDoc(doc(db, col, id), datos, { merge: true }); } 
+    catch (e) { console.error(e); }
   };
 
   const agregarAlCarrito = (p) => {
@@ -140,9 +157,7 @@ export default function App() {
         {productosMostrar.map(p => (
           <div key={p.id} style={{background:'white', padding:'15px', borderRadius:'15px', marginBottom:'10px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
             <div><strong>{p.nombre}</strong><br/><small>ID: {p.id}</small></div>
-            <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-               <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
-            </div>
+            <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
           </div>
         ))}
       </div>
@@ -162,6 +177,7 @@ export default function App() {
         <p style={{paddingBottom: '20px'}}>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
       </header>
 
+      {/* CATEGORIAS */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px' }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
           <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '12px 25px', borderRadius: '25px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_TEXTO, fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>{cat}</button>
@@ -177,20 +193,18 @@ export default function App() {
               <div style={{padding: '20px', flexGrow: 1, display:'flex', flexDirection:'column'}}>
                 <h3 style={{margin: '0 0 10px 0'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '24px', marginBottom: '15px'}}>
-                  {p.tamanos ? `$${p.tamanos[0].precio.toLocaleString()}` : `$${(Number(p.precio) || 0).toLocaleString()}`}
+                  {p.tamanos ? `$${p.tamanos.find(t=>t.disponible)?.precio.toLocaleString() || '---'}` : `$${(Number(p.precio) || 0).toLocaleString()}`}
                 </p>
 
-                {/* ✅ ARROZ LIMPIO: Sin selector de sabor */}
                 {(p.esArroz || p.categoria === "Arroces") && (
                   <div style={{background: MONO_AMARILLO, padding: '15px', borderRadius: '20px', marginBottom: '15px'}}>
                     <select onChange={(e) => setAcompañanteArroz(e.target.value)} value={acompañanteArroz} style={{width:'100%', padding:'10px', borderRadius:'10px', border:'1px solid #ddd'}}>
-                      <option value="">¿Acompañante?</option>
+                      <option value="">¿Tajada o Yuca?</option>
                       <option value="Tajadas">Tajadas</option><option value="Yuca">Yuca</option>
                     </select>
                   </div>
                 )}
 
-                {/* ✅ FRITOS CON SABOR: Solo aparece en la categoría Fritos */}
                 {p.opciones && p.categoria === "Fritos" && (
                   <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} value={sabores[p.id] || ""} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #ddd', marginBottom:'15px'}}>
                     <option value="">-- Elige Sabor --</option>
@@ -200,7 +214,7 @@ export default function App() {
 
                 {p.tamanos && (
                   <select onChange={(e) => setTamanosBebida({...tamanosBebida, [p.id]: e.target.value})} value={tamanosBebida[p.id] || ""} style={{width:'100%', padding:'12px', borderRadius:'15px', border:`2px solid ${MONO_NARANJA}`, marginBottom:'15px'}}>
-                    <option value="">-- Elige Presentación --</option>
+                    <option value="">-- Elige Tamaño --</option>
                     {p.tamanos.map(t => <option key={t.nombre} value={t.nombre} disabled={!t.disponible}>{t.nombre}</option>)}
                   </select>
                 )}
@@ -219,7 +233,7 @@ export default function App() {
       </div>
 
       {pedido.length > 0 && (
-        <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}` }}>
+        <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto', background: 'white', padding: '35px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
           <h2 style={{margin:0}}>Tu Pedido</h2>
           {pedido.map(item => (
             <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #eee' }}>
