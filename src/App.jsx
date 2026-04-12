@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS MAESTROS (Corregidos a .png según tu carpeta public)
+// 🔴 DATOS MAESTROS (Rutas sincronizadas con tu carpeta public)
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -47,7 +47,6 @@ export default function App() {
   const [direccion, setDireccion] = useState("");
   const [metodoPago, setMetodoPago] = useState("");
 
-  // ✅ SOLUCIÓN AL ERROR DE CONSOLA: Definida al inicio del componente
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
@@ -57,15 +56,6 @@ export default function App() {
     const unsubTienda = onSnapshot(doc(db, "ajuste", "tienda"), (s) => { if (s.exists()) setTiendaAbierta(s.data().abierta); });
     return () => { unsubProd(); unsubExtras(); unsubTienda(); };
   }, []);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("pedido_mono");
-    if (saved) setPedido(JSON.parse(saved));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("pedido_mono", JSON.stringify(pedido));
-  }, [pedido]);
 
   const fusionar = (base, fb) => {
     const mapa = {};
@@ -79,12 +69,13 @@ export default function App() {
 
   const guardarCambio = async (col, id, datos) => {
     try { await setDoc(doc(db, col, id), datos, { merge: true }); } 
-    catch (e) { console.error(e); }
+    catch (e) { console.error("Error Firebase:", e); }
   };
 
   const agregarAlCarrito = (p) => {
     const sel = selecciones[p.id] || {};
     const cant = cantidades[p.id] || 1;
+    
     if (p.opciones && !sel.sabor && p.categoria === "Fritos") return alert("Elige un sabor");
     if (p.tamanos && !sel.tamano) return alert("Elige el tamaño");
 
@@ -107,10 +98,10 @@ export default function App() {
   const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo el pedido?")) setPedido([]); };
 
   const enviarWhatsApp = () => {
-    if (!nombre || !direccion || !metodoPago) return alert("Faltan tus datos de entrega");
+    if (!nombre || !direccion || !metodoPago) return alert("Faltan datos de entrega");
     const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.detalle}`).join('\n');
     const totalP = pedido.reduce((acc, i) => acc + i.subtotal, 0);
-    const msg = `Pedido Mono 🐒:\n\n${lista}\n\n*Total: $${totalP.toLocaleString()}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
+    const msg = `¡Hola! Pedido Fritos El Mono 🐒:\n\n${lista}\n\n*Total: $${totalP.toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
@@ -120,15 +111,18 @@ export default function App() {
         <div style={{maxWidth:'800px', margin:'0 auto'}}>
           <div style={{display:'flex', justifyContent:'space-between', marginBottom:'30px'}}>
             <h1 style={{color: MONO_NARANJA}}>Admin 🐒</h1>
-            <button onClick={() => setIsAdmin(false)} style={{padding:'10px', borderRadius:'10px', background:MONO_TEXTO, color:'white'}}>Salir</button>
+            <button onClick={() => setIsAdmin(false)} style={{padding:'10px 20px', borderRadius:'12px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Salir</button>
           </div>
           {["Fritos", "Arroces", "Bebidas", "Desayunos"].map(cat => (
-            <div key={cat} style={{background:'white', padding:'25px', borderRadius:'25px', marginBottom:'25px'}}>
+            <div key={cat} style={{background:'white', padding:'25px', borderRadius:'25px', marginBottom:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)'}}>
               <h2>{cat}</h2>
               {productosMostrar.filter(p => p.categoria === cat).map(p => (
-                <div key={p.id} style={{padding:'10px 0', borderBottom:'1px solid #eee', display:'flex', justifyContent:'space-between'}}>
-                  <span>{p.nombre}</span>
-                  <div style={{display:'flex', gap:'10px'}}><input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'80px'}} /></div>
+                <div key={p.id} style={{padding:'10px 0', borderBottom:'1px solid #f8fafc', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                  <strong>{p.nombre}</strong>
+                  <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+                    {!p.tamanos && <div>$ <input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'80px'}} /></div>}
+                    <button onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} style={{background: p.disponible ? MONO_VERDE : '#ccc', color:'white', border:'none', padding:'5px 10px', borderRadius:'10px'}}>{p.disponible ? 'Activo' : 'Agotado'}</button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -141,7 +135,7 @@ export default function App() {
   return (
     <div style={{fontFamily: 'sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px'}}>
       {notificacion && (
-        <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold'}}>{notificacion}</div>
+        <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold', boxShadow: '0 5px 15px rgba(0,0,0,0.2)'}}>{notificacion}</div>
       )}
 
       {pedido.length > 0 && (
@@ -150,7 +144,7 @@ export default function App() {
 
       <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)'}}>
         <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{width: '100%', height: '220px', objectFit: 'cover'}} />
-        <h1 onDoubleClick={() => { const p = window.prompt("🔐 PIN:"); if(p === "mono2026") setIsAdmin(true); }} style={{color: MONO_NARANJA, cursor:'pointer', margin:'15px 0'}}>Fritos El Mono 🐒</h1>
+        <h1 onDoubleClick={() => { const pin = window.prompt("🔐 PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{color: MONO_NARANJA, cursor:'pointer', margin:'15px 0'}}>Fritos El Mono 🐒</h1>
         <div style={{paddingBottom:'20px'}}>Arroz de Hoy: <strong>{tipoArrozHoy}</strong></div>
       </header>
 
@@ -161,29 +155,54 @@ export default function App() {
       </div>
 
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))', gap: '20px', padding: '0 20px', maxWidth:'1200px', margin:'0 auto'}}>
-        {productosMostrar.filter(p => p.categoria === categoriaActiva).map(p => {
+        {productosMostrar.filter(p => (p.categoria || 'Fritos') === categoriaActiva).map(p => {
             const sel = selecciones[p.id] || {};
             const cant = cantidades[p.id] || 1;
             return (
               <div key={p.id} style={{background: 'white', borderRadius: '30px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 15px rgba(0,0,0,0.05)', border:'1px solid #f1f5f9'}}>
-                {/* 🖼️ IMAGEN CORREGIDA CON RUTA .png */}
-                <div style={{ width: '100%', height: '180px', borderRadius: '20px', overflow: 'hidden', marginBottom: '15px', background: '#eee' }}>
-                  <img 
-                    src={p.imagen} 
-                    alt={p.nombre} 
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} 
-                    onError={(e) => { e.target.onerror = null; e.target.src = "/logo-fritos-el-mono.jpg"; }} 
-                  />
+                <div style={{ width: '100%', height: '180px', borderRadius: '20px', overflow: 'hidden', marginBottom: '15px' }}>
+                  <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.onerror = null; e.target.src = "/logo-fritos-el-mono.jpg";}} />
                 </div>
                 <h3 style={{margin: '0 0 5px 0'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '24px', margin:'0 0 15px 0'}}>${(p.precio || (sel.tamano ? sel.tamano.precio : (p.tamanos ? p.tamanos[0].precio : 0))).toLocaleString()}</p>
-                
+
                 {p.categoria === "Fritos" && p.opciones && (
-                  <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #e2e8f0', marginBottom:'15px', background:'#f8fafc'}}><option value="">-- Sabor --</option>{p.opciones.filter(opt => opt.disponible).map(opt => <option key={opt.nombre} value={opt.nombre}>{opt.nombre}</option>)}</select>
+                  <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #e2e8f0', marginBottom:'15px', background:'#f8fafc'}}>
+                    <option value="">-- Elige Sabor --</option>
+                    {p.opciones.filter(opt => opt.disponible).map(opt => <option key={opt.nombre} value={opt.nombre}>{opt.nombre}</option>)}
+                  </select>
                 )}
-                
-                <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'15px', marginBottom:'15px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}><button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'35px', height:'35px', borderRadius:'50%', border:'none', background:'white', fontWeight:'bold'}}>-</button><span style={{fontWeight:'bold'}}>{cant}</span><button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'35px', height:'35px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold'}}>+</button></div>
-                <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible || !tiendaAbierta} style={{marginTop:'auto', background: p.disponible ? MONO_NARANJA : '#cbd5e1', color:'white', border:'none', padding:'15px', borderRadius:'18px', fontWeight:'bold'}}>{p.disponible ? 'Añadir 🥟' : 'Agotado'}</button>
+
+                {p.tamanos && (
+                  <select onChange={(e) => {
+                    const t = p.tamanos.find(x => x.nombre === e.target.value);
+                    setSelecciones({...selecciones, [p.id]: {...sel, tamano: t}});
+                  }} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #e2e8f0', marginBottom:'15px'}}>
+                    <option value="">-- Elige Tamaño --</option>
+                    {p.tamanos.filter(t => t.disponible).map(t => <option key={t.nombre} value={t.nombre}>{t.nombre}</option>)}
+                  </select>
+                )}
+
+                {p.categoria === "Arroces" && (
+                  <div style={{background: '#fef3c7', padding: '15px', borderRadius: '20px', marginBottom: '15px'}}>
+                     {extrasMostrar.map(e => (
+                       <label key={e.id} style={{display:'block', marginBottom:'5px', opacity: e.disponible ? 1 : 0.4}}>
+                         <input type="checkbox" disabled={!e.disponible} onChange={(ev) => {
+                           const ex = sel.extras || [];
+                           const n = ev.target.checked ? [...ex, e.id] : ex.filter(x => x !== e.id);
+                           setSelecciones({...selecciones, [p.id]: {...sel, extras: n}});
+                         }} /> {e.nombre} {e.precio > 0 && `(+$${e.precio})`}
+                       </label>
+                     ))}
+                  </div>
+                )}
+
+                <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'15px', marginBottom:'15px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
+                   <button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'35px', height:'35px', borderRadius:'50%', border:'none', background:'white', fontWeight:'bold'}}>-</button>
+                   <span style={{fontWeight:'bold', fontSize:'18px'}}>{cant}</span>
+                   <button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'35px', height:'35px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold'}}>+</button>
+                </div>
+                <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible || !tiendaAbierta} style={{marginTop:'auto', background: p.disponible ? MONO_NARANJA : '#cbd5e1', color:'white', border:'none', padding:'15px', borderRadius:'18px', fontWeight:'bold'}}>Añadir 🥟</button>
               </div>
             );
         })}
@@ -191,10 +210,25 @@ export default function App() {
 
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '40px auto 100px', background: 'white', padding: '40px', borderRadius: '35px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.15)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}><h2 style={{ fontSize: '30px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2><button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #f87171', padding: '10px 18px', borderRadius: '12px', fontWeight: 'bold' }}>🗑️ Vaciar</button></div>
-          {pedido.map(item => (<div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0' }}><span>{item.cantidad}x {item.nombre} <br /><small>{item.detalle}</small></span><strong>${item.subtotal.toLocaleString()}</strong></div>))}
-          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '36px', marginTop: '30px' }}>Total: ${(pedido.reduce((acc, i) => acc + i.subtotal, 0)).toLocaleString()}</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}><input type="text" placeholder="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} /><input type="text" placeholder="Dirección" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} /><select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }}><option value="">-- Pago --</option><option value="Efectivo">Efectivo</option><option value="Nequi">Nequi</option></select><button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '18px', fontWeight: '900', fontSize: '20px' }}>WhatsApp 📲</button></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+            <h2 style={{ fontSize: '30px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
+            <button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: '1px solid #f87171', padding: '10px 18px', borderRadius: '12px', fontWeight: 'bold' }}>🗑️ Vaciar</button>
+          </div>
+          {pedido.map(item => (
+            <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0', alignItems: 'center' }}>
+              <span style={{fontSize: '17px'}}><strong>{item.cantidad}x</strong> {item.nombre} <br /><small style={{color: '#666'}}>{item.detalle}</small></span>
+              <strong>${item.subtotal.toLocaleString()}</strong>
+            </div>
+          ))}
+          <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '36px', marginTop: '30px', borderTop: '3px dashed #eee', paddingTop: '15px' }}>Total: ${(pedido.reduce((acc, i) => acc + i.subtotal, 0)).toLocaleString()}</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
+            <input type="text" placeholder="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
+            <input type="text" placeholder="Dirección" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
+            <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }}>
+              <option value="">-- Pago --</option><option value="Efectivo">Efectivo</option><option value="Nequi">Nequi</option>
+            </select>
+            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '18px', fontWeight: '900', fontSize: '20px' }}>WhatsApp 📲</button>
+          </div>
         </div>
       )}
     </div>
