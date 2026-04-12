@@ -12,7 +12,7 @@ const MiniSwitch = ({ activo, onClick }) => (
 );
 
 // ==========================================
-// 🔴 DATOS MAESTROS (CON DISPONIBILIDAD INICIAL)
+// 🔴 DATOS MAESTROS
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", disponible: true, imagen: "/empanada.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -137,7 +137,7 @@ export default function App() {
   const eliminarDelCarrito = (idUnico) => setPedido(pedido.filter(i => i.idUnico !== idUnico));
   const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo?")) { setPedido([]); setSalsasElegidas([]); } };
 
-  // 🟢 MEJORA DE FORMATO WHATSAPP APLICADA AQUÍ
+  // 🟢 FUNCIÓN ACTUALIZADA CON EMOJIS RE-SINCRONIZADOS
   const enviarWhatsApp = () => {
     if (!nombre || !direccion || !metodoPago) return alert("Faltan datos");
     
@@ -146,7 +146,6 @@ export default function App() {
     
     const listaProductos = pedido.map(i => {
       let texto = `• ${i.cantidad}x ${i.nombre}`;
-      // Si el detalle tiene Extras, lo formateamos con el gancho └
       if (i.detalle.includes("Extras:")) {
         const partes = i.detalle.split("Extras:");
         const base = partes[0].trim();
@@ -167,7 +166,7 @@ export default function App() {
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
-  // 🟢 VISTA ADMIN (SIN CAMBIOS)
+  // 🟢 VISTA ADMIN (NO MODIFICAR)
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -260,7 +259,7 @@ export default function App() {
     );
   }
 
-  // 🔵 VISTA CLIENTE (SIN CAMBIOS)
+  // 🔵 VISTA CLIENTE (NO MODIFICAR)
   return (
     <div style={{
         fontFamily: 'system-ui, sans-serif', 
