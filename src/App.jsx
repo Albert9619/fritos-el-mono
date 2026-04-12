@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 COMPONENTE MINISWITCH (DEFINIDO AL INICIO PARA EVITAR ERRORES)
+// 🔴 COMPONENTE MINISWITCH (DEFINIDO AL INICIO)
 // ==========================================
 const MiniSwitch = ({ activo, onClick }) => (
   <div onClick={onClick} style={{ width: '46px', height: '24px', backgroundColor: activo ? "#16a34a" : '#cbd5e1', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}>
@@ -12,28 +12,22 @@ const MiniSwitch = ({ activo, onClick }) => (
 );
 
 // ==========================================
-// 🔴 DATOS MAESTROS (CÓDIGO BASE - SAGRADO)
+// 🔴 DATOS MAESTROS (CON DISPONIBILIDAD INICIAL)
 // ==========================================
 const productosBase = [
-  { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
-  { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", imagen: "/papa-rellena.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
-  { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", imagen: "/pastel-pollo.png" },
-  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", imagen: "/arepa-huevo.png" },
-  { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", imagen: "/palito-queso.png" },
-  { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", imagen: "/buñuelo.png" },
-  { 
-    id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", imagen: "/desayuno-carne.png",
-    config: { acompanamiento: ["Patacón", "Arepa"], huevos: ["Revueltos", "Pericos"], jugos: ["Avena", "Maracuyá"] }
-  },
-  { 
-    id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", imagen: "/desayuno-huevo.png",
-    config: { acompanamiento: ["Patacón", "Arepa"], proteina: ["Carne desmechada", "Pollo desmechado"], jugos: ["Avena", "Maracuyá"] }
-  },
-  { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", imagen: "/jugo-natural.png", sabores: ["Avena", "Maracuyá"], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
-  { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", imagen: "/cocacola.png", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }, { nombre: "Familiar", precio: 6500, disponible: true }] },
-  { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", imagen: "/malta.png", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }] },
-  { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", imagen: "/agua.png" },
-  { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", imagen: "/arroz-pollo.png" }
+  { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", disponible: true, imagen: "/empanada.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
+  { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/papa-rellena.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
+  { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/pastel-pollo.png" },
+  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/arepa-huevo.png" },
+  { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", disponible: true, imagen: "/palito-queso.png" },
+  { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", disponible: true, imagen: "/buñuelo.png" },
+  { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.png", config: { acompanamiento: ["Patacón", "Arepa"], huevos: ["Revueltos", "Pericos"], jugos: ["Avena", "Maracuyá"] } },
+  { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-huevo.png", config: { acompanamiento: ["Patacón", "Arepa"], proteina: ["Carne desmechada", "Pollo desmechado"], jugos: ["Avena", "Maracuyá"] } },
+  { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/jugo-natural.png", sabores: ["Avena", "Maracuyá"], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
+  { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/cocacola.png", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }, { nombre: "Familiar", precio: 6500, disponible: true }] },
+  { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/malta.png", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }] },
+  { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", disponible: true, imagen: "/agua.png" },
+  { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", disponible: true, imagen: "/arroz-pollo.png" }
 ];
 
 const extrasArrozBase = [
@@ -65,7 +59,7 @@ export default function App() {
   const [pedido, setPedido] = useState([]);
   const [selecciones, setSelecciones] = useState({});
   const [cantidades, setCantidades] = useState({});
-  const [salsasElegidas, setSalsasElegidas] = useState([]); 
+  const [salsasElegidas, setSalsasElegidas] = useState([]);
   const [notificacion, setNotificacion] = useState("");
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
@@ -76,19 +70,14 @@ export default function App() {
 
   // 🔄 FIREBASE
   useEffect(() => {
-    onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
-    onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
-    onSnapshot(collection(db, "salsas"), (s) => setSalsasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
-    onSnapshot(doc(db, "ajuste", "tienda"), (s) => { if (s.exists()) setTiendaAbierta(s.data().abierta); });
+    const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+    const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+    const unsubSalsas = onSnapshot(collection(db, "salsas"), (s) => setSalsasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
+    const unsubTienda = onSnapshot(doc(db, "ajuste", "tienda"), (s) => { 
+      if (s.exists()) setTiendaAbierta(s.data().abierta); 
+    });
+    return () => { unsubProd(); unsubExtras(); unsubSalsas(); unsubTienda(); };
   }, []);
-
-  // 💾 PERSISTENCIA
-  useEffect(() => {
-    const pedidoGuardado = localStorage.getItem("pedido_mono_storage");
-    if (pedidoGuardado) setPedido(JSON.parse(pedidoGuardado));
-  }, []);
-
-  useEffect(() => { localStorage.setItem("pedido_mono_storage", JSON.stringify(pedido)); }, [pedido]);
 
   const fusionar = (base, fb) => {
     const mapa = {};
@@ -137,10 +126,10 @@ export default function App() {
   };
 
   const eliminarDelCarrito = (idUnico) => setPedido(pedido.filter(i => i.idUnico !== idUnico));
-  const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo el pedido?")) { setPedido([]); setSalsasElegidas([]); } };
+  const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo?")) { setPedido([]); setSalsasElegidas([]); } };
 
   const enviarWhatsApp = () => {
-    if (!nombre || !direccion || !metodoPago) return alert("Faltan datos de entrega");
+    if (!nombre || !direccion || !metodoPago) return alert("Faltan datos");
     const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.detalle}`).join('\n');
     const salsas = salsasElegidas.length > 0 ? `\n\n🧂 Salsas: ${salsasElegidas.join(', ')}` : "";
     const totalP = pedido.reduce((acc, i) => acc + i.subtotal, 0);
@@ -148,13 +137,13 @@ export default function App() {
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
-  // 🟢 VISTA ADMIN (REPARADA CON TODOS LOS CONTROLES)
+  // 🟢 VISTA ADMIN
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
         <div style={{maxWidth:'850px', margin:'0 auto'}}>
           <div style={{display:'flex', justifyContent:'space-between', marginBottom:'30px', alignItems: 'center'}}>
-            <h1 style={{color: MONO_NARANJA}}>Admin 🐒</h1>
+            <h1 style={{color: MONO_NARANJA}}>Panel Admin 🐒</h1>
             <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
                <span style={{fontWeight:'bold'}}>Tienda Abierta:</span>
                <MiniSwitch activo={tiendaAbierta} onClick={() => guardarCambio("ajuste", "tienda", { abierta: !tiendaAbierta })} />
@@ -171,8 +160,6 @@ export default function App() {
                     <strong>{p.nombre}</strong>
                     <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
                   </div>
-                  
-                  {/* PRECIOS Y TAMAÑOS (INPUTS REPARADOS) */}
                   {p.tamanos ? (
                     <div style={{display:'grid', gap:'10px', marginTop:'10px'}}>
                       {p.tamanos.map((t, idx) => (
@@ -196,8 +183,6 @@ export default function App() {
                       <div style={{marginTop:'10px'}}>$ <input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'100px', padding:'8px', borderRadius:'8px', border:'1px solid #ddd'}} /></div>
                     )
                   )}
-
-                  {/* SWITCHES DE SABORES SI TIENE OPCIONES */}
                   {p.opciones && (
                     <div style={{marginTop:'10px', display:'flex', gap:'10px', flexWrap:'wrap'}}>
                       {p.opciones.map((opt, idx) => (
@@ -213,11 +198,9 @@ export default function App() {
                   )}
                 </div>
               ))}
-
-              {/* EXTRAS DE ARROZ (HUEVO, QUESO) CON INPUT DE PRECIO */}
               {cat === "Arroces" && (
                 <div style={{marginTop:'20px', borderTop:'1px dashed #ddd', paddingTop:'15px'}}>
-                  <h4 style={{margin:'0 0 10px 0'}}>Precios de Extras Arroz:</h4>
+                  <h4 style={{margin:'0 0 10px 0'}}>Extras de Arroz:</h4>
                   {extrasMostrar.map(ex => (
                     <div key={ex.id} style={{display:'flex', justifyContent:'space-between', marginBottom:'10px', alignItems:'center'}}>
                       <small>{ex.nombre}</small>
@@ -231,8 +214,6 @@ export default function App() {
               )}
             </div>
           ))}
-
-          {/* CONTROL DE SALSAS */}
           <div style={{background:'white', padding:'25px', borderRadius:'25px'}}>
             <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px'}}>Control de Salsas 🧂</h2>
             <div style={{display:'flex', gap:'10px', flexWrap:'wrap', marginTop:'15px'}}>
@@ -253,17 +234,16 @@ export default function App() {
   return (
     <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO}}>
       <style>{`
-        .card-mono { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .card-mono:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important; }
+        .card-mono { transition: 0.3s; }
+        .card-mono:hover { transform: translateY(-10px); }
         .opcion-btn { padding: 10px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 13px; }
         .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; }
         .salsa-chip { padding: 12px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; font-size: 13px; }
         .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }
-        .del-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; padding: 5px; transition: 0.2s; }
-        .del-btn:hover { transform: scale(1.2); }
+        .del-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; padding: 5px; }
       `}</style>
       
-      {notificacion && <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold', boxShadow: '0 5px 15px rgba(0,0,0,0.2)'}}>{notificacion}</div>}
+      {notificacion && <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold'}}>{notificacion}</div>}
       
       {pedido.length > 0 && (
         <div onClick={() => document.getElementById('carrito_seccion')?.scrollIntoView({ behavior: 'smooth' })} style={{position: 'fixed', bottom: '30px', right: '30px', background: MONO_NARANJA, color: 'white', width: '75px', height: '75px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '32px', boxShadow: '0 10px 30px rgba(249, 115, 22, 0.5)', zIndex: 9999, cursor: 'pointer', border: '3px solid white'}}>🛒<span style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color: 'white', fontSize:'14px', minWidth:'22px', height:'22px', borderRadius:'50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', border: '2px solid white'}}>{pedido.length}</span></div>
@@ -293,11 +273,10 @@ export default function App() {
 
             return (
               <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', position: 'relative'}}>
-                <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.src = "/logo-fritos-el-mono.jpg";}} />
+                <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover', filter: (!p.disponible || !tiendaAbierta) ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.src = "/logo-fritos-el-mono.jpg";}} />
                 <h3 style={{margin: '10px 0 5px 0', fontWeight: '800'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 
-                {/* SELECTS DE SABORES Y TAMAÑOS */}
                 {(p.opciones || p.sabores) && (
                   <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', marginBottom:'10px', background:'#f8fafc', fontWeight:'bold', border:'1px solid #eee'}}>
                     <option value="">-- Elige Sabor --</option>
@@ -340,7 +319,14 @@ export default function App() {
                    <span style={{fontWeight:'900', fontSize:'20px'}}>{cant}</span>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold'}}>+</button>
                 </div>
-                <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible || !tiendaAbierta} style={{background: p.disponible && tiendaAbierta ? MONO_NARANJA : '#ccc', color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', fontSize:'16px', cursor:'pointer'}}>Añadir 🛒</button>
+                {/* BOTÓN ARREGLADO: Solo se deshabilita si es falso explícitamente */}
+                <button 
+                  onClick={() => agregarAlCarrito(p)} 
+                  disabled={p.disponible === false || !tiendaAbierta} 
+                  style={{background: (p.disponible !== false && tiendaAbierta) ? MONO_NARANJA : '#ccc', color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', fontSize:'16px', cursor:'pointer'}}
+                >
+                  Añadir 🛒
+                </button>
               </div>
             );
         })}
@@ -362,7 +348,6 @@ export default function App() {
             </div>
           ))}
 
-          {/* SALSAS AL FINAL */}
           <div style={{marginTop: '30px', background: '#f8fafc', padding: '25px', borderRadius: '25px', border: '1px solid #eee'}}>
             <h3 style={{margin: '0 0 15px 0', fontSize: '20px', fontWeight: '900'}}>🧂 Elige tus salsas:</h3>
             <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
