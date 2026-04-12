@@ -34,7 +34,6 @@ const productosBase = [
   { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", imagen: "/jugo-natural.png", tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", imagen: "/cocacola.png", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }, { nombre: "Familiar", precio: 6500, disponible: true }] },
   { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", imagen: "/malta.png", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }] },
-  { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", imagen: "/agua.png" },
   { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", imagen: "/arroz-pollo.png" }
 ];
 
@@ -45,7 +44,8 @@ const extrasArrozBase = [
   { id: 'queso', nombre: "Tajada de Queso", disponible: true, precio: 1000 }
 ];
 
-const salsasMaestras = ["Rosada", "Tártara", "Ajo", "Picante"];
+// 🍯 LISTA DE SALSAS ACTUALIZADA
+const salsasMaestras = ["Roja", "Rosada", "Pique", "Suero", "Suero Picante"];
 
 const MONO_NARANJA = "#f97316";
 const MONO_VERDE = "#16a34a";
@@ -60,7 +60,7 @@ export default function App() {
   const [pedido, setPedido] = useState([]);
   const [selecciones, setSelecciones] = useState({});
   const [cantidades, setCantidades] = useState({});
-  const [salsasElegidas, setSalsasElegidas] = useState([]); // Salsas al final
+  const [salsasElegidas, setSalsasElegidas] = useState([]); 
   const [notificacion, setNotificacion] = useState("");
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
@@ -69,7 +69,6 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // 🔄 FIREBASE
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -77,7 +76,6 @@ export default function App() {
     return () => { unsubProd(); unsubExtras(); unsubTienda(); };
   }, []);
 
-  // 💾 PERSISTENCIA
   useEffect(() => {
     const pedidoGuardado = localStorage.getItem("pedido_mono_storage");
     if (pedidoGuardado) setPedido(JSON.parse(pedidoGuardado));
@@ -156,7 +154,7 @@ export default function App() {
     </div>
   );
 
-  // 🟢 VISTA ADMIN (RESTAURADA TOTALMENTE)
+  // 🟢 VISTA ADMIN (RESTAURADA)
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -198,12 +196,16 @@ export default function App() {
         .card-mono:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important; }
         .opcion-btn { padding: 10px 14px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 14px; font-weight: bold; }
         .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; }
-        .salsa-chip { padding: 12px 20px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .salsa-chip { padding: 12px 20px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 13px; }
         .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }
       `}</style>
-
+      
       {notificacion && (
         <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold', boxShadow: '0 5px 15px rgba(0,0,0,0.2)'}}>{notificacion}</div>
+      )}
+      
+      {pedido.length > 0 && (
+        <div onClick={() => document.getElementById('carrito_seccion')?.scrollIntoView({ behavior: 'smooth' })} style={{position: 'fixed', bottom: '30px', right: '30px', background: MONO_NARANJA, color: 'white', width: '75px', height: '75px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '32px', boxShadow: '0 10px 30px rgba(249, 115, 22, 0.5)', zIndex: 9999, cursor: 'pointer', border: '3px solid white'}}>🛒<span style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color: 'white', fontSize:'14px', minWidth:'22px', height:'22px', borderRadius:'50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', border: '2px solid white'}}>{pedido.length}</span></div>
       )}
 
       <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 50px 50px', marginBottom: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden'}}>
