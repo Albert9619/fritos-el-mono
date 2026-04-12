@@ -137,7 +137,7 @@ export default function App() {
   const eliminarDelCarrito = (idUnico) => setPedido(pedido.filter(i => i.idUnico !== idUnico));
   const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo?")) { setPedido([]); setSalsasElegidas([]); } };
 
-  // 🟢 FUNCIÓN ACTUALIZADA CON EMOJIS RE-SINCRONIZADOS
+  // 🟢 MEJORA VISUAL DEL TICKET
   const enviarWhatsApp = () => {
     if (!nombre || !direccion || !metodoPago) return alert("Faltan datos");
     
@@ -145,17 +145,18 @@ export default function App() {
     const divisor = "━━━━━━━━━━━━━━━";
     
     const listaProductos = pedido.map(i => {
-      let texto = `• ${i.cantidad}x ${i.nombre}`;
-      if (i.detalle.includes("Extras:")) {
-        const partes = i.detalle.split("Extras:");
-        const base = partes[0].trim();
-        const extras = partes[1].trim();
-        if (base) texto += ` (${base})`;
-        texto += `\n    └ Extras: ${extras}`;
-      } else if (i.detalle.trim()) {
-        texto += ` (${i.detalle.trim()})`;
+      let linea = `• ${i.cantidad}x ${i.nombre}`;
+      // Limpiamos espacios dobles del detalle
+      const detalleLimpio = i.detalle.replace(/\s+/g, ' ').trim();
+      
+      if (detalleLimpio.includes("Extras:")) {
+        const [base, extras] = detalleLimpio.split("Extras:");
+        if (base.trim()) linea += ` (${base.trim()})`;
+        linea += `\n   └ Extras: ${extras.trim()}`;
+      } else if (detalleLimpio) {
+        linea += ` (${detalleLimpio})`;
       }
-      return texto;
+      return linea;
     }).join('\n');
 
     const totalP = pedido.reduce((acc, i) => acc + i.subtotal, 0);
