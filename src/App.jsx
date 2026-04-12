@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS MAESTROS (ACTUALIZADOS CON CONFIG DE DESAYUNOS)
+// 🔴 DATOS MAESTROS (CÓDIGO BASE - SAGRADO)
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -13,32 +13,22 @@ const productosBase = [
   { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", imagen: "/palito-queso.png" },
   { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", imagen: "/buñuelo.png" },
   
-  // 🍳 CONFIG DESAYUNO TRADICIONAL
   { 
     id: "d1", 
     nombre: "Desayuno Tradicional", 
     precio: 8000, 
     categoria: "Desayunos", 
     imagen: "/desayuno-carne.png",
-    config: {
-      acompanamiento: ["Patacón", "Arepa"],
-      huevos: ["Revueltos", "Pericos"],
-      jugos: ["Avena", "Maracuyá"]
-    }
+    config: { acompanamiento: ["Patacón", "Arepa"], huevos: ["Revueltos", "Pericos"], jugos: ["Avena", "Maracuyá"] }
   },
   
-  // 🍳 CONFIG DESAYUNO ESPECIAL
   { 
     id: "d2", 
     nombre: "Desayuno Especial", 
     precio: 10000, 
     categoria: "Desayunos", 
     imagen: "/desayuno-huevo.png",
-    config: {
-      acompanamiento: ["Patacón", "Arepa"],
-      proteina: ["Carne desmechada", "Pollo desmechado"],
-      jugos: ["Avena", "Maracuyá"]
-    }
+    config: { acompanamiento: ["Patacón", "Arepa"], proteina: ["Carne desmechada", "Pollo desmechado"], jugos: ["Avena", "Maracuyá"] }
   },
 
   { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", imagen: "/jugo-natural.png", tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
@@ -54,6 +44,8 @@ const extrasArrozBase = [
   { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 },
   { id: 'queso', nombre: "Tajada de Queso", disponible: true, precio: 1000 }
 ];
+
+const salsasDisponibles = ["Rosada", "Tártara", "Ajo", "Picante"];
 
 const MONO_NARANJA = "#f97316";
 const MONO_VERDE = "#16a34a";
@@ -111,40 +103,36 @@ export default function App() {
     const sel = selecciones[p.id] || {};
     const cant = cantidades[p.id] || 1;
 
-    // VALIDACIONES SEGÚN CATEGORÍA
     if (p.opciones && !sel.sabor && p.categoria === "Fritos") return alert("Elige un sabor");
     if (p.tamanos && !sel.tamano) return alert("Elige el tamaño");
     if (p.categoria === "Desayunos") {
         if (!sel.acompanamiento) return alert("Elige Patacón o Arepa");
-        if (p.id === "d1" && !sel.huevos) return alert("Elige cómo quieres los huevos");
-        if (p.id === "d2" && !sel.proteina) return alert("Elige la carne");
+        if (p.id === "d1" && !sel.huevos) return alert("Elige tipo de huevos");
+        if (p.id === "d2" && !sel.proteina) return alert("Elige la proteína");
         if (!sel.jugo) return alert("Elige el jugo");
     }
 
-    // CÁLCULO DE PRECIO FINAL
     let precioBase = p.precio || 0;
     if (sel.tamano) precioBase = sel.tamano.precio;
-    
     const extrasPrice = (sel.extras || []).reduce((acc, id) => {
       const ex = extrasMostrar.find(e => e.id === id);
       return acc + (ex?.precio || 0);
     }, 0);
-
     const upgradeDesayuno = (p.categoria === "Desayunos" && sel.agrandar) ? 1000 : 0;
-
     const subtotal = (precioBase + extrasPrice + upgradeDesayuno) * cant;
 
-    // DETALLE DEL TEXTO PARA WHATSAPP
     let detalle = "";
     if (sel.sabor) detalle += `${sel.sabor} `;
     if (sel.tamano) detalle += `${sel.tamano.nombre} `;
     if (sel.extras) detalle += `Extras: ${sel.extras.join(', ')} `;
+    if (sel.salsas && sel.salsas.length > 0) detalle += `Salsas: ${sel.salsas.join(', ')} `;
     if (p.categoria === "Desayunos") {
-        detalle += `(${sel.acompanamiento}, ${sel.huevos || sel.proteina}, Jugo: ${sel.jugo}${sel.agrandar ? ' Grande' : ''}, Queso incluido)`;
+        detalle += `(${sel.acompanamiento}, ${sel.huevos || sel.proteina}, Jugo: ${sel.jugo}${sel.agrandar ? ' Grande' : ''}, Queso inc.)`;
     }
 
     setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, cantidad: cant, subtotal, detalle }]);
     setCantidades({ ...cantidades, [p.id]: 1 });
+    setSelecciones({ ...selecciones, [p.id]: {} }); // Limpiar selección tras añadir
     setNotificacion(`¡${cant}x ${p.nombre} añadido! 🥟`);
     setTimeout(() => setNotificacion(""), 2000);
   };
@@ -165,19 +153,50 @@ export default function App() {
     </div>
   );
 
-  if (isAdmin) { 
-      // La vista admin se mantiene funcional igual que el código base
+  // 🟢 VISTA ADMIN (RESTAURADA)
+  if (isAdmin) {
+    return (
+      <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
+        <div style={{maxWidth:'800px', margin:'0 auto'}}>
+          <div style={{display:'flex', justifyContent:'space-between', marginBottom:'30px', alignItems: 'center'}}>
+            <h1 style={{color: MONO_NARANJA}}>Admin 🐒</h1>
+            <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+               <span style={{fontWeight:'bold'}}>Tienda:</span>
+               <MiniSwitch activo={tiendaAbierta} onClick={() => guardarCambio("ajuste", "tienda", { abierta: !tiendaAbierta })} />
+               <button onClick={() => setIsAdmin(false)} style={{padding:'10px 20px', borderRadius:'12px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Cerrar</button>
+            </div>
+          </div>
+          {["Fritos", "Arroces", "Bebidas", "Desayunos"].map(cat => (
+            <div key={cat} style={{background:'white', padding:'25px', borderRadius:'25px', marginBottom:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)'}}>
+              <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'15px'}}>{cat}</h2>
+              {productosMostrar.filter(p => p.categoria === cat).map(p => (
+                <div key={p.id} style={{padding:'15px 0', borderBottom:'1px solid #f8fafc'}}>
+                  <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                    <strong>{p.nombre}</strong>
+                    <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
+                      {!p.tamanos && <div>$ <input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'80px', padding:'5px', borderRadius:'8px', border:'1px solid #ddd'}} /></div>}
+                      <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
+  // 🔵 VISTA CLIENTE
   return (
     <div style={{fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO}}>
       <style>{`
         .card-mono { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .card-mono:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.08) !important; }
-        .img-mono { transition: transform 0.5s ease; }
-        .card-mono:hover .img-mono { transform: scale(1.08); }
-        .opcion-btn { padding: 8px 12px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .opcion-btn { padding: 8px 12px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; }
         .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; }
+        .salsa-chip { padding: 5px 10px; border-radius: 10px; border: 1px solid #eee; background: #f9f9f9; font-size: 11px; cursor: pointer; }
+        .salsa-chip.active { background: #fee2e2; border-color: #f87171; color: #b91c1c; font-weight: bold; }
       `}</style>
       
       {notificacion && (
@@ -208,18 +227,14 @@ export default function App() {
             const cant = cantidades[p.id] || 1;
             const esFavorito = p.id === "4" || p.id === "lzEcQicq9WUrxw7FEaq7";
 
-            // 💰 CÁLCULO PRECIO DINÁMICO EN TARJETA
             let precioUni = p.precio || 0;
             if (p.tamanos) precioUni = sel.tamano ? sel.tamano.precio : p.tamanos[0].precio;
-            
             const extraSum = (sel.extras || []).reduce((acc, id) => {
                 const ex = extrasMostrar.find(e => e.id === id);
                 return acc + (ex?.precio || 0);
             }, 0);
-
             const upgradeSum = (p.categoria === "Desayunos" && sel.agrandar) ? 1000 : 0;
-            
-            const totalDinámico = (precioUni + extraSum + upgradeSum) * cant;
+            const totalDinamico = (precioUni + extraSum + upgradeSum) * cant;
 
             return (
               <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', position: 'relative'}}>
@@ -227,19 +242,32 @@ export default function App() {
                   <div style={{position:'absolute', top: '15px', left: '15px', zIndex: 10, background: '#ef4444', color: 'white', padding: '6px 15px', borderRadius: '20px', fontSize: '11px', fontWeight: '900'}}>⭐ EL FAVORITO</div>
                 )}
                 <div style={{ width: '100%', height: '180px', borderRadius: '25px', overflow: 'hidden', marginBottom: '15px' }}>
-                  <img className="img-mono" src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.onerror = null; e.target.src = "/logo-fritos-el-mono.jpg";}} />
+                  <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.onerror = null; e.target.src = "/logo-fritos-el-mono.jpg";}} />
                 </div>
                 <h3 style={{margin: '0 0 5px 0', fontWeight: '800', fontSize: '20px'}}>{p.nombre}</h3>
+                <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${totalDinamico.toLocaleString()}</p>
                 
-                <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${totalDinámico.toLocaleString()}</p>
-                
-                {/* --- SECCIONES DE OPCIONES --- */}
-                
+                {/* --- OPCIONES COMUNES --- */}
                 {p.categoria === "Fritos" && p.opciones && (
                   <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'14px', borderRadius:'18px', border:'2px solid #f8fafc', marginBottom:'15px', background:'#f8fafc', fontWeight: 'bold'}}>
                     <option value="">-- ¿Qué sabor? --</option>
                     {p.opciones.filter(opt => opt.disponible).map(opt => <option key={opt.nombre} value={opt.nombre}>{opt.nombre}</option>)}
                   </select>
+                )}
+
+                {(p.categoria === "Fritos" || p.categoria === "Desayunos") && (
+                    <div style={{marginBottom: '15px'}}>
+                        <div style={{fontSize: '11px', fontWeight: 'bold', marginBottom: '5px', color: '#888'}}>Añadir Salsas:</div>
+                        <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap'}}>
+                            {salsasDisponibles.map(s => (
+                                <button key={s} onClick={() => {
+                                    const salsas = sel.salsas || [];
+                                    const n = salsas.includes(s) ? salsas.filter(x => x !== s) : [...salsas, s];
+                                    setSelecciones({...selecciones, [p.id]: {...sel, salsas: n}});
+                                }} className={`salsa-chip ${sel.salsas?.includes(s) ? 'active' : ''}`}>{s}</button>
+                            ))}
+                        </div>
+                    </div>
                 )}
 
                 {p.tamanos && (
@@ -252,6 +280,7 @@ export default function App() {
                   </select>
                 )}
 
+                {/* --- ARROCES --- */}
                 {p.categoria === "Arroces" && (
                   <div style={{background: '#fef3c7', padding: '15px', borderRadius: '20px', marginBottom: '15px'}}>
                      {extrasMostrar.map(e => (
@@ -266,55 +295,49 @@ export default function App() {
                   </div>
                 )}
 
-                {/* --- LÓGICA DE DESAYUNOS (NUEVO) --- */}
+                {/* --- DESAYUNOS --- */}
                 {p.categoria === "Desayunos" && (
                     <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px'}}>
-                        <div style={{fontSize: '12px', fontWeight: 'bold', color: '#666'}}>Acompañamiento:</div>
                         <div style={{display: 'flex', gap: '5px'}}>
                             {p.config.acompanamiento.map(a => (
                                 <button key={a} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, acompanamiento: a}})} className={`opcion-btn ${sel.acompanamiento === a ? 'active' : ''}`}>{a}</button>
                             ))}
                         </div>
-
-                        <div style={{fontSize: '12px', fontWeight: 'bold', color: '#666'}}>{p.id === "d1" ? "Huevos:" : "Carne:"}</div>
                         <div style={{display: 'flex', gap: '5px'}}>
                             {(p.config.huevos || p.config.proteina).map(op => (
                                 <button key={op} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, [p.id === "d1" ? "huevos" : "proteina"]: op}})} className={`opcion-btn ${ (sel.huevos === op || sel.proteina === op) ? 'active' : ''}`}>{op}</button>
                             ))}
                         </div>
-
-                        <div style={{fontSize: '12px', fontWeight: 'bold', color: '#666'}}>Jugo (Pequeño):</div>
                         <div style={{display: 'flex', gap: '5px'}}>
                             {p.config.jugos.map(j => (
                                 <button key={j} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, jugo: j}})} className={`opcion-btn ${sel.jugo === j ? 'active' : ''}`}>{j}</button>
                             ))}
                         </div>
-                        
                         <label style={{display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '900', background: '#f0fdf4', padding: '10px', borderRadius: '12px', cursor: 'pointer', border: '1px dashed #16a34a'}}>
                             <input type="checkbox" onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, agrandar: e.target.checked}})} />
-                            🥤 Agrandar Jugo (+1.000)
+                            🥤 Agrandar Jugo (+1k)
                         </label>
-                        <div style={{fontSize: '11px', color: MONO_VERDE, fontWeight: 'bold'}}>✨ Incluye Queso</div>
+                        <div style={{fontSize: '16px', color: MONO_VERDE, fontWeight: '900', textAlign: 'center'}}>🧀 ¡INCLUYE QUESO!</div>
                     </div>
                 )}
 
                 <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'15px', marginBottom:'15px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
-                   <button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:'white', fontWeight:'bold', fontSize: '18px', cursor: 'pointer'}}>-</button>
+                   <button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:'white', fontWeight:'bold', fontSize: '18px'}}>-</button>
                    <span style={{fontWeight:'900', fontSize:'20px', minWidth: '30px', textAlign: 'center'}}>{cant}</span>
-                   <button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold', fontSize: '18px', cursor: 'pointer'}}>+</button>
+                   <button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold', fontSize: '18px'}}>+</button>
                 </div>
-                <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible || !tiendaAbierta} style={{marginTop:'auto', background: p.disponible ? MONO_NARANJA : '#cbd5e1', color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', fontSize: '16px', cursor: 'pointer'}}>Añadir 🛒</button>
+                <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible || !tiendaAbierta} style={{marginTop:'auto', background: p.disponible ? MONO_NARANJA : '#cbd5e1', color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', fontSize: '16px'}}>Añadir 🛒</button>
               </div>
             );
         })}
       </div>
       
-      {/* SECCIÓN CARRITO IGUAL AL CÓDIGO BASE */}
+      {/* SECCIÓN CARRITO */}
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '50px auto 100px', background: 'white', padding: '40px', borderRadius: '40px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
             <h2 style={{ fontSize: '30px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
-            <button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '12px 25px', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer' }}>🗑️ Vaciar</button>
+            <button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '12px 25px', borderRadius: '15px', fontWeight: 'bold' }}>🗑️ Vaciar</button>
           </div>
           {pedido.map(item => (
             <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0', alignItems: 'center' }}>
@@ -325,11 +348,11 @@ export default function App() {
           <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '38px', fontWeight: '900', marginTop: '30px', borderTop: '4px dashed #eee', paddingTop: '20px' }}>Total: ${(pedido.reduce((acc, i) => acc + i.subtotal, 0)).toLocaleString()}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
             <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '16px' }} />
-            <input type="text" placeholder="Dirección en Carepa" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '16px' }} />
+            <input type="text" placeholder="Dirección" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '16px' }} />
             <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '16px', fontWeight: 'bold' }}>
               <option value="">-- ¿Cómo pagas? --</option><option value="Efectivo">Efectivo</option><option value="Nequi">Nequi</option>
             </select>
-            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '25px', fontWeight: '900', fontSize: '20px', cursor: 'pointer', boxShadow: '0 10px 20px rgba(22, 163, 74, 0.2)' }}>WhatsApp 📲</button>
+            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '22px', borderRadius: '25px', fontWeight: '900', fontSize: '20px' }}>WhatsApp 📲</button>
           </div>
         </div>
       )}
