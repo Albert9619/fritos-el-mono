@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 DATOS MAESTROS (CON TUS IDs EXACTOS)
+// 🔴 DATOS MAESTROS
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.jpg", disponible: true, opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
@@ -19,7 +19,6 @@ const productosBase = [
   { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", imagen: "/coca-cola.jpg", disponible: true, tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }, { nombre: "Familiar 1.5L", precio: 6500, disponible: true }] },
   { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", imagen: "/pony.jpg", disponible: true, tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }] },
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", imagen: "/agua.jpg", disponible: true },
-  // IDs raros según tus capturas
   { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", imagen: "/jugo-natural.jpg", disponible: true, opciones: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", esArroz: true, imagen: "/arroz-pollo.jpg", disponible: true }
 ];
@@ -63,7 +62,6 @@ export default function App() {
     return () => { unsubProd(); unsubExtras(); unsubTienda(); };
   }, []);
 
-  // ✅ FUNCION FUSION: Evita duplicados comparando IDs
   const obtenerListaLimpia = () => {
     const mapa = {};
     productosBase.forEach(p => mapa[p.id] = p);
@@ -74,18 +72,9 @@ export default function App() {
   const productosMostrar = obtenerListaLimpia();
   const extrasArrozMostrar = extrasFB.length > 0 ? extrasFB : extrasArrozBase;
 
-  // ✅ FUNCIONES DE ACCIÓN
   const guardarCambio = async (col, id, datos) => {
     try { await setDoc(doc(db, col, id), datos, { merge: true }); } 
     catch (e) { console.error(e); }
-  };
-
-  const enviarWhatsApp = () => {
-    if (pedido.length === 0) return alert("Carrito vacío");
-    if (!nombre || !direccion || !metodoPago) return alert("Faltan datos");
-    const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.saborElegido ? '('+i.saborElegido+')' : ''} ${i.detallesArroz || ''}`).join('\n');
-    const msg = `¡Hola! Pedido Fritos El Mono 🐒:\n\n${lista}\n\n*Total: $${(pedido.reduce((acc, i) => acc + i.subtotal, 0)).toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
-    window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
   const agregarAlCarrito = (p) => {
@@ -105,7 +94,7 @@ export default function App() {
         detallesExtra = `(Con ${acompañanteArroz}${conHuevo ? ' + Huevo' : ''}${conQueso ? ' + Queso' : ''})`;
       } else if (p.opciones && p.categoria === "Fritos") {
         sabor = sabores[p.id];
-        if (!sabor) return alert("Elige un sabor");
+        if (!sabor) return alert("Por favor elige un sabor");
       }
 
       if (p.tamanos) {
@@ -128,39 +117,97 @@ export default function App() {
     </div>
   );
 
-  // 🟢 VISTA ADMIN
+  // 🟢 VISTA ADMIN (CON CAMBIO DE PRECIOS)
   if (isAdmin) {
     return (
-      <div style={{padding: '20px', background: '#f0f2f5', minHeight: '100vh'}}>
-        <button onClick={() => setIsAdmin(false)}>← Volver</button>
-        <h2 style={{color: MONO_NARANJA}}>Admin 🐒</h2>
-        {productosMostrar.map(p => (
-          <div key={p.id} style={{background:'white', padding:'15px', borderRadius:'15px', marginBottom:'10px', display:'flex', justifyContent:'space-between'}}>
-            <span>{p.nombre} (ID: {p.id})</span>
-            <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
-          </div>
-        ))}
+      <div style={{padding: '20px', background: '#f0f2f5', minHeight: '100vh', fontFamily: 'sans-serif'}}>
+        <button onClick={() => setIsAdmin(false)} style={{padding:'10px', borderRadius:'10px', cursor:'pointer'}}>← Volver a la Tienda</button>
+        <h2 style={{color: MONO_NARANJA}}>Panel de Administración 🐒</h2>
+        
+        {/* EDITAR PRODUCTOS */}
+        <div style={{background:'white', padding:'20px', borderRadius:'20px', marginBottom:'20px'}}>
+          <h3>Precios y Disponibilidad</h3>
+          {productosMostrar.map(p => (
+            <div key={p.id} style={{padding:'10px 0', borderBottom:'1px solid #eee'}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                <div style={{flex:1}}>
+                  <strong>{p.nombre}</strong><br/>
+                  <small style={{color:'gray'}}>ID: {p.id}</small>
+                </div>
+                
+                {/* PRECIO (Si no tiene tamaños múltiples) */}
+                {!p.tamanos && (
+                  <input 
+                    type="number" 
+                    defaultValue={p.precio} 
+                    onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })}
+                    style={{width:'80px', padding:'8px', borderRadius:'8px', border:'1px solid #ddd', marginRight:'15px'}}
+                  />
+                )}
+                
+                <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
+              </div>
+
+              {/* EDITAR PRECIOS DE TAMAÑOS (Bebidas) */}
+              {p.tamanos && (
+                <div style={{marginTop:'10px', background:'#f9f9f9', padding:'10px', borderRadius:'10px'}}>
+                  {p.tamanos.map((t, idx) => (
+                    <div key={idx} style={{display:'flex', justifyContent:'space-between', marginTop:'5px', alignItems:'center'}}>
+                      <span>{t.nombre}</span>
+                      <input 
+                        type="number" 
+                        defaultValue={t.precio} 
+                        onBlur={(e) => {
+                          const nuevosTam = [...p.tamanos];
+                          nuevosTam[idx].precio = Number(e.target.value);
+                          guardarCambio("productos", p.id, { tamanos: nuevosTam });
+                        }}
+                        style={{width:'80px', padding:'5px', borderRadius:'5px', border:'1px solid #ccc'}}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* EDITAR EXTRAS DEL ARROZ */}
+        <div style={{background:'white', padding:'20px', borderRadius:'20px'}}>
+          <h3>Precios de Extras (Arroz)</h3>
+          {extrasArrozMostrar.filter(e => e.id === 'huevo' || e.id === 'queso').map(e => (
+            <div key={e.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0'}}>
+              <span>{e.nombre}</span>
+              <input 
+                type="number" 
+                defaultValue={e.precio} 
+                onBlur={(ev) => guardarCambio("extrasArroz", e.id, { precio: Number(ev.target.value) })}
+                style={{width:'80px', padding:'8px', borderRadius:'8px', border:'1px solid #ddd'}}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
-  // 🔵 VISTA CLIENTE
+  // 🔵 VISTA CLIENTE (Igual que antes)
   return (
-    <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '120px'}}>
-      
+    <div style={{fontFamily: 'system-ui, sans-serif', backgroundColor: MONO_CREMA, minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO}}>
+      {/* ... Resto del código del cliente ... */}
       {notificacion && (
         <div style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', background: MONO_VERDE, color: 'white', padding: '15px 30px', borderRadius: '50px', zIndex: 3000, fontWeight: 'bold' }}>{notificacion}</div>
       )}
 
-      <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px'}}>
+      <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 40px 40px', marginBottom: '30px', boxShadow: '0 10px 20px rgba(0,0,0,0.05)'}}>
         <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{width: '100%', height: '220px', objectFit: 'cover'}} />
-        <h1 onDoubleClick={() => setIsAdmin(true)} style={{color: MONO_NARANJA, cursor:'pointer'}}>Fritos El Mono 🐒</h1>
+        <h1 onDoubleClick={() => setIsAdmin(true)} style={{color: MONO_NARANJA, margin: '15px 0', cursor:'pointer'}}>Fritos El Mono 🐒</h1>
+        <p style={{paddingBottom: '20px'}}>Hoy Arroz de <strong>{tipoArrozHoy}</strong></p>
       </header>
 
-      {/* CATEGORIAS */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '30px', overflowX: 'auto', padding: '10px' }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
-          <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '12px 25px', borderRadius: '25px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_TEXTO, fontWeight: 'bold' }}>{cat}</button>
+          <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '12px 25px', borderRadius: '25px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_TEXTO, fontWeight: 'bold', cursor: 'pointer' }}>{cat}</button>
         ))}
       </div>
 
@@ -168,10 +215,10 @@ export default function App() {
         {productosMostrar
           .filter(p => (p.categoria || (p.esArroz ? "Arroces" : "Fritos")) === categoriaActiva)
           .map(p => (
-            <div key={p.id} style={{background: 'white', borderRadius: '25px', overflow: 'hidden', padding: '15px', display: 'flex', flexDirection: 'column'}}>
+            <div key={p.id} style={{background: 'white', borderRadius: '25px', overflow: 'hidden', padding: '15px', display: 'flex', flexDirection: 'column', boxShadow: '0 4px 15px rgba(0,0,0,0.05)'}}>
               <img src={p.imagen} style={{width: '100%', height: '180px', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none', borderRadius: '15px'}} alt={p.nombre} />
               <h3 style={{margin: '15px 0 5px 0'}}>{p.nombre}</h3>
-              <p style={{color: MONO_NARANJA, fontWeight: 'bold', fontSize: '20px'}}>${p.precio?.toLocaleString() || (p.tamanos ? p.tamanos[0].precio : 0).toLocaleString()}</p>
+              <p style={{color: MONO_NARANJA, fontWeight: 'bold', fontSize: '20px'}}>${(p.precio || (p.tamanos ? p.tamanos[0].precio : 0)).toLocaleString()}</p>
 
               {(p.esArroz || p.categoria === "Arroces") && (
                 <div style={{background: MONO_AMARILLO, padding: '10px', borderRadius: '15px', marginTop: '10px'}}>
@@ -179,23 +226,39 @@ export default function App() {
                     <option value="">¿Tajada o Yuca?</option>
                     <option value="Tajadas">Tajadas</option><option value="Yuca">Yuca</option>
                   </select>
+                  <label style={{display:'block', marginTop:'5px'}}><input type="checkbox" onChange={(e) => setConHuevo(e.target.checked)} /> + Huevo Extra</label>
+                  <label style={{display:'block'}}><input type="checkbox" onChange={(e) => setConQueso(e.target.checked)} /> + Queso Extra</label>
                 </div>
               )}
 
               {p.opciones && p.categoria === "Fritos" && (
-                <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{width:'100%', padding:'10px', borderRadius:'15px', border:'1px solid #ddd', marginTop:'10px'}}>
+                <select onChange={(e) => setSabores({...sabores, [p.id]: e.target.value})} style={{width:'100%', padding:'12px', borderRadius:'15px', border:'1px solid #ddd', marginTop:'10px'}}>
                   <option value="">-- Elige Sabor --</option>
                   {p.opciones.map(opt => <option key={opt.nombre} value={opt.nombre} disabled={!opt.disponible}>{opt.nombre}</option>)}
                 </select>
               )}
 
-              <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible} style={{marginTop:'15px', background: MONO_NARANJA, color:'white', border:'none', padding:'12px', borderRadius:'15px', fontWeight:'bold', cursor:'pointer'}}>Añadir 🥟</button>
+              {p.tamanos && (
+                <select onChange={(e) => setTamanosBebida({...tamanosBebida, [p.id]: e.target.value})} style={{width:'100%', padding:'12px', borderRadius:'15px', border:`2px solid ${MONO_NARANJA}`, marginTop:'10px'}}>
+                  <option value="">-- Elige Tamaño --</option>
+                  {p.tamanos.map(t => <option key={t.nombre} value={t.nombre} disabled={!t.disponible}>{t.nombre} - ${t.precio.toLocaleString()}</option>)}
+                </select>
+              )}
+
+              <div style={{display:'flex', alignItems:'center', gap:'10px', marginTop:'auto', paddingTop:'15px'}}>
+                  <div style={{display:'flex', alignItems:'center', background:'#f0f2f5', borderRadius:'10px'}}>
+                    <button onClick={() => setCantidades({...cantidades, [p.id]: (cantidades[p.id] || 1) - 1})} style={{padding:'5px 10px', border:'none', background:'none'}}>-</button>
+                    <span style={{padding:'0 5px'}}>{cantidades[p.id] || 1}</span>
+                    <button onClick={() => setCantidades({...cantidades, [p.id]: (cantidades[p.id] || 1) + 1})} style={{padding:'5px 10px', border:'none', background:'none'}}>+</button>
+                  </div>
+                  <button onClick={() => agregarAlCarrito(p)} disabled={!p.disponible} style={{flex:1, background: MONO_NARANJA, color:'white', border:'none', padding:'12px', borderRadius:'15px', fontWeight:'bold', cursor:'pointer'}}>Añadir 🥟</button>
+              </div>
             </div>
           ))}
       </div>
 
       {pedido.length > 0 && (
-        <div style={{maxWidth: '700px', margin: '40px auto', background: 'white', padding: '25px', borderRadius: '30px', border: `3px solid ${MONO_NARANJA}`}}>
+        <div style={{maxWidth: '700px', margin: '40px auto', background: 'white', padding: '25px', borderRadius: '30px', border: `3px solid ${MONO_NARANJA}`, boxShadow: '0 10px 30px rgba(0,0,0,0.1)'}}>
           <h2 style={{marginTop:0}}>Tu Pedido</h2>
           {pedido.map(item => (
             <div key={item.idUnico} style={{display:'flex', justifyContent:'space-between', padding:'10px 0', borderBottom:'1px solid #eee'}}>
@@ -210,7 +273,11 @@ export default function App() {
             <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{padding:'12px', borderRadius:'10px', border:'1px solid #ddd'}}>
               <option value="">¿Cómo pagas?</option><option value="Efectivo">Efectivo</option><option value="Nequi">Nequi</option>
             </select>
-            <button onClick={enviarWhatsApp} style={{background: MONO_VERDE, color:'white', padding:'15px', borderRadius:'15px', border:'none', fontWeight:'bold', cursor:'pointer'}}>Confirmar Pedido 📲</button>
+            <button onClick={() => {
+               const lista = pedido.map(i => `-${i.cantidad}x ${i.nombre} ${i.saborElegido ? '('+i.saborElegido+')' : ''} ${i.detallesArroz || ''}`).join('\n');
+               const msg = `¡Hola! Pedido Fritos El Mono 🐒:\n\n${lista}\n\n*Total: $${(pedido.reduce((acc, i) => acc + i.subtotal, 0)).toLocaleString('es-CO')}*\n👤 ${nombre}\n📍 ${direccion}\n💰 ${metodoPago}`;
+               window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
+            }} style={{background: MONO_VERDE, color:'white', padding:'15px', borderRadius:'15px', border:'none', fontWeight:'bold', cursor:'pointer'}}>Confirmar Pedido 📲</button>
           </div>
         </div>
       )}
