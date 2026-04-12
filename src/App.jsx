@@ -247,7 +247,7 @@ export default function App() {
         minHeight: '100vh', 
         paddingBottom: '120px', 
         color: MONO_TEXTO,
-        filter: tiendaAbierta ? 'none' : 'grayscale(1) opacity(0.8)', // <--- TODO EN GRIS SI ESTÁ CERRADO
+        filter: tiendaAbierta ? 'none' : 'grayscale(1) opacity(0.8)', 
         transition: 'filter 0.5s ease'
     }}>
       <style>{`
@@ -260,15 +260,16 @@ export default function App() {
         .del-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; padding: 5px; }
       `}</style>
 
-      {/* 🔴 MENSAJE DE TIENDA CERRADA */}
+      {/* 🐒 MENSAJE DE TIENDA CERRADA (ESTILO TARJETA) */}
       {!tiendaAbierta && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', 
-          backgroundColor: '#ef4444', color: 'white', textAlign: 'center', 
-          padding: '15px', zIndex: 10001, fontWeight: '900', fontSize: '18px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-        }}>
-          🐒 El Mono está descansando. ¡Volvemos pronto!
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.1)', zIndex: 10001, display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '20px' }}>
+          <div style={{ background: 'white', padding: '40px', borderRadius: '40px', boxShadow: '0 20px 50px rgba(0,0,0,0.15)', border: `4px solid ${MONO_NARANJA}`, maxWidth: '400px' }}>
+            <span style={{ fontSize: '60px' }}>🐒💤</span>
+            <h2 style={{ fontSize: '28px', fontWeight: '900', margin: '20px 0 10px', color: MONO_NARANJA }}>¡El Mono está descansando!</h2>
+            <p style={{ fontWeight: 'bold', color: '#666', lineHeight: '1.5' }}>En este momento no estamos recibiendo pedidos. <br/>¡Vuelve pronto para calmar ese antojo!</p>
+            {/* Acceso admin oculto para el dueño */}
+            <button onDoubleClick={() => { const pin = window.prompt("🔐 PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{ marginTop: '25px', background: 'none', border: 'none', color: '#eee', fontSize: '12px', cursor: 'default' }}>Admin</button>
+          </div>
         </div>
       )}
       
@@ -306,7 +307,8 @@ export default function App() {
                 <h3 style={{margin: '10px 0 5px 0', fontWeight: '800'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 
-                {(p.opciones || p.sabores) && (
+                {/* 🔴 SOLO MUESTRA EL SELECT SI NO ES ARROZ */}
+                {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
                   <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', marginBottom:'10px', background:'#f8fafc', fontWeight:'bold', border:'1px solid #eee'}}>
                     <option value="">-- Elige Sabor --</option>
                     {(p.opciones || p.sabores.map(s => ({nombre: s, disponible: true}))).filter(o => o.disponible).map(o => <option key={o.nombre} value={o.nombre}>{o.nombre}</option>)}
