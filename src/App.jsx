@@ -9,7 +9,7 @@ const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", imagen: "/empanada.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", imagen: "/papa-rellena.png", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
   { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", imagen: "/pastel-pollo.png" },
-  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", imagen: "/arepa-huevo.png" },
+  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", imagen: "/area-huevo.png" }, // Corregí el nombre según tu carpeta
   { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", imagen: "/palito-queso.png" },
   { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", imagen: "/buñuelo.png" },
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", imagen: "/desayuno-carne.png" },
@@ -50,7 +50,6 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // 🔄 FIREBASE
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -58,7 +57,6 @@ export default function App() {
     return () => { unsubProd(); unsubExtras(); unsubTienda(); };
   }, []);
 
-  // 💾 PERSISTENCIA
   useEffect(() => {
     const pedidoGuardado = localStorage.getItem("pedido_mono_storage");
     if (pedidoGuardado) setPedido(JSON.parse(pedidoGuardado));
@@ -118,7 +116,7 @@ export default function App() {
     </div>
   );
 
-  // 🟢 VISTA ADMIN (RESTAURADA)
+  // 🟢 VISTA ADMIN (CORREGIDA CON TODOS LOS SWITCHES)
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -126,32 +124,58 @@ export default function App() {
           <div style={{display:'flex', justifyContent:'space-between', marginBottom:'30px', alignItems: 'center'}}>
             <h1 style={{color: MONO_NARANJA, margin: 0}}>Panel Admin 🐒</h1>
             <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-               <span style={{fontWeight:'bold'}}>Tienda Abierta:</span>
+               <span style={{fontWeight:'bold'}}>Tienda:</span>
                <MiniSwitch activo={tiendaAbierta} onClick={() => guardarCambio("ajuste", "tienda", { abierta: !tiendaAbierta })} />
-               <button onClick={() => setIsAdmin(false)} style={{padding:'10px 20px', borderRadius:'12px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Cerrar Panel</button>
+               <button onClick={() => setIsAdmin(false)} style={{padding:'10px 20px', borderRadius:'12px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Cerrar</button>
             </div>
           </div>
+
           {["Fritos", "Arroces", "Bebidas", "Desayunos"].map(cat => (
             <div key={cat} style={{background:'white', padding:'25px', borderRadius:'25px', marginBottom:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)'}}>
               <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'15px'}}>{cat}</h2>
               {productosMostrar.filter(p => p.categoria === cat).map(p => (
                 <div key={p.id} style={{padding:'15px 0', borderBottom:'1px solid #f8fafc'}}>
                   <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                    <strong>{p.nombre}</strong>
+                    <strong style={{fontSize:'17px'}}>{p.nombre}</strong>
                     <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
                       {!p.tamanos && <div>$ <input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'80px', padding:'5px', borderRadius:'8px', border:'1px solid #ddd'}} /></div>}
                       <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
                     </div>
                   </div>
+
+                  {/* SWITCHES DE SABORES (PARA LOS FRITOS) */}
                   {p.opciones && cat === "Fritos" && (
-                    <div style={{marginTop:'12px', display:'flex', flexWrap:'wrap', gap:'10px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
+                    <div style={{marginTop:'15px', display:'flex', flexWrap:'wrap', gap:'12px', background:'#f8fafc', padding:'12px', borderRadius:'15px'}}>
                       {p.opciones.map((opt, idx) => (
-                        <div key={idx} style={{display:'flex', alignItems:'center', gap:'8px', background:'white', padding:'5px 10px', borderRadius:'10px', border:'1px solid #e2e8f0'}}>
+                        <div key={idx} style={{display:'flex', alignItems:'center', gap:'8px', background:'white', padding:'5px 12px', borderRadius:'12px', border:'1px solid #e2e8f0'}}>
                           <small style={{fontWeight:'bold'}}>{opt.nombre}</small>
                           <MiniSwitch activo={opt.disponible} onClick={() => {
                             const n = [...p.opciones]; n[idx].disponible = !n[idx].disponible;
                             guardarCambio("productos", p.id, { opciones: n });
                           }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* SWITCHES DE TAMAÑOS Y PRECIOS (PARA BEBIDAS) */}
+                  {p.tamanos && (
+                    <div style={{marginTop:'15px', display:'grid', gap:'10px'}}>
+                      {p.tamanos.map((t, idx) => (
+                        <div key={idx} style={{display:'flex', justifyContent:'space-between', alignItems:'center', background:'#f0f9ff', padding:'10px 15px', borderRadius:'15px'}}>
+                          <small style={{fontWeight:'bold'}}>{t.nombre}</small>
+                          <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+                            <div style={{background:'white', padding:'3px 8px', borderRadius:'8px', border:'1px solid #bae6fd'}}>
+                              $ <input type="number" defaultValue={t.precio} onBlur={(e) => {
+                                const n = [...p.tamanos]; n[idx].precio = Number(e.target.value);
+                                guardarCambio("productos", p.id, { tamanos: n });
+                              }} style={{width:'65px', border:'none', textAlign:'center', fontWeight:'bold'}} />
+                            </div>
+                            <MiniSwitch activo={t.disponible} onClick={() => {
+                              const n = [...p.tamanos]; n[idx].disponible = !n[idx].disponible;
+                              guardarCambio("productos", p.id, { tamanos: n });
+                            }} />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -165,10 +189,9 @@ export default function App() {
     );
   }
 
-  // 🔵 VISTA CLIENTE
+  // 🔵 VISTA CLIENTE (VIRTUALIZADA CON DETALLES ESTÉTICOS Y PRECIO DINÁMICO)
   return (
     <div style={{fontFamily: 'system-ui, -apple-system, sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO}}>
-      
       <style>{`
         .card-mono { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .card-mono:hover { transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.1) !important; }
@@ -207,7 +230,6 @@ export default function App() {
             const cant = cantidades[p.id] || 1;
             const esFavorito = p.id === "4" || p.id === "lzEcQicq9WUrxw7FEaq7";
 
-            // PRECIO DINÁMICO EN TIEMPO REAL
             const precioUnitario = p.tamanos 
               ? (sel.tamano ? sel.tamano.precio : p.tamanos[0].precio)
               : (p.precio || 0);
@@ -219,7 +241,7 @@ export default function App() {
                   <div style={{position:'absolute', top: '15px', left: '15px', zIndex: 10, background: '#ef4444', color: 'white', padding: '6px 15px', borderRadius: '20px', fontSize: '12px', fontWeight: '900', boxShadow: '0 4px 10px rgba(239, 68, 68, 0.3)'}}>⭐ EL FAVORITO</div>
                 )}
                 <div style={{ width: '100%', height: '200px', borderRadius: '25px', overflow: 'hidden', marginBottom: '20px' }}>
-                  <img className="img-mono" src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.onerror = null; e.target.src = "/logo-fritos-el-mono.jpg";}} />
+                  <img src={p.imagen} alt={p.nombre} className="img-mono" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: !p.disponible ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.onerror = null; e.target.src = "/logo-fritos-el-mono.jpg";}} />
                 </div>
                 <h3 style={{margin: '0 0 5px 0', fontSize: '22px', fontWeight: '800'}}>{p.nombre}</h3>
                 <p className="price-tag" style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '28px', margin:'0 0 20px 0'}}>${precioTotalMostrado.toLocaleString()}</p>
