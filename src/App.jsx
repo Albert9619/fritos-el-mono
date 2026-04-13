@@ -176,7 +176,7 @@ export default function App() {
 
     const msg = `🍽️ *Pedido - Fritos El Mono* 🐒\n🕒 Enviado: ${horaActual}\n⏰ *Entregar a las:* ${horaEntrega || 'Lo antes posible'}\n\n${divisor}\n\n🧾 *Productos:*\n\n${listaProductos}\n\n${divisor}\n\n${salsas}\n\n${divisor}\n\n💰 *Subtotal:* $${totalComida.toLocaleString()}\n🛵 *Domicilio:* ${costoDomicilio === 0 ? 'GRATIS' : '$' + costoDomicilio.toLocaleString()}\n⭐ *TOTAL:* $${totalFinal.toLocaleString()}\n\n${divisor}\n\n👤 *Cliente:* ${nombre}\n📍 *Dirección:* ${direccion}\n${infoPago}`;
     
-    window.open(`https://wa.me/573116624201?text=${encodeURIComponent(msg)}`);
+    window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
   // 🟢 VISTA ADMIN COMPLETA (RECUPERADA)
