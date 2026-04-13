@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+noimport React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
@@ -157,7 +157,7 @@ export default function App() {
     const totalP = pedido.reduce((acc, i) => acc + i.subtotal, 0);
     const salsas = salsasElegidas.length > 0 ? `🍯 *Salsas:* ${salsasElegidas.join(', ')}` : "🍯 *Salsas:* Ninguna";
     const msg = `🍽️ *Pedido - Fritos El Mono* 🐒\n🕒 ${horaActual}\n\n${divisor}\n\n🧾 *Productos:*\n\n${listaProductos}\n\n${divisor}\n\n${salsas}\n\n${divisor}\n\n💰 *Total: $${totalP.toLocaleString()}*\n\n${divisor}\n\n👤 *Cliente:* ${nombre}\n📍 *Dirección:* ${direccion}\n💳 *Pago:* ${metodoPago}`;
-    window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
+    window.open(`https://wa.me/573116624201?text=${encodeURIComponent(msg)}`);
   };
 
   // 🟢 VISTA ADMIN COMPLETA
