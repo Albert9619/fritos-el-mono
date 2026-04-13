@@ -323,11 +323,16 @@ export default function App() {
             return (
               <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', position: 'relative'}}>
                <img 
-  src={p.imagen.startsWith('http') ? p.imagen : (p.imagen.startsWith('/') ? p.imagen : `/${p.imagen}`)} 
+  src={
+    p.imagen 
+      ? (p.imagen.startsWith('http') 
+          ? p.imagen.trim() 
+          : (p.imagen.trim().startsWith('/') ? p.imagen.trim() : `/${p.imagen.trim()}`))
+      : "/logo-fritos-el-mono.jpg"
+  } 
   alt={p.nombre} 
   style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} 
   onError={(e) => {
-    // Evita bucles infinitos si el logo tampoco carga
     if (e.target.src !== window.location.origin + "/logo-fritos-el-mono.jpg") {
       e.target.src = "/logo-fritos-el-mono.jpg";
     }
