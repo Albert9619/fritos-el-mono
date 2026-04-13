@@ -15,7 +15,7 @@ const MiniSwitch = ({ activo, onClick }) => (
 // 🔴 DATOS MAESTROS
 // ==========================================
 const productosBase = [
-  { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", disponible: true, imagen: "/empanada.jpg", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
+  { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", disponible: true, imagen:"/empanada.jpg", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/papa-rellena.jpg", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
   { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/pastel-pollo.jpg" },
   { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/arepa-huevo.jpg" },
@@ -322,17 +322,11 @@ export default function App() {
 
             return (
               <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', position: 'relative'}}>
-               <img 
-  src={p.imagen?.startsWith('/') ? p.imagen : `/${p.imagen}`} 
-  alt={p.nombre} 
-  style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} 
-  onError={(e) => {
-    // Si la imagen falla, intentamos cargarla sin la barra por si acaso
-    if (e.target.src.includes('//')) { 
-       e.target.src = "/logo-fritos-el-mono.jpg"; 
-    }
-  }} 
-/>
+               <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} onError={(e) => {e.target.src = "/logo-fritos-el-mono.jpg";}} />
+
+                <h3 style={{margin: '10px 0 5px 0', fontWeight: '800'}}>{p.nombre}</h3>
+
+                <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 <h3 style={{margin: '10px 0 5px 0', fontWeight: '800'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 
