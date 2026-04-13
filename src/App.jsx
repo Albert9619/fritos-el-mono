@@ -322,7 +322,17 @@ export default function App() {
 
             return (
               <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', position: 'relative'}}>
-                <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} onError={(e) => {e.target.src = "/logo-fritos-el-mono.jpg";}} />
+               <img 
+  src={p.imagen.startsWith('http') ? p.imagen : (p.imagen.startsWith('/') ? p.imagen : `/${p.imagen}`)} 
+  alt={p.nombre} 
+  style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} 
+  onError={(e) => {
+    // Evita bucles infinitos si el logo tampoco carga
+    if (e.target.src !== window.location.origin + "/logo-fritos-el-mono.jpg") {
+      e.target.src = "/logo-fritos-el-mono.jpg";
+    }
+  }} 
+/>
                 <h3 style={{margin: '10px 0 5px 0', fontWeight: '800'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 
