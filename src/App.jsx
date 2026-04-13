@@ -3,7 +3,7 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 COMPONENTE MINISWITCH (DEFINIDO AL INICIO)
+// 🔴 COMPONENTE MINISWITCH
 // ==========================================
 const MiniSwitch = ({ activo, onClick }) => (
   <div onClick={onClick} style={{ width: '46px', height: '24px', backgroundColor: activo ? "#16a34a" : '#cbd5e1', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}>
@@ -20,7 +20,7 @@ const productosBase = [
   { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/pastel-pollo.jpg" },
   { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/arepa-huevo.jpg" },
   { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", disponible: true, imagen: "/palito-queso.jpg" },
-  { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", disponible: true, imagen: "/buñuelo.jpg" },
+  { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", disponible: true, imagen: "/bunuelo.jpg" },
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.jpg", config: { acompanamiento: ["Patacón", "Arepa"], huevos: ["Revueltos", "Pericos"], jugos: ["Avena", "Maracuyá"] } },
   { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-huevo.jpg", config: { acompanamiento: ["Patacón", "Arepa"], proteina: ["Carne desmechada", "Pollo desmechado"], jugos: ["Avena", "Maracuyá"] } },
   { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/jugo-natural.jpg", sabores: ["Avena", "Maracuyá"], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
@@ -91,7 +91,7 @@ export default function App() {
   const fusionar = (base, fb) => {
     const mapa = {};
     base.forEach(p => mapa[p.id] = p);
-    fb.forEach(p => { if (mapa[p.id]) mapa[p.id] = { ...mapa[p.id], ...p }; });
+    fb.forEach(p => { mapa[p.id] = { ...(mapa[p.id] || {}), ...p }; });
     return Object.values(mapa);
   };
 
@@ -137,18 +137,13 @@ export default function App() {
   const eliminarDelCarrito = (idUnico) => setPedido(pedido.filter(i => i.idUnico !== idUnico));
   const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo?")) { setPedido([]); setSalsasElegidas([]); } };
 
-  // 🟢 MEJORA VISUAL DEL TICKET
   const enviarWhatsApp = () => {
     if (!nombre || !direccion || !metodoPago) return alert("Faltan datos");
-    
     const horaActual = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     const divisor = "━━━━━━━━━━━━━━━";
-    
     const listaProductos = pedido.map(i => {
       let linea = `• ${i.cantidad}x ${i.nombre}`;
-      // Limpiamos espacios dobles del detalle
       const detalleLimpio = i.detalle.replace(/\s+/g, ' ').trim();
-      
       if (detalleLimpio.includes("Extras:")) {
         const [base, extras] = detalleLimpio.split("Extras:");
         if (base.trim()) linea += ` (${base.trim()})`;
@@ -161,13 +156,11 @@ export default function App() {
 
     const totalP = pedido.reduce((acc, i) => acc + i.subtotal, 0);
     const salsas = salsasElegidas.length > 0 ? `🍯 *Salsas:* ${salsasElegidas.join(', ')}` : "🍯 *Salsas:* Ninguna";
-
     const msg = `🍽️ *Pedido - Fritos El Mono* 🐒\n🕒 ${horaActual}\n\n${divisor}\n\n🧾 *Productos:*\n\n${listaProductos}\n\n${divisor}\n\n${salsas}\n\n${divisor}\n\n💰 *Total: $${totalP.toLocaleString()}*\n\n${divisor}\n\n👤 *Cliente:* ${nombre}\n📍 *Dirección:* ${direccion}\n💳 *Pago:* ${metodoPago}`;
-    
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
-  // 🟢 VISTA ADMIN (NO MODIFICAR)
+  // 🟢 VISTA ADMIN COMPLETA (RECUPERADA)
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -260,40 +253,24 @@ export default function App() {
     );
   }
 
-  // 🔵 VISTA CLIENTE (NO MODIFICAR)
+  // 🔵 VISTA CLIENTE
   return (
-    <div style={{
-        fontFamily: 'system-ui, sans-serif', 
-        backgroundColor: '#fffcf5', 
-        minHeight: '100vh', 
-        paddingBottom: '120px', 
-        color: MONO_TEXTO,
-        filter: tiendaAbierta ? 'none' : 'grayscale(1) opacity(0.8)', 
-        transition: 'filter 0.5s ease'
-    }}>
-      <style>{`
-        .card-mono { transition: 0.3s; }
-        .card-mono:hover { transform: translateY(-10px); }
-        .opcion-btn { padding: 10px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; }
-        .salsa-chip { padding: 12px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }
-        .del-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; padding: 5px; }
-      `}</style>
-
+    <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO, filter: tiendaAbierta ? 'none' : 'grayscale(1) opacity(0.8)', transition: '0.4s' }}>
+      <style>{`.card-mono { transition: 0.3s; } .card-mono:hover { transform: translateY(-10px); } .opcion-btn { padding: 10px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 13px; } .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; } .salsa-chip { padding: 12px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; font-size: 13px; } .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }`}</style>
+      
       {!tiendaAbierta && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.1)', zIndex: 10001, display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '20px' }}>
           <div style={{ background: 'white', padding: '40px', borderRadius: '40px', boxShadow: '0 20px 50px rgba(0,0,0,0.15)', border: `4px solid ${MONO_NARANJA}`, maxWidth: '400px' }}>
             <span style={{ fontSize: '60px' }}>🐒💤</span>
             <h2 style={{ fontSize: '28px', fontWeight: '900', margin: '20px 0 10px', color: MONO_NARANJA }}>¡El Mono está descansando!</h2>
-            <p style={{ fontWeight: 'bold', color: '#666', lineHeight: '1.5' }}>En este momento no estamos recibiendo pedidos. <br/>¡Vuelve pronto para calmar ese antojo!</p>
-            <button onDoubleClick={() => { const pin = window.prompt("🔐 PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{ marginTop: '25px', background: 'none', border: 'none', color: '#eee', fontSize: '12px', cursor: 'default' }}>Admin</button>
+            <p style={{ fontWeight: 'bold', color: '#666' }}>Vuelve pronto para calmar ese antojo.</p>
+            <button onDoubleClick={() => { const pin = window.prompt("🔐 PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{ marginTop: '25px', background: 'none', border: 'none', color: '#eee', fontSize: '12px' }}>Admin</button>
           </div>
         </div>
       )}
-      
+
       {notificacion && <div style={{position:'fixed', top:'20px', left:'50%', transform:'translateX(-50%)', background: MONO_VERDE, color:'white', padding:'15px 30px', borderRadius:'50px', zIndex: 10000, fontWeight:'bold'}}>{notificacion}</div>}
-      
+
       {pedido.length > 0 && tiendaAbierta && (
         <div onClick={() => document.getElementById('carrito_seccion')?.scrollIntoView({ behavior: 'smooth' })} style={{position: 'fixed', bottom: '30px', right: '30px', background: MONO_NARANJA, color: 'white', width: '75px', height: '75px', borderRadius: '50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '32px', boxShadow: '0 10px 30px rgba(249, 115, 22, 0.5)', zIndex: 9999, cursor: 'pointer', border: '3px solid white'}}>🛒<span style={{position:'absolute', top:'-5px', right:'-5px', background:'red', color: 'white', fontSize:'14px', minWidth:'22px', height:'22px', borderRadius:'50%', display: 'flex', justifyContent: 'center', alignItems: 'center', fontWeight: 'bold', border: '2px solid white'}}>{pedido.length}</span></div>
       )}
@@ -321,13 +298,14 @@ export default function App() {
             const total = (precioU + extrasP + (sel.agrandar ? 1000 : 0)) * cant;
 
             return (
-              <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', position: 'relative'}}>
-               <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} onError={(e) => {e.target.src = "/logo-fritos-el-mono.jpg";}} />
-
-                <h3 style={{margin: '10px 0 5px 0', fontWeight: '800'}}>{p.nombre}</h3>
-
-                <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
-                <h3 style={{margin: '10px 0 5px 0', fontWeight: '800'}}>{p.nombre}</h3>
+              <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9'}}>
+                <img 
+                  src={p.imagen?.startsWith('/') ? p.imagen : `/${p.imagen}`} 
+                  alt={p.nombre} 
+                  style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} 
+                  onError={(e) => { e.target.src = "/logo-fritos-el-mono.jpg"; }} 
+                />
+                <h3 style={{margin: '15px 0 5px 0', fontWeight: '800', fontSize: '20px'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 
                 {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
@@ -363,7 +341,6 @@ export default function App() {
                         <div style={{display: 'flex', gap: '5px'}}>{(p.config.huevos || p.config.proteina).map(op => <button key={op} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, [p.id === "d1" ? "huevos" : "proteina"]: op}})} className={`opcion-btn ${ (sel.huevos === op || sel.proteina === op) ? 'active' : ''}`}>{op}</button>)}</div>
                         <div style={{display: 'flex', gap: '5px'}}>{p.config.jugos.map(j => <button key={j} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, jugo: j}})} className={`opcion-btn ${sel.jugo === j ? 'active' : ''}`}>{j}</button>)}</div>
                         <label style={{fontSize: '13px', fontWeight: 'bold', background: '#f0fdf4', padding: '10px', borderRadius: '12px', cursor:'pointer'}}><input type="checkbox" onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, agrandar: e.target.checked}})} /> 🥤 Agrandar Jugo (+1.000)</label>
-                        <div style={{fontSize: '24px', color: MONO_VERDE, fontWeight: '900', textAlign: 'center'}}>🧀 ¡INCLUYE QUESO!</div>
                     </div>
                 )}
 
@@ -372,12 +349,12 @@ export default function App() {
                    <span style={{fontWeight:'900', fontSize:'20px'}}>{cant}</span>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold'}}>+</button>
                 </div>
-                <button onClick={() => agregarAlCarrito(p)} disabled={p.disponible === false || !tiendaAbierta} style={{background: (p.disponible !== false && tiendaAbierta) ? MONO_NARANJA : '#ccc', color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', fontSize:'16px', cursor:'pointer'}}>Añadir 🛒</button>
+                <button onClick={() => agregarAlCarrito(p)} disabled={p.disponible === false || !tiendaAbierta} style={{background: (p.disponible !== false && tiendaAbierta) ? MONO_NARANJA : '#ccc', color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', cursor:'pointer'}}>Añadir 🛒</button>
               </div>
             );
         })}
       </div>
-      
+
       {pedido.length > 0 && tiendaAbierta && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '50px auto 100px', background: 'white', padding: '40px', borderRadius: '40px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '25px', alignItems:'center' }}>
@@ -393,7 +370,6 @@ export default function App() {
               </div>
             </div>
           ))}
-
           <div style={{marginTop: '30px', background: '#f8fafc', padding: '25px', borderRadius: '25px', border: '1px solid #eee'}}>
             <h3 style={{margin: '0 0 15px 0', fontSize: '20px', fontWeight: '900'}}>🧂 Elige tus salsas:</h3>
             <div style={{display: 'flex', gap: '10px', flexWrap: 'wrap'}}>
@@ -402,7 +378,6 @@ export default function App() {
               ))}
             </div>
           </div>
-
           <h2 style={{ textAlign: 'right', color: MONO_NARANJA, fontSize: '42px', fontWeight: '900', marginTop: '30px', borderTop: '4px dashed #eee', paddingTop: '20px' }}>Total: ${pedido.reduce((acc, i) => acc + i.subtotal, 0).toLocaleString()}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
             <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '18px' }} />
