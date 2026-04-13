@@ -160,7 +160,7 @@ export default function App() {
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
-  // 🟢 VISTA ADMIN COMPLETA (RECUPERADA)
+  // 🟢 VISTA ADMIN COMPLETA
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -173,7 +173,6 @@ export default function App() {
                <button onClick={() => setIsAdmin(false)} style={{padding:'10px', borderRadius:'10px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Cerrar</button>
             </div>
           </div>
-
           {["Fritos", "Arroces", "Bebidas", "Desayunos"].map(cat => (
             <div key={cat} style={{background:'white', padding:'25px', borderRadius:'25px', marginBottom:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)'}}>
               <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'15px'}}>{cat}</h2>
@@ -256,7 +255,18 @@ export default function App() {
   // 🔵 VISTA CLIENTE
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO, filter: tiendaAbierta ? 'none' : 'grayscale(1) opacity(0.8)', transition: '0.4s' }}>
-      <style>{`.card-mono { transition: 0.3s; } .card-mono:hover { transform: translateY(-10px); } .opcion-btn { padding: 10px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 13px; } .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; } .salsa-chip { padding: 12px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; font-size: 13px; } .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }`}</style>
+      <style>{`
+        .card-mono { transition: 0.3s; } 
+        .card-mono:hover { transform: translateY(-10px); } 
+        .opcion-btn { padding: 10px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 13px; } 
+        .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; } 
+        .salsa-chip { padding: 12px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; font-size: 13px; } 
+        .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }
+        
+        /* 🟢 Estilo para ocultar barra de scroll pero permitir deslizamiento */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
       
       {!tiendaAbierta && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.1)', zIndex: 10001, display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: 'center', padding: '20px' }}>
@@ -283,9 +293,34 @@ export default function App() {
         </div>
       </header>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '40px', overflowX:'auto', padding:'10px' }}>
+      {/* 🟢 BARRA DE CATEGORÍAS DESLIZANTE */}
+      <div className="no-scrollbar" style={{ 
+          display: 'flex', 
+          justifyContent: 'flex-start', // Cambio de center a start para permitir scroll
+          gap: '12px', 
+          marginBottom: '40px', 
+          overflowX: 'auto', 
+          padding: '10px 20px',
+          WebkitOverflowScrolling: 'touch' // Suaviza el scroll en iPhone
+      }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
-          <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '14px 28px', borderRadius: '30px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : '#333', fontWeight: 'bold', cursor:'pointer' }}>{cat}</button>
+          <button 
+            key={cat} 
+            onClick={() => setCategoriaActiva(cat)} 
+            style={{ 
+              padding: '14px 28px', 
+              borderRadius: '30px', 
+              border: 'none', 
+              backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', 
+              color: categoriaActiva === cat ? 'white' : '#333', 
+              fontWeight: 'bold', 
+              cursor:'pointer',
+              whiteSpace: 'nowrap', // Evita que el texto se rompa
+              flexShrink: 0, // Evita que los botones se achiquen
+              boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
+            }}>
+            {cat}
+          </button>
         ))}
       </div>
 
@@ -305,7 +340,20 @@ export default function App() {
                   style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} 
                   onError={(e) => { e.target.src = "/logo-fritos-el-mono.jpg"; }} 
                 />
-                <h3 style={{margin: '15px 0 5px 0', fontWeight: '800', fontSize: '20px'}}>{p.nombre}</h3>
+                
+                {/* 🟢 NOMBRE AJUSTADO PARA MÓVIL */}
+                <h3 style={{
+                  margin: '15px 0 5px 0', 
+                  fontWeight: '800', 
+                  fontSize: '18px', // Bajamos un poco el tamaño
+                  lineHeight: '1.2',
+                  minHeight: '44px', // Altura mínima para que todo se vea alineado
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
+                  {p.nombre}
+                </h3>
+                
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 
                 {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
