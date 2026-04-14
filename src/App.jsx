@@ -18,11 +18,11 @@ const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", disponible: true, imagen: "/empanada.jpg", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/papa-rellena.jpg", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
   { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/pastel-pollo.jpg" },
-  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/api-logo.jpg" }, // Cambiado para evitar error de carga si el archivo no existe
+  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/api-logo.jpg" },
   { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", disponible: true, imagen: "/palito-queso.jpg" },
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.jpg", config: { acompanamiento: ["Patacón", "Arepa"], huevos: ["Revueltos", "Pericos"], jugos: ["Avena", "Maracuyá"] } },
   { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-huevo.jpg", config: { acompanamiento: ["Patacón", "Arepa"], proteina: ["Carne desmechada", "Pollo desmechado"], jugos: ["Avena", "Maracuyá"] } },
-  { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/jugo-natural.jpg", sabores: ["Avena", "Maracuyá"], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
+  { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/jugo-natural.jpg", sabores: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/cocacola.jpg", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }, { nombre: "Familiar", precio: 6500, disponible: true }] },
   { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/malta.jpg", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }] },
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", disponible: true, imagen: "/agua.jpg"},
@@ -162,7 +162,7 @@ export default function App() {
             <h1 style={{color: MONO_NARANJA}}>Admin 🐒</h1>
             <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
                <MiniSwitch activo={tiendaAbierta} onClick={() => guardarCambio("ajuste", "tienda", { abierta: !tiendaAbierta })} />
-               <button onClick={() => setIsAdmin(false)} style={{padding:'10px', borderRadius:'10px', background:MONO_TEXTO, color:'white', border:'none'}}>Cerrar</button>
+               <button onClick={() => setIsAdmin(false)} style={{padding:'10px', borderRadius:'10px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Cerrar</button>
             </div>
           </div>
           {["Fritos", "Arroces", "Bebidas", "Desayunos"].map(cat => (
@@ -197,14 +197,18 @@ export default function App() {
                       $ <input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'100px', padding:'8px', borderRadius:'8px', border:'1px solid #ddd'}} />
                     </div>
                   )}
-                  {p.opciones && (
-                    <div style={{marginTop:'10px', display:'flex', gap:'10px', flexWrap:'wrap'}}>
-                      {p.opciones.map((opt, idx) => (
-                        <div key={idx} style={{display:'flex', alignItems:'center', gap:'5px', background:'#f8fafc', padding:'5px 10px', borderRadius:'10px'}}>
+
+                  {/* 🟢 SWITCHES PARA SABORES (EMPANADAS, PAPAS Y JUGOS) */}
+                  {(p.opciones || p.sabores) && (
+                    <div style={{marginTop:'15px', display:'flex', gap:'10px', flexWrap:'wrap', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
+                      <small style={{display:'block', width:'100%', fontWeight:'bold', marginBottom:'5px'}}>Sabores disponibles:</small>
+                      {(p.opciones || p.sabores).map((opt, idx) => (
+                        <div key={idx} style={{display:'flex', alignItems:'center', gap:'8px', background:'white', padding:'5px 10px', borderRadius:'10px', border:'1px solid #eee'}}>
                           <small>{opt.nombre}</small>
                           <MiniSwitch activo={opt.disponible} onClick={() => {
-                            const n = [...p.opciones]; n[idx].disponible = !n[idx].disponible;
-                            guardarCambio("productos", p.id, { opciones: n });
+                            const n = [...(p.opciones || p.sabores)];
+                            n[idx].disponible = !n[idx].disponible;
+                            guardarCambio("productos", p.id, p.opciones ? { opciones: n } : { sabores: n });
                           }} />
                         </div>
                       ))}
@@ -212,10 +216,11 @@ export default function App() {
                   )}
                 </div>
               ))}
-              {/* 🟢 ADICIONES ARROZ - INPUTS Y SWITCHES */}
+
+              {/* 🟢 GESTIÓN DE EXTRAS DE ARROZ */}
               {cat === "Arroces" && (
                 <div style={{marginTop:'20px', borderTop:'1px dashed #ddd', paddingTop:'15px'}}>
-                  <h4 style={{margin:'0 0 10px 0'}}>Gestionar Adiciones:</h4>
+                  <h4 style={{margin:'0 0 10px 0'}}>Extras:</h4>
                   {extrasMostrar.map(ex => (
                     <div key={ex.id} style={{display:'flex', justifyContent:'space-between', marginBottom:'10px', alignItems:'center'}}>
                       <small>{ex.nombre}</small>
@@ -229,9 +234,10 @@ export default function App() {
               )}
             </div>
           ))}
-          {/* 🟢 GESTIÓN DE SALSAS - SWITCHES */}
+
+          {/* 🟢 GESTIÓN DE SALSAS */}
           <div style={{background:'white', padding:'25px', borderRadius:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)', marginBottom:'25px'}}>
-            <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'15px'}}>Salsas</h2>
+            <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'15px'}}>Gestionar Salsas</h2>
             <div style={{display:'flex', gap:'10px', flexWrap:'wrap'}}>
               {salsasMostrar.map(s => (
                 <div key={s.id} style={{padding:'10px', background:'#f8fafc', borderRadius:'15px', display:'flex', alignItems:'center', gap:'10px', border:'1px solid #eee'}}>
@@ -265,10 +271,10 @@ export default function App() {
       <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 50px 50px', marginBottom: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden'}}>
         <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{width: '100%', height: '200px', objectFit: 'cover'}} />
         <div style={{padding: '25px 0'}}>
-          <h1 onDoubleClick={() => { const pin = window.prompt("PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{color: MONO_NARANJA, margin:'0', fontSize: '2.5rem', fontWeight: '900'}}>Fritos El Mono 🐒</h1>
-          <div style={{display:'inline-block', marginTop: '10px', background: '#fff7ed', padding: '6px 20px', borderRadius: '20px', fontWeight: 'bold'}}>
-            Sabor del arroz hoy: {tipoArrozHoy}
-          </div>
+            <h1 onDoubleClick={() => { const pin = window.prompt("PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{color: MONO_NARANJA, margin:'0', fontSize: '2.5rem', fontWeight: '900'}}>Fritos El Mono 🐒</h1>
+            <div style={{display:'inline-block', marginTop: '10px', background: '#fff7ed', padding: '6px 20px', borderRadius: '20px', fontWeight: 'bold'}}>
+              Sabor del arroz hoy: {tipoArrozHoy}
+            </div>
         </div>
       </header>
 
@@ -293,7 +299,7 @@ export default function App() {
                 {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
                   <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', marginBottom:'10px', background:'#f8fafc', fontWeight:'bold', border:'1px solid #eee'}}>
                     <option value="">-- Sabor --</option>
-                    {(p.opciones || p.sabores.map(s => ({nombre: s, disponible: true}))).filter(o => o.disponible).map(o => <option key={o.nombre} value={o.nombre}>{o.nombre}</option>)}
+                    {(p.opciones || p.sabores).filter(o => o.disponible).map(o => <option key={o.nombre} value={o.nombre}>{o.nombre}</option>)}
                   </select>
                 )}
                 {p.tamanos && (
