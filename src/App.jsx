@@ -3,13 +3,14 @@ import { db } from './firebaseConfig';
 import { collection, onSnapshot, doc, setDoc } from "firebase/firestore";
 
 // ==========================================
-// 🔴 COMPONENTE MINISWITCH (DEFINIDO AL INICIO)
+// 🔴 COMPONENTE MINISWITCH
 // ==========================================
 const MiniSwitch = ({ activo, onClick }) => (
   <div onClick={onClick} style={{ width: '46px', height: '24px', backgroundColor: activo ? "#16a34a" : '#cbd5e1', borderRadius: '20px', position: 'relative', cursor: 'pointer', transition: '0.3s', flexShrink: 0 }}>
-    <div style={{ width: '18px', height: '18px', background: 'white', borderRadius: '50%', position: 'absolute', top: '3px', left: activo ? '25px' : '3px', transition: '0.3s', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
+    <div style={{ width: '18px', height: '18px', background: 'white', borderRadius: '50%', position: 'absolute', top: '3px', left: activo ? '25px' : '3px', transition: '0.3s cubic-bezier(0.18, 0.89, 0.35, 1.15)', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }} />
   </div>
 );
+
 // ==========================================
 // 🔴 DATOS MAESTROS
 // ==========================================
@@ -17,7 +18,7 @@ const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", disponible: true, imagen: "/empanada.jpg", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/papa-rellena.jpg", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
   { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/pastel-pollo.jpg" },
-  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/arepa-huevo.jpg" },
+  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/arpa-huevo.jpg" },
   { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", disponible: true, imagen: "/palito-queso.jpg" },
   { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", disponible: true, imagen: "/bunuelo.jpg" },
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.jpg", config: { acompanamiento: ["Patacón", "Arepa"], huevos: ["Revueltos", "Pericos"], jugos: ["Avena", "Maracuyá"] } },
@@ -26,7 +27,7 @@ const productosBase = [
   { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/cocacola.jpg", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }, { nombre: "Familiar", precio: 6500, disponible: true }] },
   { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/malta.jpg", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }] },
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", disponible: true, imagen: "/agua.jpg"},
-  { id: "milo1", nombre: "Milo Refrescante", precio: 4000, categoria: "Bebidas", disponible: true, imagen: "/milo.jpg" }, // 🟢 2. PRODUCTO MILO AGREGADO
+  { id: "milo1", nombre: "Milo Refrescante", precio: 4000, categoria: "Bebidas", disponible: true, imagen: "/milo.jpg" }, 
   { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", disponible: true, imagen: "/arroz-pollo.jpg" }
 ];
 
@@ -64,13 +65,12 @@ export default function App() {
   const [nombre, setNombre] = useState("");
   const [direccion, setDireccion] = useState("");
   const [metodoPago, setMetodoPago] = useState("");
-  const [horaEntrega, setHoraEntrega] = useState(""); // 🟢 3. ESTADO HORA ENTREGA
-  const [pagoCon, setPagoCon] = useState(""); // 🟢 4. ESTADO CON CUÁNTO PAGA
+  const [horaEntrega, setHoraEntrega] = useState(""); 
+  const [pagoCon, setPagoCon] = useState(""); 
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // 🔄 FIREBASE
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -141,12 +141,11 @@ export default function App() {
 
   const enviarWhatsApp = () => {
     if (!nombre || !direccion || !metodoPago) return alert("Faltan datos");
-    if (metodoPago === "Efectivo" && !pagoCon) return alert("Dinos con cuánto vas a pagar para llevar el cambio");
+    if (metodoPago === "Efectivo" && !pagoCon) return alert("Dinos con cuánto vas a pagar");
 
     const horaActual = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     const divisor = "━━━━━━━━━━━━━━━";
 
-    // 🟢 1. LÓGICA DE DOMICILIO ($2000 si es < $8000)
     const totalComida = pedido.reduce((acc, i) => acc + i.subtotal, 0);
     const costoDomicilio = totalComida < 8000 ? 2000 : 0;
     const totalFinal = totalComida + costoDomicilio;
@@ -166,7 +165,6 @@ export default function App() {
 
     const salsas = salsasElegidas.length > 0 ? `🍯 *Salsas:* ${salsasElegidas.join(', ')}` : "🍯 *Salsas:* Ninguna";
     
-    // 🟢 4. CÁLCULO DE CAMBIO
     let infoPago = `💳 *Pago:* ${metodoPago}`;
     if (metodoPago === "Efectivo") {
       const cambio = Number(pagoCon) - totalFinal;
@@ -178,7 +176,6 @@ export default function App() {
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
-  // 🟢 VISTA ADMIN COMPLETA (RECUPERADA)
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -270,7 +267,6 @@ export default function App() {
     );
   }
 
-  // 🔵 VISTA CLIENTE
   const totalSinDom = pedido.reduce((acc, i) => acc + i.subtotal, 0);
   const domCosto = totalSinDom < 8000 && totalSinDom > 0 ? 2000 : 0;
 
@@ -377,7 +373,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* 🟢 1. VISUALIZACIÓN DE DOMICILIO EN EL CARRITO */}
           <div style={{ marginTop: '20px', padding: '20px', background: '#fffcf5', borderRadius: '25px', border: `2px dashed ${MONO_NARANJA}`, textAlign: 'right' }}>
              <p style={{ margin: 0, fontSize: '18px' }}>Subtotal: <strong>${totalSinDom.toLocaleString()}</strong></p>
              <p style={{ margin: '5px 0', fontSize: '18px', color: domCosto === 0 ? MONO_VERDE : 'red' }}>Domicilio: <strong>{domCosto === 0 ? '¡GRATIS!' : `+$${domCosto.toLocaleString()}`}</strong></p>
@@ -389,7 +384,6 @@ export default function App() {
             <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '18px' }} />
             <input type="text" placeholder="Dirección en Carepa" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontSize: '18px' }} />
             
-            {/* 🟢 3. SELECTOR DE HORA */}
             <div style={{ background: '#f0f9ff', padding: '15px', borderRadius: '15px', border: '1px solid #bae6fd' }}>
               <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px', fontSize: '14px' }}>🕒 ¿A qué hora lo necesitas?</label>
               <input type="time" value={horaEntrega} onChange={(e) => setHoraEntrega(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd', fontSize: '16px' }} />
@@ -402,7 +396,6 @@ export default function App() {
               <option value="Nequi">Nequi</option>
             </select>
 
-            {/* 🟢 4. INPUT PAGO CON EFECTIVO */}
             {metodoPago === "Efectivo" && (
               <div style={{ background: '#fff7ed', padding: '15px', borderRadius: '15px', border: `2px solid ${MONO_NARANJA}` }}>
                 <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>💵 ¿Con cuánto vas a pagar?</label>
