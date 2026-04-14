@@ -66,11 +66,13 @@ export default function App() {
   const [metodoPago, setMetodoPago] = useState("");
   const [horaEntrega, setHoraEntrega] = useState(""); 
   const [pagoCon, setPagoCon] = useState(""); 
+ 
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
   useEffect(() => {
+    
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubSalsas = onSnapshot(collection(db, "salsas"), (s) => setSalsasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -78,6 +80,7 @@ export default function App() {
       if (s.exists()) setTiendaAbierta(s.data().abierta); 
     });
     return () => { unsubProd(); unsubExtras(); unsubSalsas(); unsubTienda(); };
+    
   }, []);
 
   useEffect(() => {
@@ -88,6 +91,7 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("pedido_mono_storage", JSON.stringify(pedido));
   }, [pedido]);
+  
 
   const fusionar = (base, fb) => {
     const mapa = {};
