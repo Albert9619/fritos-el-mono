@@ -20,6 +20,7 @@ const productosBase = [
   { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/pastel-pollo.jpg" },
   { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/arepa-huevo.jpg" },
   { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", disponible: true, imagen: "/palito-queso.jpg" },
+  { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", disponible: true, imagen: "/bunuelo.jpg" },
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.jpg", config: { acompanamiento: ["Patacón", "Arepa"], huevos: ["Revueltos", "Pericos"], jugos: ["Avena", "Maracuyá"] } },
   { id: "d2", nombre: "Desayuno Especial", precio: 10000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-huevo.jpg", config: { acompanamiento: ["Patacón", "Arepa"], proteina: ["Carne desmechada", "Pollo desmechado"], jugos: ["Avena", "Maracuyá"] } },
   { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/jugo-natural.jpg", sabores: ["Avena", "Maracuyá"], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
@@ -137,13 +138,14 @@ export default function App() {
   };
 
   const eliminarDelCarrito = (idUnico) => setPedido(pedido.filter(i => i.idUnico !== idUnico));
-  const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo?")) { setPedido([]); setSalsasElegidas([]); } };
+  const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo el pedido?")) { setPedido([]); setSalsasElegidas([]); } };
 
   const enviarWhatsApp = () => {
     if (!nombre || !direccion || !metodoPago) return alert("Faltan datos");
     if (metodoPago === "Efectivo" && !pagoCon) return alert("Dinos con cuánto vas a pagar");
 
     const horaActual = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    const divisor = "━━━━━━━━━━━━━━━";
     const totalComida = pedido.reduce((acc, i) => acc + i.subtotal, 0);
     const costoDomicilio = totalComida < 8000 ? 2000 : 0;
     const totalFinal = totalComida + costoDomicilio;
@@ -157,7 +159,7 @@ export default function App() {
       infoPago += `\n💵 *Paga con:* $${Number(pagoCon).toLocaleString()}\n💰 *Cambio:* $${cambio > 0 ? cambio.toLocaleString() : '0'}`;
     }
 
-    const msg = `🍽️ *Pedido - Fritos El Mono* 🐒\n🕒 Enviado: ${horaActual}\n⏰ *Entregar:* ${horaEntrega || 'ASAP'}\n\n🧾 *Productos:*\n${listaProductos}\n\n${salsas}\n\n🛵 *Dom:* $${costoDomicilio}\n⭐ *TOTAL:* $${totalFinal.toLocaleString()}\n\n👤 ${nombre}\n📍 ${direccion}\n${infoPago}`;
+    const msg = `🍽️ *Pedido - Fritos El Mono* 🐒\n🕒 Enviado: ${horaActual}\n⏰ *Entregar:* ${horaEntrega || 'ASAP'}\n\n${divisor}\n\n🧾 *Productos:*\n${listaProductos}\n\n${divisor}\n\n${salsas}\n\n${divisor}\n\n💰 *Subtotal:* $${totalComida.toLocaleString()}\n🛵 *Dom:* $${costoDomicilio}\n⭐ *TOTAL:* $${totalFinal.toLocaleString()}\n\n${divisor}\n\n👤 ${nombre}\n📍 ${direccion}\n${infoPago}`;
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
@@ -200,7 +202,6 @@ export default function App() {
                       ))}
                     </div>
                   ) : (
-                    // 🟢 AQUÍ EL CAMBIO: Quité el "cat !== Bebidas" para que el Milo y el Agua tengan input de precio.
                     <div style={{marginTop:'10px'}}>
                       $ <input type="number" defaultValue={p.precio} onBlur={(e) => guardarCambio("productos", p.id, { precio: Number(e.target.value) })} style={{width:'100px', padding:'8px', borderRadius:'8px', border:'1px solid #ddd'}} />
                     </div>
@@ -220,20 +221,6 @@ export default function App() {
                   )}
                 </div>
               ))}
-              {cat === "Arroces" && (
-                <div style={{marginTop:'20px', borderTop:'1px dashed #ddd', paddingTop:'15px'}}>
-                  <h4 style={{margin:'0 0 10px 0'}}>Extras:</h4>
-                  {extrasMostrar.map(ex => (
-                    <div key={ex.id} style={{display:'flex', justifyContent:'space-between', marginBottom:'10px'}}>
-                      <small>{ex.nombre}</small>
-                      <div style={{display:'flex', gap:'10px'}}>
-                        $ <input type="number" defaultValue={ex.precio} onBlur={(e) => guardarCambio("extrasArroz", ex.id, { precio: Number(e.target.value) })} style={{width:'80px'}} />
-                        <MiniSwitch activo={ex.disponible} onClick={() => guardarCambio("extrasArroz", ex.id, { disponible: !ex.disponible })} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
         </div>
@@ -337,11 +324,20 @@ export default function App() {
 
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '50px auto 100px', background: 'white', padding: '40px', borderRadius: '40px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
+          {/* 🟢 CABECERA DEL CARRITO CON BOTÓN VACIAR */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+            <h2 style={{ fontSize: '32px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
+            <button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '10px 20px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>🗑️ Vaciar Todo</button>
+          </div>
+
+          {/* 🟢 LISTA DE PRODUCTOS CON BOTÓN ELIMINAR INDIVIDUAL */}
           {pedido.map(item => (
-            <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', padding: '15px 0' }}>
-              <span><strong>{item.cantidad}x</strong> {item.nombre} <br /><small>{item.detalle}</small></span>
-              <strong>${item.subtotal.toLocaleString()}</strong>
+            <div key={item.idUnico} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', padding: '15px 0' }}>
+              <span style={{flex: 1}}><strong>{item.cantidad}x</strong> {item.nombre} <br /><small style={{fontWeight:'bold'}}>{item.detalle}</small></span>
+              <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
+                <strong style={{fontSize: '18px'}}>${item.subtotal.toLocaleString()}</strong>
+                <button onClick={() => eliminarDelCarrito(item.idUnico)} style={{background:'none', border:'none', color:'#ef4444', fontSize:'20px', cursor:'pointer', padding:'5px'}}>❌</button>
+              </div>
             </div>
           ))}
 
@@ -354,24 +350,37 @@ export default function App() {
             </div>
           </div>
 
+          {/* 🟢 TOTALES CON MENSAJE DE ENVÍO GRATIS */}
           <div style={{ marginTop: '20px', padding: '20px', background: '#fffcf5', borderRadius: '25px', border: `2px dashed ${MONO_NARANJA}`, textAlign: 'right' }}>
-             <p>Dom: <strong>{domCosto === 0 ? 'GRATIS' : `+$${domCosto}`}</strong></p>
-             <h2 style={{ color: MONO_NARANJA, fontSize: '42px', fontWeight: '900' }}>Total: ${(totalSinDom + domCosto).toLocaleString()}</h2>
+             <p style={{margin:0}}>Subtotal: <strong>${totalSinDom.toLocaleString()}</strong></p>
+             <p style={{margin:'5px 0', color: domCosto === 0 ? MONO_VERDE : '#333'}}>Domicilio: <strong>{domCosto === 0 ? '¡GRATIS!' : `+$${domCosto.toLocaleString()}`}</strong></p>
+             {totalSinDom < 8000 && (
+               <small style={{display:'block', marginBottom:'10px', color:MONO_NARANJA, fontWeight:'bold'}}>
+                 (Pide ${(8000 - totalSinDom).toLocaleString()} más para envío gratis)
+               </small>
+             )}
+             <h2 style={{ color: MONO_NARANJA, fontSize: '42px', fontWeight: '900', margin:0 }}>Total: ${(totalSinDom + domCosto).toLocaleString()}</h2>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
             <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
             <input type="text" placeholder="Dirección" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
-            <input type="time" value={horaEntrega} onChange={(e) => setHoraEntrega(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
+            <div style={{background:'#f0f9ff', padding:'15px', borderRadius:'15px'}}>
+               <label style={{display:'block', fontSize:'13px', fontWeight:'bold', marginBottom:'5px'}}>🕒 ¿A qué hora lo necesitas?</label>
+               <input type="time" value={horaEntrega} onChange={(e) => setHoraEntrega(e.target.value)} style={{ width:'100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
+            </div>
             <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontWeight: 'bold' }}>
-              <option value="">-- Pago --</option>
+              <option value="">-- ¿Cómo pagas? --</option>
               <option value="Efectivo">Efectivo</option>
               <option value="Nequi">Nequi</option>
             </select>
             {metodoPago === "Efectivo" && (
-              <input type="number" placeholder="¿Con cuánto pagas?" value={pagoCon} onChange={(e) => setPagoCon(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: `2px solid ${MONO_NARANJA}` }} />
+              <div style={{background:'#fff7ed', padding:'15px', borderRadius:'15px', border:`1px solid ${MONO_NARANJA}`}}>
+                <label style={{display:'block', fontSize:'13px', fontWeight:'bold', marginBottom:'5px'}}>💵 ¿Con cuánto pagas?</label>
+                <input type="number" placeholder="Ej: 20000" value={pagoCon} onChange={(e) => setPagoCon(e.target.value)} style={{ width:'100%', padding: '15px', borderRadius: '10px', border: 'none' }} />
+              </div>
             )}
-            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', padding: '22px', borderRadius: '25px', fontWeight: '900', fontSize: '22px' }}>WhatsApp 📲</button>
+            <button onClick={enviarWhatsApp} style={{ background: MONO_VERDE, color: 'white', padding: '22px', borderRadius: '25px', fontWeight: '900', fontSize: '22px', cursor:'pointer' }}>WhatsApp 📲</button>
           </div>
         </div>
       )}
