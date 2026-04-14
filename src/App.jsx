@@ -221,6 +221,23 @@ export default function App() {
                   )}
                 </div>
               ))}
+              
+              {/* 🟢 GESTIÓN DE EXTRAS DE ARROZ */}
+              {cat === "Arroces" && (
+                <div style={{marginTop:'20px', borderTop:'1px dashed #ddd', paddingTop:'15px'}}>
+                  <h4 style={{margin:'0 0 10px 0'}}>Extras:</h4>
+                  {extrasMostrar.map(ex => (
+                    <div key={ex.id} style={{display:'flex', justifyContent:'space-between', marginBottom:'10px', alignItems:'center'}}>
+                      <small>{ex.nombre}</small>
+                      <div style={{display:'flex', gap:'10px'}}>
+                        $ <input type="number" defaultValue={ex.precio} onBlur={(e) => guardarCambio("extrasArroz", ex.id, { precio: Number(e.target.value) })} style={{width:'80px'}} />
+                        <MiniSwitch activo={ex.disponible} onClick={() => guardarCambio("extrasArroz", ex.id, { disponible: !ex.disponible })} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
             </div>
           ))}
           {/* Gestión de Salsas */}
