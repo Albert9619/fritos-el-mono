@@ -12,13 +12,13 @@ const MiniSwitch = ({ activo, onClick }) => (
 );
 
 // ==========================================
-// 🔴 DATOS MAESTROS (CÓDIGO BASE)
+// 🔴 DATOS MAESTROS
 // ==========================================
 const productosBase = [
   { id: "1", nombre: "Empanada Crujiente", precio: 1500, categoria: "Fritos", disponible: true, imagen: "/empanada.jpg", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Pollo", disponible: true }, { nombre: "Arroz", disponible: true }] },
   { id: "2", nombre: "Papa Rellena de la Casa", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/papa-rellena.jpg", opciones: [{ nombre: "Carne", disponible: true }, { nombre: "Huevo", disponible: true }] },
   { id: "3", nombre: "Pastel de Pollo Hojaldrado", precio: 2500, categoria: "Fritos", disponible: true, imagen: "/pastel-pollo.jpg" },
-  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/arpa-huevo.jpg" },
+  { id: "4", nombre: "Arepa con Huevo y Carne", precio: 3500, categoria: "Fritos", disponible: true, imagen: "/arepa-huevo.jpg" },
   { id: "7", nombre: "Palitos de Queso Costeño", precio: 2000, categoria: "Fritos", disponible: true, imagen: "/palito-queso.jpg" },
   { id: "8", nombre: "Buñuelos Calientitos", precio: 1000, categoria: "Fritos", disponible: true, imagen: "/bunuelo.jpg" },
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.jpg", config: { acompanamiento: ["Patacón", "Arepa"], huevos: ["Revueltos", "Pericos"], jugos: ["Avena", "Maracuyá"] } },
@@ -91,15 +91,10 @@ export default function App() {
     localStorage.setItem("pedido_mono_storage", JSON.stringify(pedido));
   }, [pedido]);
 
-  // 🟢 FUNCIÓN DE FUSIÓN CORREGIDA
   const fusionar = (base, fb) => {
     const mapa = {};
     base.forEach(p => mapa[p.id] = { ...p });
-    fb.forEach(p => {
-      if (mapa[p.id]) {
-        mapa[p.id] = { ...mapa[p.id], ...p };
-      }
-    });
+    fb.forEach(p => { if (mapa[p.id]) mapa[p.id] = { ...mapa[p.id], ...p }; });
     return Object.values(mapa);
   };
 
@@ -116,7 +111,6 @@ export default function App() {
     const sel = selecciones[p.id] || {};
     const cant = cantidades[p.id] || 1;
 
-    // 🟢 Bloqueo si no está disponible
     if (p.disponible === false) return alert("Producto agotado");
     if (p.opciones && !sel.sabor && p.categoria === "Fritos") return alert("Elige un sabor");
     if (p.sabores && !sel.sabor) return alert("Elige el sabor");
@@ -184,7 +178,7 @@ export default function App() {
     window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
   };
 
-  // 🟢 VISTA ADMIN COMPLETA
+  // 🟢 VISTA ADMIN (Íntegra)
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -244,20 +238,6 @@ export default function App() {
                   )}
                 </div>
               ))}
-              {cat === "Arroces" && (
-                <div style={{marginTop:'20px', borderTop:'1px dashed #ddd', paddingTop:'15px'}}>
-                  <h4 style={{margin:'0 0 10px 0'}}>Extras de Arroz:</h4>
-                  {extrasMostrar.map(ex => (
-                    <div key={ex.id} style={{display:'flex', justifyContent:'space-between', marginBottom:'10px', alignItems:'center'}}>
-                      <small>{ex.nombre}</small>
-                      <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
-                        $ <input type="number" defaultValue={ex.precio} onBlur={(e) => guardarCambio("extrasArroz", ex.id, { precio: Number(e.target.value) })} style={{width:'80px', borderRadius:'8px', border:'1px solid #ddd', padding:'4px'}} />
-                        <MiniSwitch activo={ex.disponible} onClick={() => guardarCambio("extrasArroz", ex.id, { disponible: !ex.disponible })} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
           <div style={{background:'white', padding:'25px', borderRadius:'25px'}}>
@@ -276,7 +256,7 @@ export default function App() {
     );
   }
 
-  // 🔵 VISTA CLIENTE
+  // 🔵 VISTA CLIENTE (Totalmente restaurada)
   const totalSinDom = pedido.reduce((acc, i) => acc + i.subtotal, 0);
   const domCosto = totalSinDom < 8000 && totalSinDom > 0 ? 2000 : 0;
 
@@ -289,7 +269,7 @@ export default function App() {
           <div style={{ background: 'white', padding: '40px', borderRadius: '40px', boxShadow: '0 20px 50px rgba(0,0,0,0.15)', border: `4px solid ${MONO_NARANJA}`, maxWidth: '400px' }}>
             <span style={{ fontSize: '60px' }}>🐒💤</span>
             <h2 style={{ fontSize: '28px', fontWeight: '900', margin: '20px 0 10px', color: MONO_NARANJA }}>¡El Mono está descansando!</h2>
-            <p style={{ fontWeight: 'bold', color: '#666' }}>Vuelve pronto para calmar ese antojo.</p>
+            <p style={{ fontWeight: 'bold', color: '#666' }}>Vuelve pronto.</p>
             <button onDoubleClick={() => { const pin = window.prompt("🔐 PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{ marginTop: '25px', background: 'none', border: 'none', color: '#eee', fontSize: '12px' }}>Admin</button>
           </div>
         </div>
@@ -320,45 +300,61 @@ export default function App() {
             const sel = selecciones[p.id] || {};
             const cant = cantidades[p.id] || 1;
             const precioU = p.tamanos ? (sel.tamano ? sel.tamano.precio : p.tamanos[0].precio) : (p.precio || 0);
-            
-            // 🟢 Extras con precio real
             const extrasP = (sel.extras || []).reduce((acc, name) => acc + (extrasMostrar.find(e => e.nombre === name)?.precio || 0), 0);
             const total = (precioU + extrasP + (sel.agrandar ? 1000 : 0)) * cant;
 
             return (
               <div key={p.id} className="card-mono" style={{background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border:'1px solid #f1f5f9', opacity: p.disponible === false ? 0.6 : 1}}>
-                <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover', filter: p.disponible === false ? 'grayscale(1)' : 'none' }} onError={(e) => {e.target.src = "/logo-fritos-el-mono.jpg";}} />
-                
+                <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover', filter: p.disponible === false ? 'grayscale(1)' : 'none' }} />
                 <h3 style={{margin: '15px 0 5px 0', fontWeight: '800', fontSize: '18px', minHeight: '44px', display: 'flex', alignItems: 'center'}}>{p.nombre}</h3>
-                
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${total.toLocaleString()}</p>
                 
-                {p.opciones && (
+                {/* 🟢 SELECTOR DE SABOR PARA FRITOS */}
+                {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
                   <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', marginBottom:'10px', background:'#f8fafc', fontWeight:'bold', border:'1px solid #eee'}}>
                     <option value="">-- Elige Sabor --</option>
-                    {p.opciones.filter(o => o.disponible).map(o => <option key={o.nombre} value={o.nombre}>{o.nombre}</option>)}
+                    {(p.opciones || p.sabores.map(s => ({nombre: s, disponible: true}))).filter(o => o.disponible).map(o => <option key={o.nombre} value={o.nombre}>{o.nombre}</option>)}
                   </select>
                 )}
 
-                {/* (Resto de selectores igual...) */}
+                {/* 🟢 SELECTOR DE TAMAÑO PARA BEBIDAS */}
+                {p.tamanos && (
+                  <select onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, tamano: p.tamanos.find(t => t.nombre === e.target.value)}})} style={{width:'100%', padding:'12px', borderRadius:'15px', marginBottom:'10px', background:'#f8fafc', fontWeight:'bold', border:'1px solid #eee'}}>
+                    <option value="">-- Elige Tamaño --</option>
+                    {p.tamanos.filter(t => t.disponible).map(t => <option key={t.nombre} value={t.nombre}>{t.nombre}</option>)}
+                  </select>
+                )}
+
+                {/* 🟢 EXTRAS PARA ARROCES */}
+                {p.categoria === "Arroces" && (
+                  <div style={{background: '#fef3c7', padding: '12px', borderRadius: '15px', marginBottom: '10px'}}>
+                     {extrasMostrar.map(e => (
+                       <label key={e.id} style={{display:'block', fontSize:'14px', marginBottom:'5px', opacity: e.disponible ? 1 : 0.3, fontWeight:'bold'}}>
+                         <input type="checkbox" disabled={!e.disponible} onChange={(ev) => {
+                           const ex = sel.extras || [];
+                           setSelecciones({...selecciones, [p.id]: {...sel, extras: ev.target.checked ? [...ex, e.nombre] : ex.filter(x => x !== e.nombre)}});
+                         }} /> {e.nombre} {e.precio > 0 && `(+$${e.precio})`}
+                       </label>
+                     ))}
+                  </div>
+                )}
+
+                {/* 🟢 CONFIGURACIÓN DESAYUNOS */}
+                {p.categoria === "Desayunos" && (
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
+                        <div style={{display: 'flex', gap: '5px'}}>{p.config.acompanamiento.map(a => <button key={a} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, acompanamiento: a}})} className={`opcion-btn ${sel.acompanamiento === a ? 'active' : ''}`}>{a}</button>)}</div>
+                        <div style={{display: 'flex', gap: '5px'}}>{(p.config.huevos || p.config.proteina).map(op => <button key={op} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, [p.id === "d1" ? "huevos" : "proteina"]: op}})} className={`opcion-btn ${ (sel.huevos === op || sel.proteina === op) ? 'active' : ''}`}>{op}</button>)}</div>
+                        <div style={{display: 'flex', gap: '5px'}}>{p.config.jugos.map(j => <button key={j} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, jugo: j}})} className={`opcion-btn ${sel.jugo === j ? 'active' : ''}`}>{j}</button>)}</div>
+                        <label style={{fontSize: '13px', fontWeight: 'bold', background: '#f0fdf4', padding: '10px', borderRadius: '12px', cursor:'pointer'}}><input type="checkbox" onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, agrandar: e.target.checked}})} /> 🥤 Agrandar Jugo (+1.000)</label>
+                    </div>
+                )}
 
                 <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'15px', marginBottom:'15px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:'white', fontWeight:'bold'}}>-</button>
                    <span style={{fontWeight:'900', fontSize:'20px'}}>{cant}</span>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: cant + 1})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none', background:MONO_NARANJA, color:'white', fontWeight:'bold'}}>+</button>
                 </div>
-
-                {/* 🟢 BOTÓN INTELIGENTE: Bloquea si p.disponible es false */}
-                <button 
-                  onClick={() => agregarAlCarrito(p)} 
-                  disabled={!tiendaAbierta || p.disponible === false} 
-                  style={{
-                    background: (tiendaAbierta && p.disponible !== false) ? MONO_NARANJA : '#ccc', 
-                    color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', cursor:'pointer'
-                  }}
-                >
-                  {p.disponible === false ? 'AGOTADO 🚫' : 'Añadir 🛒'}
-                </button>
+                <button onClick={() => agregarAlCarrito(p)} disabled={!tiendaAbierta || p.disponible === false} style={{background: (tiendaAbierta && p.disponible !== false) ? MONO_NARANJA : '#ccc', color:'white', border:'none', padding:'18px', borderRadius:'20px', fontWeight:'900', cursor:'pointer'}}>{p.disponible === false ? 'AGOTADO 🚫' : 'Añadir 🛒'}</button>
               </div>
             );
         })}
@@ -392,6 +388,7 @@ export default function App() {
           <div style={{ marginTop: '20px', padding: '20px', background: '#fffcf5', borderRadius: '25px', border: `2px dashed ${MONO_NARANJA}`, textAlign: 'right' }}>
              <p style={{ margin: 0, fontSize: '18px' }}>Subtotal: <strong>${totalSinDom.toLocaleString()}</strong></p>
              <p style={{ margin: '5px 0', fontSize: '18px', color: domCosto === 0 ? MONO_VERDE : 'red' }}>Domicilio: <strong>{domCosto === 0 ? '¡GRATIS!' : `+$${domCosto.toLocaleString()}`}</strong></p>
+             {totalSinDom < 8000 && <small>(Pide $${(8000 - totalSinDom).toLocaleString()} más para envío gratis)</small>}
              <h2 style={{ color: MONO_NARANJA, fontSize: '42px', fontWeight: '900', margin: '10px 0 0' }}>Total: ${(totalSinDom + domCosto).toLocaleString()}</h2>
           </div>
 
