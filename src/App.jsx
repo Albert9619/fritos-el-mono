@@ -249,11 +249,12 @@ export default function App() {
       <header style={{textAlign: 'center', background: 'white', borderRadius: '0 0 50px 50px', marginBottom: '40px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', overflow: 'hidden'}}>
         <img src="/logo-fritos-el-mono.jpg" alt="Logo" style={{width: '100%', height: '200px', objectFit: 'cover'}} />
         <div style={{padding: '25px 0'}}>
-            <h1 onDoubleClick={() => { const pin = window.prompt("PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{color: MONO_NARANJA, margin:'0', fontSize: '2.5rem', fontWeight: '900'}}>Fritos El Mono 🐒</h1>
-            <div style={{display:'inline-block', marginTop: '10px', background: '#fff7ed', padding: '6px 20px', borderRadius: '20px', fontWeight: 'bold'}}>
-  Sabor del arroz hoy: {tipoArrozHoy}
-</div>
-      </header>
+          </div>
+    <h1 onDoubleClick={() => { const pin = window.prompt("PIN:"); if(pin === "mono2026") setIsAdmin(true); }} style={{color: MONO_NARANJA, margin:'0', fontSize: '2.5rem', fontWeight: '900'}}>Fritos El Mono 🐒</h1>
+    <div style={{display:'inline-block', marginTop: '10px', background: '#fff7ed', padding: '6px 20px', borderRadius: '20px', fontWeight: 'bold'}}>
+      Sabor del arroz hoy: {tipoArrozHoy}
+    </div>
+</header>
 
       <div className="no-scrollbar" style={{ display: 'flex', justifyContent: 'flex-start', gap: '12px', marginBottom: '40px', overflowX: 'auto', padding: '10px 20px' }}>
         {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
