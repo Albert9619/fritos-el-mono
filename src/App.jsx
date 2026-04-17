@@ -88,13 +88,13 @@ export default function App() {
       
       const tiempoActualEnMinutos = (hora * 60) + minutos;
 
-      // 6:00 AM = 360 | 5:10 PM = 1030 (17*60 + 10)
-      const estaEnHorario = tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 1030;
+      // 6:00 AM = 360 | 11:30 AM = 690 (11*60 + 30)
+      const estaEnHorario = tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 690;
 
       // Para la prueba, el reloj manda sobre el manualOverride
       setTiendaAbierta(estaEnHorario);
       
-      console.log("Minutos actuales:", tiempoActualEnMinutos, "Limite:", 1030);
+      console.log("Minutos actuales:", tiempoActualEnMinutos, "Limite:", 690);
     };
 
     verificarEstado();
@@ -329,8 +329,8 @@ export default function App() {
       {!tiendaAbierta && (
         <div style={{position:'fixed', top:0, left:0, width:'100%', height:'100%', background:'rgba(255,252,245,0.98)', zIndex:15000, display:'flex', justifyContent:'center', alignItems:'center', textAlign:'center', padding:'20px'}}>
           <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
-            <span style={{fontSize:'70px'}}>📂💤</span>
-            <h2 style={{color:MONO_NARANJA, fontSize:'30px', fontWeight:'900', marginTop:'20px'}}>Sistema en Mantenimiento</h2>
+            <span style={{fontSize:'70px'}}>🐒💤</span>
+            <h2 style={{color:MONO_NARANJA, fontSize:'30px', fontWeight:'900', marginTop:'20px'}}>El Mono descansa</h2>
             <p style={{fontSize:'18px'}}>Atendemos de <b>6:00 a.m. a 5:10 p.m.</b></p>
             <button onClick={() => setMostrarLogin(true)} style={{marginTop:'50px', background:'#eee', color:'#999', border:'none', padding:'10px 20px', borderRadius:'15px', fontSize:'12px', fontWeight:'bold', cursor:'pointer'}}>ACCESO ADMIN</button>
           </div>
