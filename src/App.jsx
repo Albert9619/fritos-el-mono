@@ -89,7 +89,7 @@ export default function App() {
     const tiempoActualEnMinutos = (hora * 60) + minutos;
 
     // 6:00 AM = 360 | 11:30 AM = 690
-    const estaEnHorario = tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 690;
+    const estaEnHorario = tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 1020;
 
     if (manualOverride !== null) {
       setTiendaAbierta(manualOverride);
