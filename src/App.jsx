@@ -79,16 +79,12 @@ export default function App() {
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // 🕒 Lógica Horario (6am - 11am) con Override del Admin
   useEffect(() => {
     const verificarEstado = () => {
       const hora = new Date().getHours();
       const estaEnHorario = hora >= 6 && hora < 11;
-      if (manualOverride !== null) {
-        setTiendaAbierta(manualOverride);
-      } else {
-        setTiendaAbierta(estaEnHorario);
-      }
+      if (manualOverride !== null) setTiendaAbierta(manualOverride);
+      else setTiendaAbierta(estaEnHorario);
     };
     verificarEstado();
     const t = setInterval(verificarEstado, 30000);
@@ -141,6 +137,12 @@ export default function App() {
       if (!sel.acompanamiento || !sel.jugo || (p.id === "d1" && !sel.huevos) || (p.id === "d2" && !sel.proteina)) return alert("Completa tu desayuno");
     }
     
+    // 🧠 GUARDAR HISTORIAL DE PREFERENCIAS EN LOCALSTORAGE
+    const historial = JSON.parse(localStorage.getItem("mono_favoritos") || "{}");
+    if (!historial[p.id]) historial[p.id] = {};
+    if (sel.sabor) historial[p.id][sel.sabor] = (historial[p.id][sel.sabor] || 0) + 1;
+    localStorage.setItem("mono_favoritos", JSON.stringify(historial));
+
     let precioB = p.precio || 0;
     if (sel.tamano) precioB = sel.tamano.precio || 0;
     const extrasP = (sel.extras || []).reduce((acc, n) => acc + (extrasMostrar.find(e => e.nombre === n)?.precio || 0), 0);
@@ -154,6 +156,25 @@ export default function App() {
     setSelecciones({ ...selecciones, [p.id]: {} });
     setNotificacion("¡Añadido! 🥟");
     setTimeout(() => setNotificacion(""), 2000);
+  };
+
+  // 🧠 FUNCIÓN PARA PREDECIR EL FAVORITO DEL CLIENTE
+  const predecirSeleccion = (p) => {
+    let saborElegido = null;
+    if (p.opciones || p.sabores) {
+      const opciones = (p.opciones || p.sabores).filter(o => o.disponible);
+      const historial = JSON.parse(localStorage.getItem("mono_favoritos") || "{}");
+      const stats = historial[p.id] || {};
+      const ordenados = Object.keys(stats).sort((a,b) => stats[b] - stats[a]);
+      saborElegido = ordenados.find(f => opciones.some(o => o.nombre === f));
+      if (!saborElegido && opciones.length > 0) saborElegido = opciones[0].nombre;
+    }
+    let tamanoElegido = null;
+    if (p.tamanos && p.tamanos.length > 0) {
+      const disponibles = p.tamanos.filter(t => t.disponible);
+      tamanoElegido = disponibles[0]; // Por defecto añade el más pequeño/barato
+    }
+    return { sabor: saborElegido, tamano: tamanoElegido };
   };
 
   const eliminarDelCarrito = (idUnico) => setPedido(pedido.filter(i => i.idUnico !== idUnico));
@@ -188,9 +209,10 @@ export default function App() {
   const totalSinDom = pedido.reduce((acc, i) => acc + i.subtotal, 0);
   const domCosto = totalSinDom < 8000 && totalSinDom > 0 ? 2000 : 0;
   const faltaParaGratis = 8000 - totalSinDom;
-  const sugeridos = productosMostrar.filter(p => p.disponible !== false && p.precio > 0 && p.precio <= (faltaParaGratis + 1000) && p.categoria !== "Arroces").slice(0, 3);
+  // Excluimos Arroces y Desayunos de la compra rápida por impulso
+  const sugeridos = productosMostrar.filter(p => p.disponible !== false && p.precio > 0 && p.precio <= (faltaParaGratis + 1000) && p.categoria !== "Arroces" && p.categoria !== "Desayunos").slice(0, 3);
 
-  // 🔴 PANEL DE ADMINISTRADOR (COMPLETO)
+  // 🔴 PANEL DE ADMINISTRADOR
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -366,7 +388,7 @@ export default function App() {
                 <h3 style={{margin: '15px 0 5px 0', fontWeight: '800', fontSize: '18px', minHeight: '44px', display: 'flex', alignItems: 'center'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${(total || 0).toLocaleString()}</p>
                 
-                {/* BOTONES DE SELECCIÓN RÁPIDA PARA SABOR */}
+                {/* ETIQUETAS DE SELECCIÓN PARA SABOR */}
                 {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
                   <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px'}}>
                     {(p.opciones || p.sabores).filter(o => o.disponible).map(o => (
@@ -377,7 +399,7 @@ export default function App() {
                   </div>
                 )}
 
-                {/* BOTONES DE SELECCIÓN RÁPIDA PARA TAMAÑO (REEMPLAZA AL MENÚ DESPLEGABLE) */}
+                {/* ETIQUETAS DE SELECCIÓN PARA TAMAÑO */}
                 {p.tamanos && p.tamanos.length > 0 && (
                   <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px'}}>
                     {p.tamanos.filter(t => t.disponible).map(t => (
@@ -443,14 +465,27 @@ export default function App() {
             </div>
           ))}
 
-          {/* 🌟 VENTA SUGERIDA */}
+          {/* 🌟 VENTA SUGERIDA RÁPIDA CON PREDICCIÓN */}
           {totalSinDom < 8000 && (
             <div style={{marginTop:'25px', background:'#fff7ed', padding:'20px', borderRadius:'25px', border:'2px dashed #f97316'}}>
               <p style={{margin:'0 0 10px 0', fontWeight:'bold'}}>💡 ¡Te faltan ${(8000 - totalSinDom).toLocaleString()} para envío GRATIS!</p>
               <div style={{display:'flex', gap:'10px', overflowX:'auto'}} className="no-scrollbar">
-                {sugeridos.map(sug => (
-                  <button key={sug.id} onClick={() => agregarAlCarrito(sug)} style={{padding:'10px 15px', background:'white', border:'1px solid #f97316', borderRadius:'15px', fontSize:'13px', flexShrink:0, fontWeight:'bold', cursor:'pointer'}}>+ {sug.nombre} (${sug.precio.toLocaleString()})</button>
-                ))}
+                {sugeridos.map(sug => {
+                  const prediccion = predecirSeleccion(sug);
+                  const textoAdicional = prediccion.sabor ? ` de ${prediccion.sabor}` : '';
+                  const precioSugerido = prediccion.tamano ? prediccion.tamano.precio : sug.precio;
+                  
+                  return (
+                    <button key={sug.id} onClick={() => {
+                        let det = `${prediccion.sabor || ''} ${prediccion.tamano?.nombre || ''}`.trim();
+                        setPedido([...pedido, { idUnico: Date.now(), nombre: sug.nombre, cantidad: 1, subtotal: precioSugerido, detalle: det }]);
+                        setNotificacion("¡Añadido rápido! 🥟");
+                        setTimeout(() => setNotificacion(""), 2000);
+                    }} style={{padding:'10px 15px', background:'white', border:'1px solid #f97316', borderRadius:'15px', fontSize:'13px', flexShrink:0, fontWeight:'bold', cursor:'pointer'}}>
+                      + {sug.nombre}{textoAdicional} (${precioSugerido.toLocaleString()})
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
