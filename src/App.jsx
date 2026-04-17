@@ -28,7 +28,8 @@ const productosBase = [
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", disponible: true, imagen: "/agua.jpg"},
   { id: "b4", nombre: "Tinto Tradicional", precio: 1000, categoria: "Bebidas", disponible: true, imagen: "/tinto.jpg" },
   { id: "b5", nombre: "Café con Leche", precio: 1500, categoria: "Bebidas", disponible: true, imagen: "/cafe-leche.jpg" },
-  { id: "b6", nombre: "Chocolate Caliente", precio: 1500, categoria: "Bebidas", disponible: true, imagen: "/chocolate.jpg" },
+  // ✅ CHOCOLATE ACTUALIZADO CON OPCIONES
+  { id: "b6", nombre: "Chocolate Caliente", precio: 1500, categoria: "Bebidas", disponible: true, imagen: "/chocolate.jpg", sabores: [{ nombre: "Con Leche", disponible: true }, { nombre: "Sin Leche", disponible: true }] },
   { id: "b7", nombre: "Aromáticas", precio: 1000, categoria: "Bebidas", disponible: true, imagen: "/aromática.jpg" },
   { id: "milo1", nombre: "Milo Refrescante", precio: 4000, categoria: "Bebidas", disponible: true, imagen: "/milo.jpg" }, 
   { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", disponible: true, imagen: "/arroz-pollo.jpg" }
@@ -70,6 +71,8 @@ export default function App() {
   const [metodoPago, setMetodoPago] = useState("");
   const [horaEntrega, setHoraEntrega] = useState(""); 
   const [pagoCon, setPagoCon] = useState(""); 
+  // ✅ NUEVO ESTADO PARA LAS NOTAS
+  const [notas, setNotas] = useState("");
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
@@ -114,14 +117,13 @@ export default function App() {
     const cant = cantidades[p.id] || 1;
     if (p.disponible === false) return alert("Producto agotado");
     if (p.opciones && !sel.sabor && p.categoria === "Fritos") return alert("Elige un sabor");
-    if (p.sabores && !sel.sabor) return alert("Elige el sabor");
+    if (p.sabores && !sel.sabor) return alert("Elige la opción (ej: sabor o tipo de leche)");
     if (p.tamanos && p.tamanos.length > 0 && !sel.tamano) return alert("Elige el tamaño");
     if (p.categoria === "Desayunos") {
         if (!sel.acompanamiento || !sel.jugo || (p.id === "d1" && !sel.huevos) || (p.id === "d2" && !sel.proteina)) return alert("Completa el desayuno");
     }
     
     let precioBase = p.precio || 0;
-    // 🛡️ BLINDAJE: Verificamos de forma segura usando optional chaining
     if (sel.tamano) precioBase = sel.tamano?.precio || 0;
     
     const extrasPrice = (sel.extras || []).reduce((acc, name) => {
@@ -160,7 +162,9 @@ export default function App() {
       const cambio = Number(pagoCon) - totalFinal;
       infoPago += `\n💵 *Paga con:* $${Number(pagoCon).toLocaleString()}\n💰 *Cambio:* $${cambio > 0 ? cambio.toLocaleString() : '0'}`;
     }
-    const msg = `🍽️ *Pedido - Fritos El Mono* 🐒\n🕒 Enviado: ${horaActual}\n⏰ *Entregar:* ${horaEntrega || 'ASAP'}\n\n${divisor}\n\n🧾 *Productos:*\n${listaProductos}\n\n${divisor}\n\n${salsas}\n\n${divisor}\n\n💰 *Subtotal:* $${totalComida.toLocaleString()}\n🛵 *Dom:* $${costoDomicilio}\n⭐ *TOTAL:* $${totalFinal.toLocaleString()}\n\n${divisor}\n\n👤 ${nombre}\n📍 ${direccion}\n${infoPago}`;
+    
+    // ✅ MENSAJE DE WHATSAPP CON NOTAS INCLUIDAS
+    const msg = `🍽️ *Pedido - Fritos El Mono* 🐒\n🕒 Enviado: ${horaActual}\n⏰ *Entregar:* ${horaEntrega || 'Lo antes posible'}\n\n${divisor}\n\n🧾 *Productos:*\n${listaProductos}\n\n${divisor}\n\n${salsas}\n\n${notas ? `📝 *Observaciones:* ${notas}\n\n${divisor}\n\n` : ''}💰 *Subtotal:* $${totalComida.toLocaleString()}\n🛵 *Dom:* $${costoDomicilio}\n⭐ *TOTAL:* $${totalFinal.toLocaleString()}\n\n${divisor}\n\n👤 ${nombre}\n📍 ${direccion}\n${infoPago}`;
     window.open(`https://wa.me/573116624201?text=${encodeURIComponent(msg)}`);
   };
 
@@ -184,10 +188,9 @@ export default function App() {
                     <strong>{p.nombre}</strong>
                     <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
                   </div>
-                  {/* Gestión de Sabores/Opciones (Empanadas, Papas, Jugos) */}
                   {(p.opciones || p.sabores) && (
                     <div style={{marginTop:'10px', display:'flex', gap:'10px', flexWrap:'wrap', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
-                      <small style={{width:'100%', fontWeight:'bold'}}>Gestionar Sabores:</small>
+                      <small style={{width:'100%', fontWeight:'bold'}}>Gestionar Opciones:</small>
                       {(p.opciones || p.sabores).map((opt, idx) => (
                         <div key={idx} style={{display:'flex', alignItems:'center', gap:'5px', background:'white', padding:'5px 10px', borderRadius:'10px', border:'1px solid #eee'}}>
                           <small>{opt.nombre}</small>
@@ -225,8 +228,6 @@ export default function App() {
                   )}
                 </div>
               ))}
-              
-              {/* 🟢 GESTIÓN DE EXTRAS DE ARROZ */}
               {cat === "Arroces" && (
                 <div style={{marginTop:'20px', borderTop:'1px dashed #ddd', paddingTop:'15px'}}>
                   <h4 style={{margin:'0 0 10px 0'}}>Extras:</h4>
@@ -241,21 +242,8 @@ export default function App() {
                   ))}
                 </div>
               )}
-
             </div>
           ))}
-          {/* Gestión de Salsas */}
-          <div style={{background:'white', padding:'25px', borderRadius:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)', marginBottom:'25px'}}>
-            <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'15px'}}>Salsas</h2>
-            <div style={{display:'flex', gap:'10px', flexWrap:'wrap'}}>
-              {salsasMostrar.map(s => (
-                <div key={s.id} style={{padding:'10px', background:'#f8fafc', borderRadius:'15px', display:'flex', alignItems:'center', gap:'10px', border:'1px solid #eee'}}>
-                  <small style={{fontWeight:'bold'}}>{s.nombre}</small>
-                  <MiniSwitch activo={s.disponible} onClick={() => guardarCambio("salsas", s.id, { disponible: !s.disponible })} />
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -300,12 +288,7 @@ export default function App() {
         {productosMostrar.filter(p => p.categoria === categoriaActiva).map(p => {
             const sel = selecciones[p.id] || {};
             const cant = cantidades[p.id] || 1;
-            
-            // 🛡️ BLINDAJE: Cálculo de precio súper seguro. Si tamanos está vacío, no se rompe.
-            const precioU = (p.tamanos && p.tamanos.length > 0) 
-              ? (sel.tamano?.precio || p.tamanos[0]?.precio || 0) 
-              : (p.precio || 0);
-              
+            const precioU = (p.tamanos && p.tamanos.length > 0) ? (sel.tamano?.precio || p.tamanos[0]?.precio || 0) : (p.precio || 0);
             const extrasP = (sel.extras || []).reduce((acc, name) => acc + (extrasMostrar.find(e => e.nombre === name)?.precio || 0), 0);
             const total = (precioU + extrasP + (sel.agrandar ? 1000 : 0)) * cant;
             
@@ -314,12 +297,15 @@ export default function App() {
                 <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover', filter: p.disponible === false ? 'grayscale(1)' : 'none' }} />
                 <h3 style={{margin: '15px 0 5px 0', fontWeight: '800', fontSize: '18px', minHeight: '44px', display: 'flex', alignItems: 'center'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${(total || 0).toLocaleString()}</p>
+                
+                {/* ✅ SELECTOR AUTOMÁTICO PARA CHOCOLATE Y OTROS CON SABORES/OPCIONES */}
                 {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
                   <select value={sel.sabor || ""} onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, sabor: e.target.value}})} style={{width:'100%', padding:'12px', borderRadius:'15px', marginBottom:'10px', background:'#f8fafc', fontWeight:'bold', border:'1px solid #eee'}}>
-                    <option value="">-- Sabor --</option>
+                    <option value="">-- Elige Opción --</option>
                     {(p.opciones || p.sabores).filter(o => o.disponible).map(o => <option key={o.nombre} value={o.nombre}>{o.nombre}</option>)}
                   </select>
                 )}
+
                 {p.tamanos && p.tamanos.length > 0 && (
                   <select value={sel.tamano?.nombre || ""} onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, tamano: p.tamanos.find(t => t.nombre === e.target.value)}})} style={{width:'100%', padding:'12px', borderRadius:'15px', marginBottom:'10px', background:'#f8fafc', fontWeight:'bold', border:'1px solid #eee'}}>
                     <option value="">-- Tamaño --</option>
@@ -392,11 +378,20 @@ export default function App() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginTop: '25px' }}>
             <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
-            <input type="text" placeholder="Dirección" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
+            <input type="text" placeholder="Dirección exacta" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
             <div style={{background:'#f0f9ff', padding:'15px', borderRadius:'15px'}}>
                <label style={{display:'block', fontSize:'13px', fontWeight:'bold', marginBottom:'5px'}}>🕒 ¿A qué hora lo necesitas?</label>
                <input type="time" value={horaEntrega} onChange={(e) => setHoraEntrega(e.target.value)} style={{ width:'100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
             </div>
+
+            {/* ✅ CAMPO DE NOTAS / ASUNTOS */}
+            <textarea 
+              placeholder="¿Alguna instrucción especial? (Eje: Patacones tostados, arepa de huevo sin carne...)" 
+              value={notas} 
+              onChange={(e) => setNotas(e.target.value)} 
+              style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', minHeight: '80px', fontFamily: 'sans-serif' }} 
+            />
+
             <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontWeight: 'bold' }}>
               <option value="">-- ¿Cómo pagas? --</option>
               <option value="Efectivo">Efectivo</option>
