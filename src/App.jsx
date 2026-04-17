@@ -58,7 +58,7 @@ export default function App() {
   const [mostrarLogin, setMostrarLogin] = useState(false);
   const [pinInput, setPinInput] = useState("");
   const [tiendaAbierta, setTiendaAbierta] = useState(true);
-  const [manualOverride, setManualOverride] = useState(null); // null = automático, true/false = manual
+  const [manualOverride, setManualOverride] = useState(null); 
   const [categoriaActiva, setCategoriaActiva] = useState("Fritos");
   const [productosFB, setProductosFB] = useState([]);
   const [extrasFB, setExtrasFB] = useState([]);
@@ -136,7 +136,7 @@ export default function App() {
     if (p.disponible === false) return alert("Agotado");
     if (p.opciones && !sel.sabor && p.categoria === "Fritos") return alert("Elige un sabor antes de añadir");
     if (p.sabores && !sel.sabor) return alert("Elige una opción antes de añadir");
-    if (p.tamanos && p.tamanos.length > 0 && !sel.tamano) return alert("Elige el tamaño");
+    if (p.tamanos && p.tamanos.length > 0 && !sel.tamano) return alert("Elige el tamaño antes de añadir");
     if (p.categoria === "Desayunos") {
       if (!sel.acompanamiento || !sel.jugo || (p.id === "d1" && !sel.huevos) || (p.id === "d2" && !sel.proteina)) return alert("Completa tu desayuno");
     }
@@ -366,7 +366,7 @@ export default function App() {
                 <h3 style={{margin: '15px 0 5px 0', fontWeight: '800', fontSize: '18px', minHeight: '44px', display: 'flex', alignItems: 'center'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${(total || 0).toLocaleString()}</p>
                 
-                {/* BOTONES DE SELECCIÓN RÁPIDA (REEMPLAZA AL MENÚ DESPLEGABLE) */}
+                {/* BOTONES DE SELECCIÓN RÁPIDA PARA SABOR */}
                 {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
                   <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px'}}>
                     {(p.opciones || p.sabores).filter(o => o.disponible).map(o => (
@@ -377,12 +377,19 @@ export default function App() {
                   </div>
                 )}
 
-                {/* SELECTOR DE TAMAÑO (Mantiene el desplegable porque suele ser más estándar) */}
+                {/* BOTONES DE SELECCIÓN RÁPIDA PARA TAMAÑO (REEMPLAZA AL MENÚ DESPLEGABLE) */}
                 {p.tamanos && p.tamanos.length > 0 && (
-                  <select value={sel.tamano?.nombre || ""} onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, tamano: p.tamanos.find(t => t.nombre === e.target.value)}})} style={{width:'100%', padding:'12px', borderRadius:'15px', marginBottom:'10px', background:'#f8fafc', fontWeight:'bold', border:'1px solid #eee'}}>
-                    <option value="">-- Seleccionar Tamaño --</option>
-                    {p.tamanos.filter(t => t.disponible).map(t => <option key={t.nombre} value={t.nombre}>{t.nombre}</option>)}
-                  </select>
+                  <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px'}}>
+                    {p.tamanos.filter(t => t.disponible).map(t => (
+                      <button 
+                        key={t.nombre} 
+                        onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, tamano: t}})} 
+                        className={`opcion-btn ${sel.tamano?.nombre === t.nombre ? 'active' : ''}`}
+                      >
+                        {t.nombre}
+                      </button>
+                    ))}
+                  </div>
                 )}
 
                 {p.categoria === "Arroces" && (
