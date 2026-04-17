@@ -331,7 +331,7 @@ export default function App() {
           <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
             <span style={{fontSize:'70px'}}>🐒💤</span>
             <h2 style={{color:MONO_NARANJA, fontSize:'30px', fontWeight:'900', marginTop:'20px'}}>El Mono descansa</h2>
-            <p style={{fontSize:'18px'}}>Atendemos de <b>6:00 a.m. a 5:10 p.m.</b></p>
+            <p style={{fontSize:'18px'}}>Atendemos de <b>6:00 a.m. a 11:30 p.m.</b></p>
             <button onClick={() => setMostrarLogin(true)} style={{marginTop:'50px', background:'#eee', color:'#999', border:'none', padding:'10px 20px', borderRadius:'15px', fontSize:'12px', fontWeight:'bold', cursor:'pointer'}}>ACCESO ADMIN</button>
           </div>
         </div>
