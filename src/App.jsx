@@ -89,7 +89,7 @@ export default function App() {
       const tiempoActualEnMinutos = (hora * 60) + minutos;
 
       // 6:00 AM = 360 | 11:30 AM = 690 (11*60 + 30)
-      const estaEnHorario = tiempoActualEnMinutos >= 1060 && tiempoActualEnMinutos < 1110;
+      const estaEnHorario = tiempoActualEnMinutos >= 690 && tiempoActualEnMinutos < 1110;
 
       // Para la prueba, el reloj manda sobre el manualOverride
       setTiendaAbierta(estaEnHorario);
