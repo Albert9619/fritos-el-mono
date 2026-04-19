@@ -78,6 +78,17 @@ export default function App() {
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
+  const [mesa, setMesa] = useState(null);
+
+useEffect(() => {
+  // Esta parte lee la URL para ver si dice ?mesa=1
+  const params = new URLSearchParams(window.location.search);
+  const mesaURL = params.get('mesa');
+  if (mesaURL) {
+    setMesa(mesaURL);
+    setDireccion(`Mesa ${mesaURL}`); 
+  }
+}, []);
 
   useEffect(() => {
     const verificarEstado = () => {
