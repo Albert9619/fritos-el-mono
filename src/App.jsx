@@ -76,43 +76,37 @@ export default function App() {
   const [notas, setNotas] = useState("");
   const [agradecimiento, setAgradecimiento] = useState(false);
 
-  const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
-  const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
+  // 🪑 ESTADO DE MESA
   const [mesa, setMesa] = useState(null);
 
-useEffect(() => {
-  // Esta parte lee la URL para ver si dice ?mesa=1
-  const params = new URLSearchParams(window.location.search);
-  const mesaURL = params.get('mesa');
-  if (mesaURL) {
-    setMesa(mesaURL);
-    setDireccion(`Mesa ${mesaURL}`); 
-  }
-}, []);
+  const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
+  const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
- // 🕒 LÓGICA DE CIERRE AUTOMÁTICO (PRUEBA 5:10 PM)
+  // 🔎 DETECTOR DE MESA POR URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const mesaURL = params.get('mesa');
+    if (mesaURL) {
+      setMesa(mesaURL);
+      setDireccion(`Mesa ${mesaURL}`); 
+    }
+  }, []);
+
+  // 🕒 LÓGICA DE CIERRE AUTOMÁTICO
   useEffect(() => {
     const verificarEstado = () => {
       const ahora = new Date();
       const hora = ahora.getHours();
       const minutos = ahora.getMinutes();
-      
       const tiempoActualEnMinutos = (hora * 60) + minutos;
-
-      // 6:00 AM = 360 | 11:30 AM = 690 (11*60 + 30)
       const estaEnHorario = tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 690;
-
-      // Para la prueba, el reloj manda sobre el manualOverride
       setTiendaAbierta(estaEnHorario);
-      
-      console.log("Minutos actuales:", tiempoActualEnMinutos, "Limite:", 690);
     };
+    verificarEstado();
+    const t = setInterval(verificarEstado, 30000);
+    return () => clearInterval(t);
+  }, [manualOverride]);
 
-  verificarEstado(); // Ejecuta apenas carga
-  const t = setInterval(verificarEstado, 30000); // Revisa cada 30 segundos
-  
-  return () => clearInterval(t); // Limpia el reloj si se cierra la página
-}, [manualOverride]);
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -159,7 +153,6 @@ useEffect(() => {
       if (!sel.acompanamiento || !sel.jugo || (p.id === "d1" && !sel.huevos) || (p.id === "d2" && !sel.proteina)) return alert("Completa tu desayuno");
     }
     
-    // 🧠 GUARDAR HISTORIAL DE PREFERENCIAS EN LOCALSTORAGE
     const historial = JSON.parse(localStorage.getItem("mono_favoritos") || "{}");
     if (!historial[p.id]) historial[p.id] = {};
     if (sel.sabor) historial[p.id][sel.sabor] = (historial[p.id][sel.sabor] || 0) + 1;
@@ -180,7 +173,6 @@ useEffect(() => {
     setTimeout(() => setNotificacion(""), 2000);
   };
 
-  // 🧠 FUNCIÓN PARA PREDECIR EL FAVORITO DEL CLIENTE
   const predecirSeleccion = (p) => {
     let saborElegido = null;
     if (p.opciones || p.sabores) {
@@ -194,7 +186,7 @@ useEffect(() => {
     let tamanoElegido = null;
     if (p.tamanos && p.tamanos.length > 0) {
       const disponibles = p.tamanos.filter(t => t.disponible);
-      tamanoElegido = disponibles[0]; // Por defecto añade el más pequeño/barato
+      tamanoElegido = disponibles[0];
     }
     return { sabor: saborElegido, tamano: tamanoElegido };
   };
@@ -202,13 +194,16 @@ useEffect(() => {
   const eliminarDelCarrito = (idUnico) => setPedido(pedido.filter(i => i.idUnico !== idUnico));
   const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo el pedido?")) { setPedido([]); setSalsasElegidas([]); } };
 
+  // 🚀 FUNCIÓN WHATSAPP ACTUALIZADA PARA MESAS
   const enviarWhatsApp = () => {
-    if (!nombre || !direccion || !metodoPago) return alert("Faltan datos (Nombre, Dirección y Pago)");
+    if (!nombre || !direccion || !metodoPago) return alert("Faltan datos (Nombre y Pago)");
     if (metodoPago === "Efectivo" && !pagoCon) return alert("Dinos con cuánto vas a pagar");
-    const horaActual = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     
+    const horaActual = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     const tComida = pedido.reduce((acc, i) => acc + i.subtotal, 0);
-    const cDom = tComida < 8000 ? 2000 : 0;
+    
+    // Si hay mesa, el costo de domicilio es 0
+    const cDom = mesa ? 0 : (tComida < 8000 ? 2000 : 0);
     const tFinal = tComida + cDom;
     
     const lista = pedido.map(i => `• ${i.cantidad}x ${i.nombre} (${i.detalle})`).join('\n');
@@ -221,7 +216,9 @@ useEffect(() => {
     }
 
     const divisor = "━━━━━━━━━━━━━━━";
-    const msg = `🍽️ *Pedido - Fritos El Mono* 🐒\n🕒 Enviado: ${horaActual}\n⏰ *Entregar:* ${horaEntrega || 'Lo antes posible'}\n\n${divisor}\n\n🧾 *Productos:*\n${lista}\n\n${divisor}\n\n${salsas}\n\n${notas ? `📝 *Observaciones:* ${notas}\n\n${divisor}\n\n` : ''}💰 *Subtotal:* $${tComida.toLocaleString()}\n🛵 *Dom:* $${cDom}\n⭐ *TOTAL:* $${tFinal.toLocaleString()}\n\n${divisor}\n\n👤 ${nombre}\n📍 ${direccion}\n${infoPago}`;
+    const titulo = mesa ? `🪑 *ORDEN MESA ${mesa}* 🪑` : `🛵 *PEDIDO DOMICILIO* 🛵`;
+
+    const msg = `${titulo}\n🕒 Enviado: ${horaActual}\n⏰ *Entregar:* ${horaEntrega || 'Lo antes posible'}\n\n${divisor}\n\n🧾 *Productos:*\n${lista}\n\n${divisor}\n\n${salsas}\n\n${notas ? `📝 *Observaciones:* ${notas}\n\n${divisor}\n\n` : ''}💰 *Subtotal:* $${tComida.toLocaleString()}\n${!mesa ? `🛵 *Dom:* $${cDom.toLocaleString()}\n` : ''}⭐ *TOTAL:* $${tFinal.toLocaleString()}\n\n${divisor}\n\n👤 *Cliente:* ${nombre}\n📍 ${mesa ? `LOCAL - MESA ${mesa}` : `DIRECCIÓN: ${direccion}`}\n${infoPago}`;
     
     window.open(`https://wa.me/573116624201?text=${encodeURIComponent(msg)}`);
     setAgradecimiento(true);
@@ -231,10 +228,8 @@ useEffect(() => {
   const totalSinDom = pedido.reduce((acc, i) => acc + i.subtotal, 0);
   const domCosto = totalSinDom < 8000 && totalSinDom > 0 ? 2000 : 0;
   const faltaParaGratis = 8000 - totalSinDom;
-  // Excluimos Arroces y Desayunos de la compra rápida por impulso
   const sugeridos = productosMostrar.filter(p => p.disponible !== false && p.precio > 0 && p.precio <= (faltaParaGratis + 1000) && p.categoria !== "Arroces" && p.categoria !== "Desayunos").slice(0, 3);
 
-  // 🔴 PANEL DE ADMINISTRADOR
   if (isAdmin) {
     return (
       <div style={{padding: '20px', background: '#f8fafc', minHeight: '100vh', fontFamily: 'sans-serif'}}>
@@ -251,7 +246,6 @@ useEffect(() => {
                <button onClick={() => setIsAdmin(false)} style={{padding:'10px 15px', borderRadius:'10px', background:MONO_TEXTO, color:'white', border:'none', cursor:'pointer'}}>Cerrar</button>
             </div>
           </div>
-
           {["Fritos", "Arroces", "Bebidas", "Desayunos"].map(cat => (
             <div key={cat} style={{background:'white', padding:'25px', borderRadius:'25px', marginBottom:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)'}}>
               <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'15px'}}>{cat}</h2>
@@ -261,11 +255,9 @@ useEffect(() => {
                     <strong>{p.nombre}</strong>
                     <MiniSwitch activo={p.disponible} onClick={() => guardarCambio("productos", p.id, { disponible: !p.disponible })} />
                   </div>
-                  
-                  {/* GESTIÓN DE SABORES / OPCIONES */}
                   {(p.opciones || p.sabores) && (
                     <div style={{marginTop:'10px', display:'flex', gap:'10px', flexWrap:'wrap', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
-                      <small style={{width:'100%', fontWeight:'bold'}}>Gestionar Opciones/Sabores:</small>
+                      <small style={{width:'100%', fontWeight:'bold'}}>Gestionar Opciones:</small>
                       {(p.opciones || p.sabores).map((opt, idx) => (
                         <div key={idx} style={{display:'flex', alignItems:'center', gap:'5px', background:'white', padding:'5px 10px', borderRadius:'10px', border:'1px solid #eee'}}>
                           <small>{opt.nombre}</small>
@@ -278,8 +270,6 @@ useEffect(() => {
                       ))}
                     </div>
                   )}
-
-                  {/* GESTIÓN DE TAMAÑOS Y PRECIOS */}
                   {p.tamanos ? (
                     <div style={{display:'grid', gap:'10px', marginTop:'10px'}}>
                       {p.tamanos.map((t, idx) => (
@@ -305,43 +295,13 @@ useEffect(() => {
                   )}
                 </div>
               ))}
-
-              {/* GESTIÓN DE EXTRAS (ARROCES) */}
-              {cat === "Arroces" && (
-                <div style={{marginTop:'20px', borderTop:'1px dashed #ddd', paddingTop:'15px'}}>
-                  <h4 style={{margin:'0 0 10px 0'}}>Extras del Arroz:</h4>
-                  {extrasMostrar.map(ex => (
-                    <div key={ex.id} style={{display:'flex', justifyContent:'space-between', marginBottom:'10px', alignItems:'center'}}>
-                      <small>{ex.nombre}</small>
-                      <div style={{display:'flex', gap:'10px'}}>
-                        $ <input type="number" defaultValue={ex.precio} onBlur={(e) => guardarCambio("extrasArroz", ex.id, { precio: Number(e.target.value) })} style={{width:'80px', padding:'5px', borderRadius:'5px', border:'1px solid #ddd'}} />
-                        <MiniSwitch activo={ex.disponible} onClick={() => guardarCambio("extrasArroz", ex.id, { disponible: !ex.disponible })} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
-
-          {/* GESTIÓN DE SALSAS */}
-          <div style={{background:'white', padding:'25px', borderRadius:'25px', boxShadow:'0 4px 6px rgba(0,0,0,0.05)', marginBottom:'25px'}}>
-            <h2 style={{borderBottom:'2px solid #eee', paddingBottom:'10px', marginBottom:'15px'}}>Salsas</h2>
-            <div style={{display:'flex', gap:'10px', flexWrap:'wrap'}}>
-              {salsasMostrar.map(s => (
-                <div key={s.id} style={{padding:'10px', background:'#f8fafc', borderRadius:'15px', display:'flex', alignItems:'center', gap:'10px', border:'1px solid #eee'}}>
-                  <small style={{fontWeight:'bold'}}>{s.nombre}</small>
-                  <MiniSwitch activo={s.disponible} onClick={() => guardarCambio("salsas", s.id, { disponible: !s.disponible })} />
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     );
   }
 
-  // 🟡 VISTA DEL CLIENTE
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', backgroundColor: '#fffcf5', minHeight: '100vh', paddingBottom: '120px', color: MONO_TEXTO }}>
       <style>{`.card-mono { transition: 0.3s; } .card-mono:hover { transform: translateY(-10px); } .opcion-btn { padding: 10px; border-radius: 12px; border: 1px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 13px; } .opcion-btn.active { background: ${MONO_NARANJA}; color: white; border-color: ${MONO_NARANJA}; } .salsa-chip { padding: 12px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; font-size: 13px; } .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; } .no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
@@ -410,7 +370,6 @@ useEffect(() => {
                 <h3 style={{margin: '15px 0 5px 0', fontWeight: '800', fontSize: '18px', minHeight: '44px', display: 'flex', alignItems: 'center'}}>{p.nombre}</h3>
                 <p style={{color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin:'0 0 15px 0'}}>${(total || 0).toLocaleString()}</p>
                 
-                {/* ETIQUETAS DE SELECCIÓN PARA SABOR */}
                 {(p.opciones || p.sabores) && p.categoria !== "Arroces" && (
                   <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px'}}>
                     {(p.opciones || p.sabores).filter(o => o.disponible).map(o => (
@@ -421,15 +380,10 @@ useEffect(() => {
                   </div>
                 )}
 
-                {/* ETIQUETAS DE SELECCIÓN PARA TAMAÑO */}
                 {p.tamanos && p.tamanos.length > 0 && (
                   <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px'}}>
                     {p.tamanos.filter(t => t.disponible).map(t => (
-                      <button 
-                        key={t.nombre} 
-                        onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, tamano: t}})} 
-                        className={`opcion-btn ${sel.tamano?.nombre === t.nombre ? 'active' : ''}`}
-                      >
+                      <button key={t.nombre} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, tamano: t}})} className={`opcion-btn ${sel.tamano?.nombre === t.nombre ? 'active' : ''}`}>
                         {t.nombre}
                       </button>
                     ))}
@@ -471,7 +425,6 @@ useEffect(() => {
 
       {pedido.length > 0 && (
         <div id="carrito_seccion" style={{ maxWidth: '750px', margin: '50px auto 100px', background: 'white', padding: '40px', borderRadius: '40px', border: `5px solid ${MONO_NARANJA}`, boxShadow: '0 20px 45px rgba(0,0,0,0.1)' }}>
-          
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
             <h2 style={{ fontSize: '32px', fontWeight: '900', margin: 0 }}>🛒 Tu Pedido</h2>
             <button onClick={vaciarCarrito} style={{ background: '#fee2e2', color: '#dc2626', border: 'none', padding: '10px 20px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>🗑️ Vaciar Todo</button>
@@ -487,8 +440,8 @@ useEffect(() => {
             </div>
           ))}
 
-          {/* 🌟 VENTA SUGERIDA RÁPIDA CON PREDICCIÓN */}
-          {totalSinDom < 8000 && (
+          {/* 🌟 VENTA SUGERIDA RÁPIDA (Solo si no es mesa) */}
+          {!mesa && totalSinDom < 8000 && (
             <div style={{marginTop:'25px', background:'#fff7ed', padding:'20px', borderRadius:'25px', border:'2px dashed #f97316'}}>
               <p style={{margin:'0 0 10px 0', fontWeight:'bold'}}>💡 ¡Te faltan ${(8000 - totalSinDom).toLocaleString()} para envío GRATIS!</p>
               <div style={{display:'flex', gap:'10px', overflowX:'auto'}} className="no-scrollbar">
@@ -496,7 +449,6 @@ useEffect(() => {
                   const prediccion = predecirSeleccion(sug);
                   const textoAdicional = prediccion.sabor ? ` de ${prediccion.sabor}` : '';
                   const precioSugerido = prediccion.tamano ? prediccion.tamano.precio : sug.precio;
-                  
                   return (
                     <button key={sug.id} onClick={() => {
                         let det = `${prediccion.sabor || ''} ${prediccion.tamano?.nombre || ''}`.trim();
@@ -523,21 +475,28 @@ useEffect(() => {
 
           <div style={{ marginTop: '20px', textAlign: 'right' }}>
              <p>Subtotal: <strong>${totalSinDom.toLocaleString()}</strong></p>
-             <p>Domicilio: <strong>{domCosto === 0 ? '¡GRATIS!' : `$${domCosto.toLocaleString()}`}</strong></p>
-             <h2 style={{ color: MONO_NARANJA, fontSize: '38px', fontWeight: '900' }}>Total: ${(totalSinDom + domCosto).toLocaleString()}</h2>
+             <p>Domicilio: <strong>{mesa || domCosto === 0 ? '¡SIN COSTO!' : `$${domCosto.toLocaleString()}`}</strong></p>
+             <h2 style={{ color: MONO_NARANJA, fontSize: '38px', fontWeight: '900' }}>Total: ${(totalSinDom + (mesa ? 0 : domCosto)).toLocaleString()}</h2>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '25px' }}>
             <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
-            <input type="text" placeholder="Dirección exacta" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
             
-            {/* 🕒 SELECTOR DE HORA RESTAURADO */}
+            {/* 🔴 LÓGICA DE DIRECCIÓN VS MESA */}
+            {!mesa ? (
+              <input type="text" placeholder="Dirección exacta" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
+            ) : (
+              <div style={{ padding: '18px', background: '#ecfdf5', borderRadius: '15px', border: '2px solid #10b981', color: '#065f46', fontWeight: 'bold', textAlign: 'center' }}>
+                📍 Estas pidiendo desde la MESA {mesa}
+              </div>
+            )}
+
             <div style={{background:'#f0f9ff', padding:'15px', borderRadius:'15px'}}>
                <label style={{display:'block', fontSize:'13px', fontWeight:'bold', marginBottom:'5px'}}>🕒 ¿A qué hora lo necesitas?</label>
                <input type="time" value={horaEntrega} onChange={(e) => setHoraEntrega(e.target.value)} style={{ width:'100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
             </div>
 
-            <textarea placeholder="Notas (Ej: Patacones tostados, café sin azúcar...)" value={notas} onChange={(e) => setNotas(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', height: '90px' }} />
+            <textarea placeholder="Notas (Ej: Café sin azúcar...)" value={notes} onChange={(e) => setNotes(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', height: '90px' }} />
             
             <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontWeight: 'bold' }}>
               <option value="">-- ¿Cómo pagas? --</option>
@@ -554,4 +513,3 @@ useEffect(() => {
     </div>
   );
 }
-
