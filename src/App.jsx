@@ -75,14 +75,12 @@ export default function App() {
   const [pagoCon, setPagoCon] = useState(""); 
   const [notas, setNotas] = useState("");
   const [agradecimiento, setAgradecimiento] = useState(false);
-
-  // 🪑 ESTADO DE MESA
   const [mesa, setMesa] = useState(null);
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // 🔎 DETECTOR DE MESA POR URL
+  // 🔎 DETECTOR DE MESA POR URL (Se activa apenas abre la página)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const mesaURL = params.get('mesa');
@@ -194,7 +192,6 @@ export default function App() {
   const eliminarDelCarrito = (idUnico) => setPedido(pedido.filter(i => i.idUnico !== idUnico));
   const vaciarCarrito = () => { if (window.confirm("¿Vaciar todo el pedido?")) { setPedido([]); setSalsasElegidas([]); } };
 
-  // 🚀 FUNCIÓN WHATSAPP ACTUALIZADA PARA MESAS
   const enviarWhatsApp = () => {
     if (!nombre || !direccion || !metodoPago) return alert("Faltan datos (Nombre y Pago)");
     if (metodoPago === "Efectivo" && !pagoCon) return alert("Dinos con cuánto vas a pagar");
@@ -202,7 +199,7 @@ export default function App() {
     const horaActual = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
     const tComida = pedido.reduce((acc, i) => acc + i.subtotal, 0);
     
-    // Si hay mesa, el costo de domicilio es 0
+    // 🪑 LÓGICA DE COSTO: Si hay mesa, el envío es 0
     const cDom = mesa ? 0 : (tComida < 8000 ? 2000 : 0);
     const tFinal = tComida + cDom;
     
@@ -220,7 +217,7 @@ export default function App() {
 
     const msg = `${titulo}\n🕒 Enviado: ${horaActual}\n⏰ *Entregar:* ${horaEntrega || 'Lo antes posible'}\n\n${divisor}\n\n🧾 *Productos:*\n${lista}\n\n${divisor}\n\n${salsas}\n\n${notas ? `📝 *Observaciones:* ${notas}\n\n${divisor}\n\n` : ''}💰 *Subtotal:* $${tComida.toLocaleString()}\n${!mesa ? `🛵 *Dom:* $${cDom.toLocaleString()}\n` : ''}⭐ *TOTAL:* $${tFinal.toLocaleString()}\n\n${divisor}\n\n👤 *Cliente:* ${nombre}\n📍 ${mesa ? `LOCAL - MESA ${mesa}` : `DIRECCIÓN: ${direccion}`}\n${infoPago}`;
     
-    window.open(`https://wa.me/573116624201?text=${encodeURIComponent(msg)}`);
+    window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
     setAgradecimiento(true);
     setPedido([]);
   };
@@ -475,14 +472,15 @@ export default function App() {
 
           <div style={{ marginTop: '20px', textAlign: 'right' }}>
              <p>Subtotal: <strong>${totalSinDom.toLocaleString()}</strong></p>
-             <p>Domicilio: <strong>{mesa || domCosto === 0 ? '¡SIN COSTO!' : `$${domCosto.toLocaleString()}`}</strong></p>
+             {/* 🪑 LÓGICA DE TEXTO DE ENVÍO */}
+             <p>Domicilio: <strong>{mesa ? '¡LOCAL!' : (domCosto === 0 ? '¡GRATIS!' : `$${domCosto.toLocaleString()}`)}</strong></p>
              <h2 style={{ color: MONO_NARANJA, fontSize: '38px', fontWeight: '900' }}>Total: ${(totalSinDom + (mesa ? 0 : domCosto)).toLocaleString()}</h2>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '25px' }}>
             <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
             
-            {/* 🔴 LÓGICA DE DIRECCIÓN VS MESA */}
+            {/* 🔴 LÓGICA DE DIRECCIÓN VS MESA: Si hay mesa, bloqueamos el input de dirección */}
             {!mesa ? (
               <input type="text" placeholder="Dirección exacta" value={direccion} onChange={(e) => setDireccion(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
             ) : (
@@ -496,7 +494,7 @@ export default function App() {
                <input type="time" value={horaEntrega} onChange={(e) => setHoraEntrega(e.target.value)} style={{ width:'100%', padding: '12px', borderRadius: '10px', border: '1px solid #ddd' }} />
             </div>
 
-            <textarea placeholder="Notas (Ej: Café sin azúcar...)" value={notes} onChange={(e) => setNotes(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', height: '90px' }} />
+            <textarea placeholder="Notas (Ej: Patacones tostados...)" value={notas} onChange={(e) => setNotas(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', height: '90px' }} />
             
             <select value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd', fontWeight: 'bold' }}>
               <option value="">-- ¿Cómo pagas? --</option>
