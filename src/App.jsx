@@ -29,7 +29,7 @@ const productosBase = [
   { id: "b4", nombre: "Tinto Tradicional", precio: 1000, categoria: "Bebidas", disponible: true, imagen: "/tinto.jpg" },
   { id: "b5", nombre: "Café con Leche", precio: 1500, categoria: "Bebidas", disponible: true, imagen: "/cafe-leche.jpg" },
   { id: "b6", nombre: "Chocolate Caliente", precio: 1500, categoria: "Bebidas", disponible: true, imagen: "/chocolate.jpg", sabores: [{ nombre: "Con Leche", disponible: true }, { nombre: "Sin Leche", disponible: true }] },
-  { id: "b7", nombre: "Aromáticas", precio: 1000, categoria: "Bebidas", disponible: true, imagen: "/aromática.jpg" },
+  { id: "b7", nombre: "Aromáticas", precio: 1000, categoria: "Bebidas", disponible: true, imagen: "/aromática.jpg" , sabores: [{ nombre: "Manzanilla", disponible: true},{nombre: "Hierbabuena", disponible: true},{nombre: "Limoncillo", disponible: true},{nombre: "Frutos Rojos", disponible: true}]},
   { id: "milo1", nombre: "Milo Refrescante", precio: 4000, categoria: "Bebidas", disponible: true, imagen: "/milo.jpg" }, 
   { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", disponible: true, imagen: "/arroz-pollo.jpg" }
 ];
@@ -90,18 +90,29 @@ useEffect(() => {
   }
 }, []);
 
+ // 🕒 LÓGICA DE CIERRE AUTOMÁTICO (PRUEBA 5:10 PM)
   useEffect(() => {
     const verificarEstado = () => {
-      const hora = new Date().getHours();
-      const estaEnHorario = hora >= 6 && hora < 11;
-      if (manualOverride !== null) setTiendaAbierta(manualOverride);
-      else setTiendaAbierta(estaEnHorario);
-    };
-    verificarEstado();
-    const t = setInterval(verificarEstado, 30000);
-    return () => clearInterval(t);
-  }, [manualOverride]);
+      const ahora = new Date();
+      const hora = ahora.getHours();
+      const minutos = ahora.getMinutes();
+      
+      const tiempoActualEnMinutos = (hora * 60) + minutos;
 
+      // 6:00 AM = 360 | 11:30 AM = 690 (11*60 + 30)
+      const estaEnHorario = tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 690;
+
+      // Para la prueba, el reloj manda sobre el manualOverride
+      setTiendaAbierta(estaEnHorario);
+      
+      console.log("Minutos actuales:", tiempoActualEnMinutos, "Limite:", 690);
+    };
+
+  verificarEstado(); // Ejecuta apenas carga
+  const t = setInterval(verificarEstado, 30000); // Revisa cada 30 segundos
+  
+  return () => clearInterval(t); // Limpia el reloj si se cierra la página
+}, [manualOverride]);
   useEffect(() => {
     const unsubProd = onSnapshot(collection(db, "productos"), (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -362,7 +373,7 @@ useEffect(() => {
           <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
             <span style={{fontSize:'70px'}}>🐒💤</span>
             <h2 style={{color:MONO_NARANJA, fontSize:'30px', fontWeight:'900', marginTop:'20px'}}>El Mono descansa</h2>
-            <p style={{fontSize:'18px'}}>Atendemos de <b>6:00 a.m. a 11:00 a.m.</b></p>
+            <p style={{fontSize:'18px'}}>Atendemos de <b>6:00 a.m. a 11:30 a.m.</b></p>
             <button onClick={() => setMostrarLogin(true)} style={{marginTop:'50px', background:'#eee', color:'#999', border:'none', padding:'10px 20px', borderRadius:'15px', fontSize:'12px', fontWeight:'bold', cursor:'pointer'}}>ACCESO ADMIN</button>
           </div>
         </div>
@@ -543,3 +554,4 @@ useEffect(() => {
     </div>
   );
 }
+
