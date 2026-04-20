@@ -217,7 +217,7 @@ export default function App() {
 
     const msg = `${titulo}\n🕒 Enviado: ${horaActual}\n⏰ *Entregar:* ${horaEntrega || 'Lo antes posible'}\n\n${divisor}\n\n🧾 *Productos:*\n${lista}\n\n${divisor}\n\n${salsas}\n\n${notas ? `📝 *Observaciones:* ${notas}\n\n${divisor}\n\n` : ''}💰 *Subtotal:* $${tComida.toLocaleString()}\n${!mesa ? `🛵 *Dom:* $${cDom.toLocaleString()}\n` : ''}⭐ *TOTAL:* $${tFinal.toLocaleString()}\n\n${divisor}\n\n👤 *Cliente:* ${nombre}\n📍 ${mesa ? `LOCAL - MESA ${mesa}` : `DIRECCIÓN: ${direccion}`}\n${infoPago}`;
     
-    window.open(`https://wa.me/573148686455?text=${encodeURIComponent(msg)}`);
+    window.open(`https://wa.me/573116624201?text=${encodeURIComponent(msg)}`);
     setAgradecimiento(true);
     setPedido([]);
   };
