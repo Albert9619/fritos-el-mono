@@ -439,18 +439,37 @@ export default function App() {
   
   
 3. Ajustar el detalle para WhatsA
-                       // Ajusta esta línea para que solo muestre huevos o proteína si existen
-if (p.categoria === "Desayunos") {
+                      
+if(p.categoria === "Desayunos") {
   const proteinaOculta = sel.huevos || sel.proteina || ""; // Si no hay nada, queda vacío
-  det += `(${sel.acompanamiento}${proteinaOculta ? ', ' + proteinaOculta : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
-}
-                        <div style={{display: 'flex', gap: '5px'}}>{p.config.jugos.map(j => <button key={j} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, jugo: j}})} className={`opcion-btn ${sel.jugo === j ? 'active' : ''}`}>{j}</button>)}</div>
-                        <label style={{fontSize: '13px', fontWeight: 'bold'}}><input type="checkbox" checked={sel.agrandar || false} onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, agrandar: e.target.checked}})} /> 🥤 Agrandar Jugo (+1.000)</label>
-                    </div>
-                )}
+ // 1. PRIMERO: Creamos la variable 'det' (Bautizamos el carro)
+    let det = "";
 
-               {p.config && p.categoria === "Bebidas" && (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
+    // 2. SEGUNDO: Si es Desayuno, armamos su detalle
+    if (p.categoria === "Desayunos") {
+      const proteinaOculta = sel.huevos || sel.proteina || ""; 
+      // Le sumamos los datos al detalle
+      det = `${sel.sabor || ''} ${sel.tamano?.nombre || ''}`.trim();
+      det += ` (${sel.acompanamiento}${proteinaOculta ? ', ' + proteinaOculta : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
+    } 
+    
+    // 3. TERCERO: Si es una Bebida con config (Tinto, Chocolate, etc.)
+    else if (p.config) {
+      if (p.config.leche && !sel.leche) return alert("Elige si quieres leche");
+      if (p.config.azucar && !sel.azucar) return alert("Elige el nivel de azúcar");
+
+      const partes = [];
+      if (sel.sabor) partes.push(sel.sabor);
+      if (sel.leche) partes.push(sel.leche);
+      if (sel.azucar) partes.push(sel.azucar);
+      if (sel.tamano) partes.push(sel.tamano.nombre);
+      det = partes.join(" - ");
+    } 
+    
+    // 4. CUARTO: Para todo lo demás (Fritos normales)
+    else {
+      det = `${sel.sabor || ''} ${sel.tamano?.nombre || ''} ${sel.extras?.length > 0 ? 'Ex: ' + sel.extras.join(', ') : ''}`.trim();
+    }
     
     {/* SECCIÓN DE LECHE */}
     {p.config.leche && (
