@@ -161,12 +161,30 @@ export default function App() {
     const extrasP = (sel.extras || []).reduce((acc, n) => acc + (extrasMostrar.find(e => e.nombre === n)?.precio || 0), 0);
     const subtotal = (precioB + extrasP + (sel.agrandar ? 1000 : 0)) * cant;
     
-    let det = `${sel.sabor || ''} ${sel.tamano?.nombre || ''} ${sel.extras?.length > 0 ? 'Ex: '+sel.extras.join(', ') : ''}`;
-    if (p.categoria === "Desayunos") det += `(${sel.acompanamiento}, ${sel.huevos || sel.proteina}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
-    let det = ""; if (p.config) {if (p.config.leche && !sel.leche) return alert("Elige si quiere leche"); if (p.config.azucar && !sel.azucar) return alert("Elige nivel de azúcar");}
-    const partes = []; 
-    if (sel.sabor) partes.push(sel.sabor); if (sel.leche) partes.push(sel.leche); if (sel.azucar) partes.push(sel.azucar); if (sel.tamano) partes.push(sel.tamano.nombre); det = partes.join(" - ");
-  }
+   // 1. Declaramos la variable una sola vez con los datos básicos
+    let det = `${sel.sabor || ''} ${sel.tamano?.nombre || ''} ${sel.extras?.length > 0 ? 'Ex: ' + sel.extras.join(', ') : ''}`.trim();
+
+    // 2. Si es desayuno, le sumamos sus detalles específicos
+    if (p.categoria === "Desayunos") {
+      det += ` (${sel.acompanamiento}, ${sel.huevos || sel.proteina}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
+    }
+
+    // 3. Si tiene configuración especial (Bebidas Calientes), validamos y armamos un detalle limpio
+    if (p.config) {
+      // Validaciones para que no se les olvide marcar nada
+      if (p.config.leche && !sel.leche) return alert("Elige si quieres leche");
+      if (p.config.azucar && !sel.azucar) return alert("Elige el nivel de azúcar");
+
+      // Creamos una lista limpia de lo elegido
+      const partes = [];
+      if (sel.sabor) partes.push(sel.sabor);
+      if (sel.leche) partes.push(sel.leche);
+      if (sel.azucar) partes.push(sel.azucar);
+      if (sel.tamano) partes.push(sel.tamano.nombre);
+      
+      // Sobrescribimos 'det' con las opciones unidas por guiones
+      det = partes.join(" - ");
+    }
     setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, cantidad: cant, subtotal, detalle: det.trim() }]);
     setCantidades({ ...cantidades, [p.id]: 1 });
     setSelecciones({ ...selecciones, [p.id]: {} });
@@ -412,37 +430,46 @@ export default function App() {
                     </div>
                 )}
 
-                {p.config && p.categoria === "Bebidas" && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
-                  {p.config.leche && (<div style ={{ display: 'flex', gap: '5px'}}>
-                    {p.config.leche.map(l=> (
-                  <button
-                    key={l} onClick={() =>
-                      setSelecciones({...selecciones,
-                                  [p.id]; {...sel, leche: l}})} 
-                    className={`option-btn ${sel.leche === 
-                                             l? 'active':''}`}>
-                    {l} 
-                  </button>
-                                          ))}
-                  </div>
+               {p.config && p.categoria === "Bebidas" && (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
+    
+    {/* SECCIÓN DE LECHE */}
+    {p.config.leche && (
+      <div style={{ display: 'flex', gap: '5px'}}>
+        {p.config.leche.map(l => (
+          <button
+            key={l} 
+            onClick={() => setSelecciones({
+              ...selecciones,
+              [p.id]: { ...sel, leche: l } // Cambiado ; por :
+            })} 
+            className={`opcion-btn ${sel.leche === l ? 'active' : ''}`}
+          >
+            {l} 
+          </button>
+        ))}
+      </div>
+    )}
 
-                {p.config.azucar && (<div style ={{ display: 'flex', gap: '5px'}}>
-                    {p.config.azucar.map(a=> (
-                  <button
-                    key={a} onClick={() =>
-                      setSelecciones({...selecciones,
-                                  [p.id]; {...sel, azucar: l}})} 
-                    className={`option-btn ${sel.azucar === 
-                                             l? 'active':''}`}>
-                    {l} 
-                  </button>
-                                          ))}
-                  </div>
-                                     )}
-                  </div>
-                )}
-                
+    {/* SECCIÓN DE AZÚCAR */}
+    {p.config.azucar && (
+      <div style={{ display: 'flex', gap: '5px'}}>
+        {p.config.azucar.map(a => (
+          <button
+            key={a} 
+            onClick={() => setSelecciones({
+              ...selecciones,
+              [p.id]: { ...sel, azucar: a } // Cambiado ; por : y usado 'a'
+            })} 
+            className={`opcion-btn ${sel.azucar === a ? 'active' : ''}`} // Usado 'a'
+          >
+            {a} 
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+)}
 
                 <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'15px', marginBottom:'15px', background:'#f8fafc', padding:'10px', borderRadius:'15px'}}>
                    <button onClick={() => setCantidades({...cantidades, [p.id]: Math.max(1, cant - 1)})} style={{width:'40px', height:'40px', borderRadius:'50%', border:'none'}}>-</button>
