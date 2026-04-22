@@ -167,8 +167,15 @@ export default function App() {
 
     // 2. Si es desayuno, le sumamos sus detalles específicos
     if (p.categoria === "Desayunos") {
-      det += ` (${sel.acompanamiento}, ${sel.huevos || sel.proteina}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
-    }
+  // Ahora solo pide proteína o huevos si están definidos en el config del producto
+  const faltaProteina = p.config.proteina && !sel.proteina;
+  const faltaHuevos = p.config.huevos && !sel.huevos;
+
+  if (!sel.acompanamiento || !sel.jugo || faltaProteina || faltaHuevos) {
+    return alert("Completa tu desayuno (Acompañamiento, Huevo/Proteína y Jugo)");
+  }
+}
+   
 
     // 3. Si tiene configuración especial (Bebidas Calientes), validamos y armamos un detalle limpio
     if (p.config) {
@@ -425,7 +432,18 @@ export default function App() {
                 {p.categoria === "Desayunos" && (
                     <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
                         <div style={{display: 'flex', gap: '5px'}}>{p.config.acompanamiento.map(a => <button key={a} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, acompanamiento: a}})} className={`opcion-btn ${sel.acompanamiento === a ? 'active' : ''}`}>{a}</button>)}</div>
-                        <div style={{display: 'flex', gap: '5px'}}>{(p.config.huevos || p.config.proteina).map(op => <button key={op} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, [p.id === "d1" ? "huevos" : "proteina"]: op}})} className={`opcion-btn ${ (sel.huevos === op || sel.proteina === op) ? 'active' : ''}`}>{op}</button>)}</div>
+                      <div style={{display: 'flex', gap: '5px'}}>
+  {p.config.huevos && p.config.huevos.map(op => (
+    <button key={op} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, huevos: op}})} className={`opcion-btn ${sel.huevos === op ? 'active' : ''}`}>{op}</button>
+  ))}
+  
+  
+3. Ajustar el detalle para WhatsA
+                       // Ajusta esta línea para que solo muestre huevos o proteína si existen
+if (p.categoria === "Desayunos") {
+  const proteinaOculta = sel.huevos || sel.proteina || ""; // Si no hay nada, queda vacío
+  det += `(${sel.acompanamiento}${proteinaOculta ? ', ' + proteinaOculta : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
+}
                         <div style={{display: 'flex', gap: '5px'}}>{p.config.jugos.map(j => <button key={j} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, jugo: j}})} className={`opcion-btn ${sel.jugo === j ? 'active' : ''}`}>{j}</button>)}</div>
                         <label style={{fontSize: '13px', fontWeight: 'bold'}}><input type="checkbox" checked={sel.agrandar || false} onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, agrandar: e.target.checked}})} /> 🥤 Agrandar Jugo (+1.000)</label>
                     </div>
