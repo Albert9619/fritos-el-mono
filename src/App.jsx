@@ -140,65 +140,76 @@ export default function App() {
     try { await setDoc(doc(db, col, id), datos, { merge: true }); } 
     catch (e) { console.error(e); }
   };
-
   const agregarAlCarrito = (p) => {
     const sel = selecciones[p.id] || {};
     const cant = cantidades[p.id] || 1;
+
     if (p.disponible === false) return alert("Agotado");
-    if (p.opciones && !sel.sabor && p.categoria === "Fritos") return alert("Elige un sabor antes de añadir");
-    if (p.sabores && !sel.sabor) return alert("Elige una opción antes de añadir");
-    if (p.tamanos && p.tamanos.length > 0 && !sel.tamano) return alert("Elige el tamaño antes de añadir");
-    if (p.categoria === "Desayunos") {
-      if (!sel.acompanamiento || !sel.jugo || (p.id === "d1" && !sel.huevos) || (p.id === "d2" && !sel.proteina)) return alert("Completa tu desayuno");
+
+    // 1. VALIDACIONES DE SELECCIÓN
+    if (p.categoria === "Fritos" && p.opciones && !sel.sabor) {
+      return alert("Elige un sabor antes de añadir");
     }
-    
-    const historial = JSON.parse(localStorage.getItem("mono_favoritos") || "{}");
-    if (!historial[p.id]) historial[p.id] = {};
-    if (sel.sabor) historial[p.id][sel.sabor] = (historial[p.id][sel.sabor] || 0) + 1;
-    localStorage.setItem("mono_favoritos", JSON.stringify(historial));
 
-    let precioB = p.precio || 0;
-    if (sel.tamano) precioB = sel.tamano.precio || 0;
-    const extrasP = (sel.extras || []).reduce((acc, n) => acc + (extrasMostrar.find(e => e.nombre === n)?.precio || 0), 0);
-    const subtotal = (precioB + extrasP + (sel.agrandar ? 1000 : 0)) * cant;
-    
-   // 1. Declaramos la variable una sola vez con los datos básicos
-    let det = `${sel.sabor || ''} ${sel.tamano?.nombre || ''} ${sel.extras?.length > 0 ? 'Ex: ' + sel.extras.join(', ') : ''}`.trim();
-
-    // 2. Si es desayuno, le sumamos sus detalles específicos
     if (p.categoria === "Desayunos") {
-  // Ahora solo pide proteína o huevos si están definidos en el config del producto
-  const faltaProteina = p.config.proteina && !sel.proteina;
-  const faltaHuevos = p.config.huevos && !sel.huevos;
+      // Solo pide proteína o huevos si el producto los tiene en su config
+      const faltaProteina = p.config?.proteina && !sel.proteina;
+      const faltaHuevos = p.config?.huevos && !sel.huevos;
+      if (!sel.acompanamiento || !sel.jugo || faltaProteina || faltaHuevos) {
+        return alert("Completa tu desayuno (Acompañamiento, Huevo/Proteína y Jugo)");
+      }
+    }
 
-  if (!sel.acompanamiento || !sel.jugo || faltaProteina || faltaHuevos) {
-    return alert("Completa tu desayuno (Acompañamiento, Huevo/Proteína y Jugo)");
-  }
-}
-   
-
-    // 3. Si tiene configuración especial (Bebidas Calientes), validamos y armamos un detalle limpio
-    if (p.config) {
-      // Validaciones para que no se les olvide marcar nada
+    if (p.categoria === "Bebidas" && p.config) {
       if (p.config.leche && !sel.leche) return alert("Elige si quieres leche");
       if (p.config.azucar && !sel.azucar) return alert("Elige el nivel de azúcar");
+    }
 
-      // Creamos una lista limpia de lo elegido
+    // 2. CÁLCULO DE PRECIOS
+    let precioB = p.precio || 0;
+    if (sel.tamano) precioB = sel.tamano.precio || 0;
+    
+    const extrasP = (sel.extras || []).reduce((acc, n) => {
+      const exEncontrado = extrasMostrar.find(e => e.nombre === n);
+      return acc + (exEncontrado ? exEncontrado.precio : 0);
+    }, 0);
+
+    const subtotal = (precioB + extrasP + (sel.agrandar ? 1000 : 0)) * cant;
+
+    // 3. CONSTRUCCIÓN DEL DETALLE (Aquí estaba el error)
+    let textoDetalle = "";
+
+    if (p.categoria === "Desayunos") {
+      const prote = sel.huevos || sel.proteina || "";
+      textoDetalle = `${sel.acompanamiento}${prote ? ', ' + prote : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''}`;
+    } else if (p.config && p.categoria === "Bebidas") {
       const partes = [];
       if (sel.sabor) partes.push(sel.sabor);
       if (sel.leche) partes.push(sel.leche);
       if (sel.azucar) partes.push(sel.azucar);
       if (sel.tamano) partes.push(sel.tamano.nombre);
-      
-      // Sobrescribimos 'det' con las opciones unidas por guiones
-      det = partes.join(" - ");
+      textoDetalle = partes.join(" - ");
+    } else {
+      textoDetalle = `${sel.sabor || ''} ${sel.tamano?.nombre || ''} ${sel.extras?.length > 0 ? 'Ex: '+sel.extras.join(', ') : ''}`.trim();
     }
-    setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, cantidad: cant, subtotal, detalle: det.trim() }]);
+
+    // 4. GUARDAR EN EL PEDIDO
+    setPedido([...pedido, { 
+      idUnico: Date.now(), 
+      nombre: p.nombre, 
+      cantidad: cant, 
+      subtotal, 
+      detalle: textoDetalle 
+    }]);
+
+    // Limpiar selecciones para el siguiente
     setCantidades({ ...cantidades, [p.id]: 1 });
     setSelecciones({ ...selecciones, [p.id]: {} });
-    setNotificacion("¡Añadido! 🥟");
+    setNotificacion("¡Añadido! 🛒");
     setTimeout(() => setNotificacion(""), 2000);
   };
+
+  
 
   const predecirSeleccion = (p) => {
     let saborElegido = null;
