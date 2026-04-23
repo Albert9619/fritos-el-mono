@@ -472,19 +472,33 @@ export default function App() {
 
 3. Ajustar el detalle para WhatsA
                       
-if(p.categoria === "Desayunos") {
-  const proteinaOculta = sel.huevos || sel.proteina || ""; // Si no hay nada, queda vacío
- // 1. PRIMERO: Creamos la variable 'det' (Bautizamos el carro)
-    let det = "";
-
-    // 2. SEGUNDO: Si es Desayuno, armamos su detalle
-    if (p.categoria === "Desayunos") {
-      const proteinaOculta = sel.huevos || sel.proteina || ""; 
-      // Le sumamos los datos al detalle
-      det = `${sel.sabor || ''} ${sel.tamano?.nombre || ''}`.trim();
-      det += ` (${sel.acompanamiento}${proteinaOculta ? ', ' + proteinaOculta : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
-    } 
+{p.categoria === "Desayunos" && p.config && (
+  <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
     
+    {/* Acompañamiento (Arepa/Patacón) */}
+    <div style={{display: 'flex', gap: '5px'}}>
+      {p.config.acompanamiento && p.config.acompanamiento.map(a => (
+        <button key={a} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, acompanamiento: a}})} className={`opcion-btn ${sel.acompanamiento === a ? 'active' : ''}`}>{a}</button>
+      ))}
+    </div>
+
+    {/* Huevos (Solo se muestra si el producto d1 los tiene) */}
+    {p.config.huevos && (
+      <div style={{display: 'flex', gap: '5px'}}>
+        {p.config.huevos.map(h => (
+          <button key={h} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, huevos: h}})} className={`opcion-btn ${sel.huevos === h ? 'active' : ''}`}>{h}</button>
+        ))}
+      </div>
+    )}
+
+    {/* Jugos */}
+    <div style={{display: 'flex', gap: '5px'}}>
+      {p.config.jugos && p.config.jugos.map(j => (
+        <button key={j} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, jugo: j}})} className={`opcion-btn ${sel.jugo === j ? 'active' : ''}`}>{j}</button>
+      ))}
+    </div>
+
+
     // 3. TERCERO: Si es una Bebida con config (Tinto, Chocolate, etc.)
     else if (p.config) {
       if (p.config.leche && !sel.leche) return alert("Elige si quieres leche");
