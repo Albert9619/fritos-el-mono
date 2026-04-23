@@ -180,19 +180,16 @@ export default function App() {
     let textoDetalle = "";
 
     if (p.categoria === "Desayunos") {
-      const prote = sel.huevos || sel.proteina || "";
-      textoDetalle = `${sel.acompanamiento}${prote ? ', ' + prote : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''}`;
-    } else if (p.config && p.categoria === "Bebidas") {
-      const partes = [];
-      if (sel.sabor) partes.push(sel.sabor);
-      if (sel.leche) partes.push(sel.leche);
-      if (sel.azucar) partes.push(sel.azucar);
-      if (sel.tamano) partes.push(sel.tamano.nombre);
-      textoDetalle = partes.join(" - ");
-    } else {
-      textoDetalle = `${sel.sabor || ''} ${sel.tamano?.nombre || ''} ${sel.extras?.length > 0 ? 'Ex: '+sel.extras.join(', ') : ''}`.trim();
-    }
+      // Solo sumamos huevo si el cliente eligió uno (para el d1)
+      const extraHuevo = sel.huevos ? `, ${sel.huevos}` : "";
+      
+      // Armamos el detalle sin pedir proteína obligatoria
+      textoDetalle = `(${sel.acompanamiento}${extraHuevo}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
+    } 
+    // ... aquí siguen los otros else if (p.config) etc.
 
+    
+    
     // 4. GUARDAR EN EL PEDIDO
     setPedido([...pedido, { 
       idUnico: Date.now(), 
@@ -439,16 +436,40 @@ export default function App() {
                      ))}
                   </div>
                 )}
+                {p.categoria === "Desayunos" && p.config && (
+  <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
+    
+    {/* Fila 1: Acompañamiento (Arepa/Patacón) */}
+    <div style={{display: 'flex', gap: '5px'}}>
+      {p.config.acompanamiento && p.config.acompanamiento.map(a => (
+        <button key={a} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, acompanamiento: a}})} className={`opcion-btn ${sel.acompanamiento === a ? 'active' : ''}`}>{a}</button>
+      ))}
+    </div>
 
-                {p.categoria === "Desayunos" && (
-                    <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
-                        <div style={{display: 'flex', gap: '5px'}}>{p.config.acompanamiento.map(a => <button key={a} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, acompanamiento: a}})} className={`opcion-btn ${sel.acompanamiento === a ? 'active' : ''}`}>{a}</button>)}</div>
-                      <div style={{display: 'flex', gap: '5px'}}>
-  {p.config.huevos && p.config.huevos.map(op => (
-    <button key={op} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, huevos: op}})} className={`opcion-btn ${sel.huevos === op ? 'active' : ''}`}>{op}</button>
-  ))}
-  
-  
+    {/* Fila 2: Huevos (Solo si el producto d1 los tiene) */}
+    {p.config.huevos && (
+      <div style={{display: 'flex', gap: '5px'}}>
+        {p.config.huevos.map(h => (
+          <button key={h} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, huevos: h}})} className={`opcion-btn ${sel.huevos === h ? 'active' : ''}`}>{h}</button>
+        ))}
+      </div>
+    )}
+
+    {/* Fila 3: Jugos */}
+    <div style={{display: 'flex', gap: '5px'}}>
+      {p.config.jugos && p.config.jugos.map(j => (
+        <button key={j} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, jugo: j}})} className={`opcion-btn ${sel.jugo === j ? 'active' : ''}`}>{j}</button>
+      ))}
+    </div>
+
+    {/* Opción de Agrandar */}
+    <label style={{fontSize: '13px', fontWeight: 'bold'}}>
+      <input type="checkbox" checked={sel.agrandar || false} onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, agrandar: e.target.checked}})} /> 🥤 Agrandar Jugo (+1.000)
+    </label>
+  </div>
+)}
+
+
 3. Ajustar el detalle para WhatsA
                       
 if(p.categoria === "Desayunos") {
