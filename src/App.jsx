@@ -515,7 +515,12 @@ export default function App() {
     {(p.opciones || p.sabores).filter(o => o.disponible).map(o => (
       <button 
         key={o.nombre} 
-        onClick={() => setSelecciones(prev => ({ ...prev, [p.id]: { ...sel, sabor: o.nombre } }))} 
+         // FORMA CORRECTA PARA TUS BOTONES:
+onClick={() => setSelecciones(prev => ({ 
+  ...prev, 
+  [p.id]: { ...(prev[p.id] || {}), sabor: o.nombre } 
+}))}
+
         className={`opcion-btn ${sel.sabor === o.nombre ? 'active' : ''}`}
       >
         {o.nombre}
