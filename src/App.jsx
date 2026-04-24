@@ -98,7 +98,7 @@ export default function App() {
       const hora = ahora.getHours();
       const minutos = ahora.getMinutes();
       const tiempoActualEnMinutos = (hora * 60) + minutos;
-      const estaEnHorario = tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 1200;
+      const estaEnHorario = tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 1320;
       setTiendaAbierta(estaEnHorario);
     };
     verificarEstado();
