@@ -455,7 +455,7 @@ export default function App() {
 
       {/* 📂 SELECTOR DE CATEGORÍAS */}
       <div className="no-scrollbar" style={{ display: 'flex', gap: '12px', marginBottom: '40px', overflowX: 'auto', padding: '0 20px' }}>
-        {["Fritos", "Desayunos", "Arroces", "Bebidas"].map(cat => (
+        {["Fritos", "Bebidas", "Arroces", "Desayunos"].map(cat => (
           <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '14px 28px', borderRadius: '30px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_TEXTO, fontWeight: 'bold', flexShrink: 0, boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
             {cat}
           </button>
