@@ -151,19 +151,22 @@ export default function App() {
       return alert("Elige un sabor antes de añadir");
     }
 
-    if (p.categoria === "Desayunos") {
-      // Solo pide proteína o huevos si el producto los tiene en su config
-      const faltaProteina = p.config?.proteina && !sel.proteina;
-      const faltaHuevos = p.config?.huevos && !sel.huevos;
-      if (!sel.acompanamiento || !sel.jugo || faltaProteina || faltaHuevos) {
-        return alert("Completa tu desayuno (Acompañamiento, Huevo/Proteína y Jugo)");
-      }
+    // --- 🛑 ZONA DE ALERTAS (VALIDACIONES) ---
+  
+  // Si es Desayuno
+  if (p.categoria === "Desayunos") {
+    const faltaProteina = p.config?.proteina && !sel.proteina;
+    const faltaHuevos = p.config?.huevos && !sel.huevos;
+    if (!sel.acompanamiento || !sel.jugo || faltaProteina || faltaHuevos) {
+      return alert("Completa tu desayuno (Acompañamiento, Huevo/Proteína y Jugo)");
     }
+  }
 
-    if (p.categoria === "Bebidas" && p.config) {
-      if (p.config.leche && !sel.leche) return alert("Elige si quieres leche");
-      if (p.config.azucar && !sel.azucar) return alert("Elige el nivel de azúcar");
-    }
+  // Si es Bebida (Tinto, Chocolate, etc.)
+  else if (p.config && p.categoria === "Bebidas") {
+    if (p.config.leche && !sel.leche) return alert("Elige si quieres leche");
+    if (p.config.azucar && !sel.azucar) return alert("Elige el nivel de azúcar");
+  }
 
     // 2. CÁLCULO DE PRECIOS
     let precioB = p.precio || 0;
@@ -424,72 +427,62 @@ export default function App() {
                   </div>
                 )}
 
-                {p.categoria === "Arroces" && (
-                  <div style={{background: '#fef3c7', padding: '12px', borderRadius: '15px', marginBottom: '10px'}}>
-                     {extrasMostrar.map(e => (
-                       <label key={e.id} style={{display:'block', fontSize:'14px', marginBottom:'5px', opacity: e.disponible ? 1 : 0.3, fontWeight:'bold'}}>
-                         <input type="checkbox" checked={sel.extras?.includes(e.nombre) || false} disabled={!e.disponible} onChange={(ev) => {
-                           const ex = sel.extras || [];
-                           setSelecciones({...selecciones, [p.id]: {...sel, extras: ev.target.checked ? [...ex, e.nombre] : ex.filter(x => x !== e.nombre)}});
-                         }} /> {e.nombre} {e.precio > 0 && `(+$${e.precio})`}
-                       </label>
-                     ))}
-                  </div>
-                )}
-                {p.categoria === "Desayunos" && p.config && (
-  <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
-    
-    {/* Fila 1: Acompañamiento (Arepa/Patacón) */}
-    <div style={{display: 'flex', gap: '5px'}}>
-      {p.config.acompanamiento && p.config.acompanamiento.map(a => (
-        <button key={a} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, acompanamiento: a}})} className={`opcion-btn ${sel.acompanamiento === a ? 'active' : ''}`}>{a}</button>
-      ))}
-    </div>
-
-    {/* Fila 2: Huevos (Solo si el producto d1 los tiene) */}
-    {p.config.huevos && (
-      <div style={{display: 'flex', gap: '5px'}}>
-        {p.config.huevos.map(h => (
-          <button key={h} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, huevos: h}})} className={`opcion-btn ${sel.huevos === h ? 'active' : ''}`}>{h}</button>
+               {p.config && p.categoria === "Bebidas" && (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    {p.config.leche && (
+      <div style={{ display: 'flex', gap: '5px' }}>
+        {p.config.leche.map(l => (
+          <button key={l} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, leche: l}})} className={`opcion-btn ${sel.leche === l ? 'active' : ''}`}>{l}</button>
         ))}
       </div>
     )}
-
-    {/* Fila 3: Jugos */}
-    <div style={{display: 'flex', gap: '5px'}}>
-      {p.config.jugos && p.config.jugos.map(j => (
-        <button key={j} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, jugo: j}})} className={`opcion-btn ${sel.jugo === j ? 'active' : ''}`}>{j}</button>
-      ))}
-    </div>
-
-    {/* Opción de Agrandar */}
-    <label style={{fontSize: '13px', fontWeight: 'bold'}}>
-      <input type="checkbox" checked={sel.agrandar || false} onChange={(e) => setSelecciones({...selecciones, [p.id]: {...sel, agrandar: e.target.checked}})} /> 🥤 Agrandar Jugo (+1.000)
-    </label>
+    {p.config.azucar && (
+      <div style={{ display: 'flex', gap: '5px' }}>
+        {p.config.azucar.map(a => (
+          <button key={a} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, azucar: a}})} className={`opcion-btn ${sel.azucar === a ? 'active' : ''}`}>{a}</button>
+        ))}
+      </div>
+    )}
   </div>
 )}
 
-
 3. Ajustar el detalle para WhatsA
-                      
-{p.categoria === "Desayunos" && p.config && (
-  <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px'}}>
-    
-    {/* Acompañamiento (Arepa/Patacón) */}
-    <div style={{display: 'flex', gap: '5px'}}>
-      {p.config.acompanamiento && p.config.acompanamiento.map(a => (
-        <button key={a} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, acompanamiento: a}})} className={`opcion-btn ${sel.acompanamiento === a ? 'active' : ''}`}>{a}</button>
-      ))}
-    </div>
+const agregarAlCarrito = (p) => {
+  const sel = selecciones[p.id] || {};
+  const cant = cantidades[p.id] || 1;
 
-    {/* Huevos (Solo se muestra si el producto d1 los tiene) */}
-    {p.config.huevos && (
-      <div style={{display: 'flex', gap: '5px'}}>
-        {p.config.huevos.map(h => (
-          <button key={h} onClick={() => setSelecciones({...selecciones, [p.id]: {...sel, huevos: h}})} className={`opcion-btn ${sel.huevos === h ? 'active' : ''}`}>{h}</button>
-        ))}
-      </div>
-    )}
+  // --- 🛑 ZONA DE ALERTAS (VALIDACIONES) ---
+  
+  // Si es Desayuno
+  if (p.categoria === "Desayunos") {
+    const faltaProteina = p.config?.proteina && !sel.proteina;
+    const faltaHuevos = p.config?.huevos && !sel.huevos;
+    if (!sel.acompanamiento || !sel.jugo || faltaProteina || faltaHuevos) {
+      return alert("Completa tu desayuno (Acompañamiento, Huevo/Proteína y Jugo)");
+    }
+  }
+
+  // Si es Bebida (Tinto, Chocolate, etc.)
+  else if (p.config && p.categoria === "Bebidas") {
+    if (p.config.leche && !sel.leche) return alert("Elige si quieres leche");
+    if (p.config.azucar && !sel.azucar) return alert("Elige el nivel de azúcar");
+  }
+
+  // --- 📝 ZONA DE WHATSAPP (CONSTRUIR EL DETALLE) ---
+  let det = "";
+  if (p.categoria === "Desayunos") {
+    const prote = sel.huevos || sel.proteina || "";
+    det = `(${sel.acompanamiento}${prote ? ', ' + prote : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
+  } else if (p.config) {
+    const partes = [sel.sabor, sel.leche, sel.azucar].filter(Boolean);
+    det = partes.join(" - ");
+  } else {
+    det = `${sel.sabor || ''}`.trim();
+  }
+
+  // Guardar en el pedido...
+  setPedido([...pedido, { idUnico: Date.now(), nombre: p.nombre, cantidad: cant, detalle: det }]);
+};
 
     {/* Jugos */}
     <div style={{display: 'flex', gap: '5px'}}>
