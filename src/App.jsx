@@ -507,6 +507,20 @@ export default function App() {
                   ))}
                 </div>
               )}
+              {/* 1. SABORES (Para Fritos, Jugos y otros) */}
+{(p.opciones || p.sabores) && !p.config && (
+  <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
+    {(p.opciones || p.sabores).filter(o => o.disponible).map(o => (
+      <button 
+        key={o.nombre} 
+        onClick={() => setSelecciones(prev => ({ ...prev, [p.id]: { ...sel, sabor: o.nombre } }))} 
+        className={`opcion-btn ${sel.sabor === o.nombre ? 'active' : ''}`}
+      >
+        {o.nombre}
+      </button>
+    ))}
+  </div>
+)}
 
               {/* 3. DESAYUNOS */}
               {p.categoria === "Desayunos" && p.config && (
