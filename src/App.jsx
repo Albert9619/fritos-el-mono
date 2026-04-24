@@ -167,79 +167,92 @@ export default function App() {
     return { sabor: saborElegido, tamano: tamanoElegido };
   };
 
-  // 🛒 AGREGAR AL CARRITO — función única y completa
+  // 🛒 AGREGAR AL CARRITO — Versión Blindada
   const agregarAlCarrito = (p) => {
+    // 1. Obtenemos los datos actuales de forma segura
     const sel = selecciones[p.id] || {};
     const cant = cantidades[p.id] || 1;
 
-    if (p.disponible === false) return alert("Agotado");
+    if (p.disponible === false) return alert("Agotado 🚫");
 
     // --- 🛑 VALIDACIONES ---
+    // Para Fritos
     if (p.categoria === "Fritos" && p.opciones && !sel.sabor) {
-      return alert("Elige un sabor antes de añadir");
+      return alert("Por favor, elige el sabor (Carne, Pollo, etc.)");
     }
+    
+    // Para Desayunos
     if (p.categoria === "Desayunos") {
       if (!sel.acompanamiento || !sel.jugo) {
-        return alert("Completa tu desayuno (Acompañamiento y Jugo)");
+        return alert("Completa tu desayuno: falta el acompañamiento o el jugo");
       }
     }
-    if (p.config && p.categoria === "Bebidas") {
-      if (p.config.leche && !sel.leche) return alert("Elige si quieres leche");
-      if (p.config.azucar && !sel.azucar) return alert("Elige el nivel de azúcar");
-      if (p.config.sabores && !sel.sabor) return alert("Elige un sabor");
+
+    // Para Bebidas (Incluyendo Jugos y calientes)
+    if (p.categoria === "Bebidas") {
+      if (p.config?.leche && !sel.leche) return alert("Elige si quieres con leche");
+      if (p.config?.azucar && !sel.azucar) return alert("Elige el nivel de azúcar");
+      // Si el jugo tiene sabores (Avena/Maracuyá), obligamos a elegir
+      if ((p.sabores || p.config?.sabores) && !sel.sabor) return alert("Elige el sabor de tu jugo");
+      // Si tiene tamaños (Gaseosas/Jugos), obligamos a elegir
+      if (p.tamanos && !sel.tamano) return alert("Elige el tamaño");
     }
 
-    // --- 💰 CÁLCULO DE PRECIO ---
+    // --- 💰 CÁLCULO DE PRECIO SEGURO ---
     let precioBase = p.precio || 0;
     if (sel.tamano) precioBase = sel.tamano.precio || 0;
+    
     const costoExtras = (sel.extras || []).reduce((acc, n) => {
-      return acc + (extrasMostrar.find(e => e.nombre === n)?.precio || 0);
+      const exEncontrado = extrasMostrar.find(e => e.nombre === n);
+      return acc + (exEncontrado?.precio || 0);
     }, 0);
+
     const subtotal = (precioBase + costoExtras + (sel.agrandar ? 1000 : 0)) * cant;
 
-    // --- 📝 CONSTRUCCIÓN DEL DETALLE ---
+    // --- 📝 CONSTRUCCIÓN DEL DETALLE PARA WHATSAPP ---
     let detalle = "";
     if (p.categoria === "Desayunos") {
       const prote = sel.huevos || "";
       detalle = `(${sel.acompanamiento}${prote ? ', ' + prote : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
-    } else if (p.config && p.categoria === "Bebidas") {
+    } else {
+      // Lógica universal para Fritos, Arroces y Bebidas
       const partes = [];
-      if (sel.sabor)  partes.push(sel.sabor);
-      if (sel.leche)  partes.push(sel.leche);
+      if (sel.sabor) partes.push(sel.sabor);
+      if (sel.leche) partes.push(sel.leche);
       if (sel.azucar) partes.push(sel.azucar);
       if (sel.tamano) partes.push(sel.tamano.nombre);
-      detalle = partes.join(" - ");
-    } else {
-      const partes = [];
-      if (sel.sabor)              partes.push(sel.sabor);
-      if (sel.tamano)             partes.push(sel.tamano.nombre);
-      if (sel.extras?.length > 0) partes.push(`Ex: ${sel.extras.join(', ')}`);
-      detalle = partes.join(" ").trim();
+      if (sel.extras?.length > 0) partes.push(`Extras: ${sel.extras.join(', ')}`);
+      detalle = partes.join(" - ").trim();
     }
 
-    // 🧠 Guardar en historial para predicción
+    // 🧠 Guardar en historial para la predicción del Mono
     if (sel.sabor) {
-      const historial = JSON.parse(localStorage.getItem("mono_favoritos") || "{}");
-      if (!historial[p.id]) historial[p.id] = {};
-      historial[p.id][sel.sabor] = (historial[p.id][sel.sabor] || 0) + 1;
-      localStorage.setItem("mono_favoritos", JSON.stringify(historial));
+      try {
+        const historial = JSON.parse(localStorage.getItem("mono_favoritos") || "{}");
+        if (!historial[p.id]) historial[p.id] = {};
+        historial[p.id][sel.sabor] = (historial[p.id][sel.sabor] || 0) + 1;
+        localStorage.setItem("mono_favoritos", JSON.stringify(historial));
+      } catch(e) { console.log("Error en historial"); }
     }
 
     // --- 🛒 GUARDAR EN EL PEDIDO ---
-    setPedido(prev => [...prev, {
+    const nuevoItem = {
       idUnico: Date.now() + Math.random(),
       nombre: p.nombre,
       cantidad: cant,
       subtotal,
       detalle
-    }]);
+    };
 
-    // Limpiar selecciones
+    setPedido(prev => [...prev, nuevoItem]);
+
+    // --- ✨ LIMPIEZA POST-COMPRA ---
     setCantidades(prev => ({ ...prev, [p.id]: 1 }));
     setSelecciones(prev => ({ ...prev, [p.id]: {} }));
-    setNotificacion("¡Añadido! 🛒");
+    setNotificacion("¡Añadido al carrito! 🛒");
     setTimeout(() => setNotificacion(""), 2000);
   };
+
 
   const eliminarDelCarrito = (idUnico) => setPedido(prev => prev.filter(i => i.idUnico !== idUnico));
   const vaciarCarrito = () => {
