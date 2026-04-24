@@ -100,7 +100,7 @@ export default function App() {
       }
       const ahora = new Date();
       const tiempoActualEnMinutos = ahora.getHours() * 60 + ahora.getMinutes();
-      setTiendaAbierta(tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 1440);
+      setTiendaAbierta(tiempoActualEnMinutos >= 360 && tiempoActualEnMinutos < 1430);
     };
     verificarEstado();
     const t = setInterval(verificarEstado, 30000);
