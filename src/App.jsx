@@ -486,17 +486,6 @@ export default function App() {
               <h3 style={{ margin: '15px 0 5px 0', fontWeight: '800', fontSize: '18px', minHeight: '44px', display: 'flex', alignItems: 'center' }}>{p.nombre}</h3>
               <p style={{ color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin: '0 0 15px 0' }}>${total.toLocaleString()}</p>
 
-              {/* 1. SABORES PARA FRITOS */}
-              {(p.opciones || p.sabores) && p.categoria === "Fritos" && (
-                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                  {(p.opciones || p.sabores).filter(o => o.disponible).map(o => (
-                    <button key={o.nombre} onClick={() => setSelecciones(prev => ({ ...prev, [p.id]: { ...sel, sabor: o.nombre } }))} className={`opcion-btn ${sel.sabor === o.nombre ? 'active' : ''}`}>
-                      {o.nombre}
-                    </button>
-                  ))}
-                </div>
-              )}
-
               {/* 2. TAMAÑOS (Gaseosas, Jugos) */}
               {p.tamanos && p.tamanos.length > 0 && (
                 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
