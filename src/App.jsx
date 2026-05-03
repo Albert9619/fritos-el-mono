@@ -33,7 +33,11 @@ const productosBase = [
   { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/cocacola.jpg", tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }, { nombre: "Familiar 1.5L", precio: 6500, disponible: true }] },
   { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/malta.jpg", tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }] },
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", disponible: true, imagen: "/agua.jpg" },
-  { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", disponible: true, imagen: "/arroz-pollo.jpg" }
+  { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", disponible: true, imagen: "/arroz-pollo.jpg" },
+  { id: "por1", nombre: "Porción de Queso", precio: 1000, categoria: "Porciones", disponible: true, imagen: "/palito-queso.jpg" },
+  { id: "por2", nombre: "Porción de Patacones", precio: 3000, categoria: "Porciones", disponible: true, imagen: "/empanada.jpg" },
+  { id: "por3", nombre: "Porción de Salchichón", precio: 2000, categoria: "Porciones", disponible: true, imagen: "/desayuno-carne.jpg" },
+  { id: "por4", nombre: "Porción de Huevo Cocido", precio: 1000, categoria: "Porciones", disponible: true, imagen: "/desayuno-carne.jpg" }
 ];
 
 const extrasArrozBase = [
@@ -622,6 +626,28 @@ export default function App() {
                 );
               })}
             </div>
+
+            {/* ── PORCIONES ── */}
+            <div style={{ marginTop: '30px' }}>
+              <h3 style={{ color: '#94a3b8', marginBottom: '15px' }}>Porciones</h3>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {productosMostrar.filter(p => p.categoria === "Porciones").map(p => (
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#334155', padding: '12px 16px', borderRadius: '14px' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.nombre}</span>
+                    <MiniSwitch
+                      activo={p.disponible !== false}
+                      onClick={() => guardarCambio("productos", p.id, { disponible: !(p.disponible !== false) })}
+                    />
+                    <PrecioInput
+                      keyId={`porcion-${p.id}`}
+                      valorActual={p.precio}
+                      onGuardar={(nuevo) => guardarCambio("productos", p.id, { precio: nuevo })}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
       )}
@@ -639,7 +665,7 @@ export default function App() {
 
       {/* 📂 SELECTOR DE CATEGORÍAS */}
       <div className="no-scrollbar" style={{ display: 'flex', gap: '12px', marginBottom: '40px', overflowX: 'auto', padding: '0 20px' }}>
-        {["Fritos", "Bebidas", "Arroces", "Desayunos"].map(cat => (
+        {["Fritos", "Bebidas", "Arroces", "Desayunos", "Porciones"].map(cat => (
           <button key={cat} onClick={() => setCategoriaActiva(cat)} style={{ padding: '14px 28px', borderRadius: '30px', border: 'none', backgroundColor: categoriaActiva === cat ? MONO_NARANJA : 'white', color: categoriaActiva === cat ? 'white' : MONO_TEXTO, fontWeight: 'bold', flexShrink: 0, boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
             {cat}
           </button>
