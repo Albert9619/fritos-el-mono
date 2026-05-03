@@ -77,6 +77,8 @@ export default function App() {
   const [notas, setNotas] = useState("");
   const [agradecimiento, setAgradecimiento] = useState(false);
   const [mesa, setMesa] = useState(null);
+  // 🆕 Estado para precios editados en el panel admin
+  const [preciosEditados, setPreciosEditados] = useState({});
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
@@ -169,39 +171,29 @@ export default function App() {
 
   // 🛒 AGREGAR AL CARRITO — Versión Blindada
   const agregarAlCarrito = (p) => {
-    // 1. Obtenemos los datos actuales de forma segura
     const sel = selecciones[p.id] || {};
     const cant = cantidades[p.id] || 1;
 
     if (p.disponible === false) return alert("Agotado 🚫");
 
-    // --- 🛑 VALIDACIONES ---
-    // Para Fritos
     if (p.categoria === "Fritos" && p.opciones && !sel.sabor) {
       return alert("Por favor, elige el sabor (Carne, Pollo, etc.)");
     }
-    
-    // Para Desayunos
     if (p.categoria === "Desayunos") {
       if (!sel.acompanamiento || !sel.jugo) {
         return alert("Completa tu desayuno: falta el acompañamiento o el jugo");
       }
     }
-
-    // Para Bebidas (Incluyendo Jugos y calientes)
     if (p.categoria === "Bebidas") {
       if (p.config?.leche && !sel.leche) return alert("Elige si quieres con leche");
       if (p.config?.azucar && !sel.azucar) return alert("Elige el nivel de azúcar");
-      // Si el jugo tiene sabores (Avena/Maracuyá), obligamos a elegir
       if ((p.sabores || p.config?.sabores) && !sel.sabor) return alert("Elige el sabor de tu jugo");
-      // Si tiene tamaños (Gaseosas/Jugos), obligamos a elegir
       if (p.tamanos && !sel.tamano) return alert("Elige el tamaño");
     }
 
-    // --- 💰 CÁLCULO DE PRECIO SEGURO ---
     let precioBase = p.precio || 0;
     if (sel.tamano) precioBase = sel.tamano.precio || 0;
-    
+
     const costoExtras = (sel.extras || []).reduce((acc, n) => {
       const exEncontrado = extrasMostrar.find(e => e.nombre === n);
       return acc + (exEncontrado?.precio || 0);
@@ -209,13 +201,11 @@ export default function App() {
 
     const subtotal = (precioBase + costoExtras + (sel.agrandar ? 1000 : 0)) * cant;
 
-    // --- 📝 CONSTRUCCIÓN DEL DETALLE PARA WHATSAPP ---
     let detalle = "";
     if (p.categoria === "Desayunos") {
       const prote = sel.huevos || "";
       detalle = `(${sel.acompanamiento}${prote ? ', ' + prote : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
     } else {
-      // Lógica universal para Fritos, Arroces y Bebidas
       const partes = [];
       if (sel.sabor) partes.push(sel.sabor);
       if (sel.leche) partes.push(sel.leche);
@@ -225,7 +215,6 @@ export default function App() {
       detalle = partes.join(" - ").trim();
     }
 
-    // 🧠 Guardar en historial para la predicción del Mono
     if (sel.sabor) {
       try {
         const historial = JSON.parse(localStorage.getItem("mono_favoritos") || "{}");
@@ -235,7 +224,6 @@ export default function App() {
       } catch(e) { console.log("Error en historial"); }
     }
 
-    // --- 🛒 GUARDAR EN EL PEDIDO ---
     const nuevoItem = {
       idUnico: Date.now() + Math.random(),
       nombre: p.nombre,
@@ -245,14 +233,11 @@ export default function App() {
     };
 
     setPedido(prev => [...prev, nuevoItem]);
-
-    // --- ✨ LIMPIEZA POST-COMPRA ---
     setCantidades(prev => ({ ...prev, [p.id]: 1 }));
     setSelecciones(prev => ({ ...prev, [p.id]: {} }));
     setNotificacion("¡Añadido al carrito! 🛒");
     setTimeout(() => setNotificacion(""), 2000);
   };
-
 
   const eliminarDelCarrito = (idUnico) => setPedido(prev => prev.filter(i => i.idUnico !== idUnico));
   const vaciarCarrito = () => {
@@ -316,6 +301,11 @@ export default function App() {
         .salsa-chip { padding: 12px; border-radius: 15px; border: 2px solid #eee; background: white; cursor: pointer; font-weight: bold; font-size: 13px; }
         .salsa-chip.active { border-color: ${MONO_NARANJA}; background: #fff7ed; color: ${MONO_NARANJA}; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .precio-input-admin::-webkit-outer-spin-button,
+        .precio-input-admin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .precio-input-admin { -moz-appearance: textfield; }
+        .guardar-btn { opacity: 0; transition: opacity 0.2s; }
+        .precio-wrapper:focus-within .guardar-btn { opacity: 1; }
       `}</style>
 
       {/* 🔐 MODAL DE LOGIN */}
@@ -412,42 +402,138 @@ export default function App() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '15px' }}>
               {productosMostrar.map(p => (
                 <div key={p.id} style={{ background: '#334155', padding: '15px', borderRadius: '15px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+
+                  {/* ── Fila 1: nombre + switch disponible ── */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.nombre}</span>
-                    <MiniSwitch activo={p.disponible !== false} onClick={() => guardarCambio("productos", p.id, { disponible: !(p.disponible !== false) })} />
+                    <MiniSwitch
+                      activo={p.disponible !== false}
+                      onClick={() => guardarCambio("productos", p.id, { disponible: !(p.disponible !== false) })}
+                    />
                   </div>
 
-                  {/* Opciones / Sabores */}
+                  {/* ── Fila 2: editor de precio ── */}
+                  <div className="precio-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#1e293b', padding: '8px 12px', borderRadius: '10px', marginBottom: '10px' }}>
+                    <span style={{ color: '#64748b', fontSize: '12px' }}>$</span>
+                    <input
+                      type="number"
+                      className="precio-input-admin"
+                      defaultValue={p.precio}
+                      min="0"
+                      step="100"
+                      onChange={(e) => setPreciosEditados(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
+                      style={{
+                        flex: 1,
+                        background: 'transparent',
+                        border: 'none',
+                        color: MONO_NARANJA,
+                        fontWeight: 'bold',
+                        fontSize: '15px',
+                        outline: 'none',
+                        minWidth: 0,
+                      }}
+                    />
+                    <button
+                      className="guardar-btn"
+                      onClick={() => {
+                        const nuevo = preciosEditados[p.id];
+                        if (nuevo === undefined) return;
+                        guardarCambio("productos", p.id, { precio: nuevo });
+                        setNotificacion(`Precio actualizado ✓`);
+                        setTimeout(() => setNotificacion(""), 2000);
+                      }}
+                      style={{
+                        background: MONO_VERDE,
+                        color: 'white',
+                        border: 'none',
+                        padding: '4px 10px',
+                        borderRadius: '7px',
+                        fontWeight: 'bold',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Guardar
+                    </button>
+                  </div>
+
+                  {/* ── Fila 3: switches por opción/sabor ── */}
                   {(p.opciones || p.sabores) && (
-                    <div style={{ marginTop: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      {(p.opciones || p.sabores).map((opt, idx) => (
-                        <div key={`opt-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#1e293b', padding: '4px 8px', borderRadius: '8px' }}>
-                          <small>{opt.nombre}</small>
-                          <MiniSwitch activo={opt.disponible} onClick={() => {
-                            const arr = [...(p.opciones || p.sabores)];
-                            arr[idx] = { ...arr[idx], disponible: !arr[idx].disponible };
-                            guardarCambio("productos", p.id, p.opciones ? { opciones: arr } : { sabores: arr });
-                          }} />
-                        </div>
-                      ))}
+                    <div style={{ marginBottom: '8px' }}>
+                      <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Opciones
+                      </span>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                        {(p.opciones || p.sabores).map((opt, idx) => (
+                          <div
+                            key={`opt-${idx}`}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              background: opt.disponible !== false ? '#1a3a2a' : '#1e293b',
+                              padding: '5px 10px',
+                              borderRadius: '10px',
+                              border: `1px solid ${opt.disponible !== false ? '#16a34a55' : '#334155'}`,
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            <small style={{ color: opt.disponible !== false ? '#86efac' : '#64748b', fontWeight: 'bold' }}>
+                              {opt.nombre}
+                            </small>
+                            <MiniSwitch
+                              activo={opt.disponible !== false}
+                              onClick={() => {
+                                const arr = [...(p.opciones || p.sabores)];
+                                arr[idx] = { ...arr[idx], disponible: !(arr[idx].disponible !== false) };
+                                guardarCambio("productos", p.id, p.opciones ? { opciones: arr } : { sabores: arr });
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 
-                  {/* Tamaños */}
+                  {/* ── Fila 4: switches por tamaño ── */}
                   {p.tamanos && (
-                    <div style={{ marginTop: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      {p.tamanos.map((t, idx) => (
-                        <div key={`tam-${idx}`} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#1e293b', padding: '4px 8px', borderRadius: '8px' }}>
-                          <small>{t.nombre} ${t.precio.toLocaleString()}</small>
-                          <MiniSwitch activo={t.disponible} onClick={() => {
-                            const arr = [...p.tamanos];
-                            arr[idx] = { ...arr[idx], disponible: !arr[idx].disponible };
-                            guardarCambio("productos", p.id, { tamanos: arr });
-                          }} />
-                        </div>
-                      ))}
+                    <div>
+                      <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Tamaños
+                      </span>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                        {p.tamanos.map((t, idx) => (
+                          <div
+                            key={`tam-${idx}`}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              background: t.disponible ? '#1a3a2a' : '#1e293b',
+                              padding: '5px 10px',
+                              borderRadius: '10px',
+                              border: `1px solid ${t.disponible ? '#16a34a55' : '#334155'}`,
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            <small style={{ color: t.disponible ? '#86efac' : '#64748b', fontWeight: 'bold' }}>
+                              {t.nombre} ${t.precio.toLocaleString()}
+                            </small>
+                            <MiniSwitch
+                              activo={t.disponible}
+                              onClick={() => {
+                                const arr = [...p.tamanos];
+                                arr[idx] = { ...arr[idx], disponible: !arr[idx].disponible };
+                                guardarCambio("productos", p.id, { tamanos: arr });
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
+
                 </div>
               ))}
             </div>
@@ -481,12 +567,10 @@ export default function App() {
           const sel  = selecciones[p.id] || {};
           const cant = cantidades[p.id] || 1;
 
-          // Precio base
           const pBase = (p.tamanos && p.tamanos.length > 0)
             ? (sel.tamano?.precio ?? p.tamanos.find(t => t.disponible)?.precio ?? 0)
             : (p.precio || 0);
 
-          // Costo extras
           const costoExtras = (sel.extras || []).reduce((acc, n) => {
             return acc + (extrasMostrar.find(e => e.nombre === n)?.precio || 0);
           }, 0);
@@ -499,7 +583,7 @@ export default function App() {
               <h3 style={{ margin: '15px 0 5px 0', fontWeight: '800', fontSize: '18px', minHeight: '44px', display: 'flex', alignItems: 'center' }}>{p.nombre}</h3>
               <p style={{ color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin: '0 0 15px 0' }}>${total.toLocaleString()}</p>
 
-              {/* 2. TAMAÑOS (Gaseosas, Jugos) */}
+              {/* TAMAÑOS */}
               {p.tamanos && p.tamanos.length > 0 && (
                 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
                   {p.tamanos.filter(t => t.disponible).map(t => (
@@ -509,27 +593,23 @@ export default function App() {
                   ))}
                 </div>
               )}
-              {/* 1. SABORES (Para Fritos, Jugos y otros) */}
-{(p.opciones || p.sabores) && !p.config && (
-  <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
-    {(p.opciones || p.sabores).filter(o => o.disponible).map(o => (
-      <button 
-        key={o.nombre} 
-         // FORMA CORRECTA PARA TUS BOTONES:
-onClick={() => setSelecciones(prev => ({ 
-  ...prev, 
-  [p.id]: { ...(prev[p.id] || {}), sabor: o.nombre } 
-}))}
 
-        className={`opcion-btn ${sel.sabor === o.nombre ? 'active' : ''}`}
-      >
-        {o.nombre}
-      </button>
-    ))}
-  </div>
-)}
+              {/* SABORES */}
+              {(p.opciones || p.sabores) && !p.config && (
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                  {(p.opciones || p.sabores).filter(o => o.disponible).map(o => (
+                    <button
+                      key={o.nombre}
+                      onClick={() => setSelecciones(prev => ({ ...prev, [p.id]: { ...(prev[p.id] || {}), sabor: o.nombre } }))}
+                      className={`opcion-btn ${sel.sabor === o.nombre ? 'active' : ''}`}
+                    >
+                      {o.nombre}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-              {/* 3. DESAYUNOS */}
+              {/* DESAYUNOS */}
               {p.categoria === "Desayunos" && p.config && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
                   <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
@@ -556,7 +636,7 @@ onClick={() => setSelecciones(prev => ({
                 </div>
               )}
 
-              {/* 4. EXTRAS PARA ARROCES */}
+              {/* EXTRAS ARROCES */}
               {p.categoria === "Arroces" && (
                 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
                   {extrasMostrar.filter(ex => ex.disponible !== false).map(ex => (
@@ -571,7 +651,7 @@ onClick={() => setSelecciones(prev => ({
                 </div>
               )}
 
-              {/* 5. BEBIDAS CALIENTES Y AROMÁTICAS */}
+              {/* BEBIDAS CALIENTES Y AROMÁTICAS */}
               {p.config && p.categoria === "Bebidas" && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
                   {p.config.sabores && (
@@ -639,7 +719,7 @@ onClick={() => setSelecciones(prev => ({
             </div>
           ))}
 
-          {/* 🌟 SUGERIDO: ENVÍO GRATIS */}
+          {/* SUGERIDO: ENVÍO GRATIS */}
           {!mesa && totalSinDom < 8000 && (
             <div style={{ marginTop: '25px', background: '#fff7ed', padding: '20px', borderRadius: '25px', border: '2px dashed #f97316' }}>
               <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>💡 ¡Te faltan ${faltaParaGratis.toLocaleString()} para envío GRATIS!</p>
@@ -669,7 +749,7 @@ onClick={() => setSelecciones(prev => ({
             </div>
           )}
 
-          {/* 🍯 SALSAS */}
+          {/* SALSAS */}
           <div style={{ marginTop: '30px', background: '#f8fafc', padding: '25px', borderRadius: '25px' }}>
             <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', fontWeight: '900' }}>Salsas:</h3>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -681,14 +761,14 @@ onClick={() => setSelecciones(prev => ({
             </div>
           </div>
 
-          {/* 💰 TOTALES */}
+          {/* TOTALES */}
           <div style={{ marginTop: '20px', textAlign: 'right' }}>
             <p>Subtotal: <strong>${totalSinDom.toLocaleString()}</strong></p>
             <p>Domicilio: <strong>{mesa ? '¡LOCAL!' : (domCosto === 0 ? '¡GRATIS!' : `$${domCosto.toLocaleString()}`)}</strong></p>
             <h2 style={{ color: MONO_NARANJA, fontSize: '38px', fontWeight: '900' }}>Total: ${(totalSinDom + (mesa ? 0 : domCosto)).toLocaleString()}</h2>
           </div>
 
-          {/* 📝 FORMULARIO */}
+          {/* FORMULARIO */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '25px' }}>
             <input type="text" placeholder="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{ padding: '18px', borderRadius: '15px', border: '1px solid #ddd' }} />
 
