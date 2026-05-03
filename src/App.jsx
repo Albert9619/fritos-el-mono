@@ -29,8 +29,8 @@ const productosBase = [
   { id: "b6", nombre: "Chocolate Caliente", precio: 1500, categoria: "Bebidas", disponible: true, imagen: "/chocolate.jpg", config: { leche: ["Con Leche", "Sin Leche"], azucar: ["Con Azúcar", "Sin Azúcar"] } },
   { id: "b7", nombre: "Aromáticas", precio: 1000, categoria: "Bebidas", disponible: true, imagen: "/aromática.jpg", config: { sabores: ["Manzanilla", "Hierbabuena", "Limoncillo", "Frutos Rojos"], azucar: ["Con Azúcar", "Sin Azúcar"] } },
   { id: "milo1", nombre: "Milo Refrescante", precio: 4000, categoria: "Bebidas", disponible: true, imagen: "/milo.jpg" },
-  { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/cocacola.jpg", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }, { nombre: "Familiar", precio: 6500, disponible: true }] },
-  { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/malta.jpg", tamanos: [{ nombre: "Mini", precio: 2500, disponible: true }, { nombre: "Personal", precio: 3500, disponible: true }] },
+  { id: "b1", nombre: "Coca-Cola", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/cocacola.jpg", tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }, { nombre: "Familiar 1.5L", precio: 6500, disponible: true }] },
+  { id: "b2", nombre: "Pony Malta", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/malta.jpg", tamanos: [{ nombre: "Mini 250ml", precio: 2500, disponible: true }, { nombre: "Personal 400ml", precio: 3500, disponible: true }] },
   { id: "b3", nombre: "Agua Cielo", precio: 2000, categoria: "Bebidas", disponible: true, imagen: "/agua.jpg" },
   { id: "lzEcQicq9WUrxw7FEaq7", nombre: "Arroz Especial del Día", precio: 6000, categoria: "Arroces", disponible: true, imagen: "/arroz-pollo.jpg" }
 ];
@@ -38,7 +38,7 @@ const productosBase = [
 const extrasArrozBase = [
   { id: 'tajada', nombre: "Tajadas", disponible: true, precio: 0 },
   { id: 'yuca', nombre: "Yuca", disponible: true, precio: 0 },
-  { id: 'huevo', nombre: "Huevo Cocido", disponible: true, precio: 1000 },
+  { id: 'huevo', nombre: "Huevo Extra", disponible: true, precio: 1000 },
   { id: 'queso', nombre: "Tajada de Queso", disponible: true, precio: 1000 }
 ];
 
@@ -77,13 +77,11 @@ export default function App() {
   const [notas, setNotas] = useState("");
   const [agradecimiento, setAgradecimiento] = useState(false);
   const [mesa, setMesa] = useState(null);
-  // 🆕 Estado para precios editados en el panel admin
   const [preciosEditados, setPreciosEditados] = useState({});
 
   const hoy = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"][new Date().getDay()];
   const tipoArrozHoy = ["lunes", "miércoles", "viernes"].includes(hoy) ? "Pollo" : "Cerdo";
 
-  // 🔎 DETECTOR DE MESA POR URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const mesaURL = params.get('mesa');
@@ -93,7 +91,6 @@ export default function App() {
     }
   }, []);
 
-  // 🕒 LÓGICA DE CIERRE AUTOMÁTICO
   useEffect(() => {
     const verificarEstado = () => {
       if (manualOverride !== null) {
@@ -109,7 +106,6 @@ export default function App() {
     return () => clearInterval(t);
   }, [manualOverride]);
 
-  // 🔥 FIREBASE LISTENERS
   useEffect(() => {
     const unsubProd    = onSnapshot(collection(db, "productos"),   (s) => setProductosFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
     const unsubExtras  = onSnapshot(collection(db, "extrasArroz"), (s) => setExtrasFB(s.docs.map(d => ({ id: d.id, ...d.data() }))));
@@ -120,7 +116,6 @@ export default function App() {
     return () => { unsubProd(); unsubExtras(); unsubSalsas(); unsubTienda(); };
   }, []);
 
-  // 💾 PERSISTENCIA DEL CARRITO
   useEffect(() => {
     const p = localStorage.getItem("pedido_mono_storage");
     if (p) setPedido(JSON.parse(p));
@@ -130,7 +125,6 @@ export default function App() {
     localStorage.setItem("pedido_mono_storage", JSON.stringify(pedido));
   }, [pedido]);
 
-  // 🔀 FUSIÓN BASE + FIREBASE
   const fusionar = (base, fb) => {
     const mapa = {};
     base.forEach(p => { mapa[p.id] = { ...p }; });
@@ -142,13 +136,11 @@ export default function App() {
   const extrasMostrar    = fusionar(extrasArrozBase, extrasFB);
   const salsasMostrar    = fusionar(salsasIniciales, salsasFB);
 
-  // 💾 GUARDAR CAMBIO EN FIREBASE
   const guardarCambio = async (col, id, datos) => {
     try { await setDoc(doc(db, col, id), datos, { merge: true }); }
     catch (e) { console.error(e); }
   };
 
-  // 🧠 PREDICCIÓN DE SELECCIÓN
   const predecirSeleccion = (p) => {
     let saborElegido = null;
     const listaOpciones = p.opciones || p.sabores || p.config?.sabores;
@@ -169,7 +161,6 @@ export default function App() {
     return { sabor: saborElegido, tamano: tamanoElegido };
   };
 
-  // 🛒 AGREGAR AL CARRITO — Versión Blindada
   const agregarAlCarrito = (p) => {
     const sel = selecciones[p.id] || {};
     const cant = cantidades[p.id] || 1;
@@ -247,7 +238,6 @@ export default function App() {
     }
   };
 
-  // 📲 ENVIAR POR WHATSAPP
   const enviarWhatsApp = () => {
     if (!nombre || (!mesa && !direccion) || !metodoPago) return alert("Faltan datos de envío");
     if (metodoPago === "Efectivo" && !pagoCon) return alert("Dinos con cuánto vas a pagar");
@@ -276,7 +266,6 @@ export default function App() {
     setPedido([]);
   };
 
-  // 💰 TOTALES
   const totalSinDom = pedido.reduce((acc, i) => acc + i.subtotal, 0);
   const domCosto    = !mesa && totalSinDom > 0 && totalSinDom < 8000 ? 2000 : 0;
   const faltaParaGratis = Math.max(0, 8000 - totalSinDom);
@@ -287,6 +276,35 @@ export default function App() {
     p.categoria !== "Arroces" &&
     p.categoria !== "Desayunos"
   ).slice(0, 3);
+
+  // ─── Helper: input de precio + botón guardar ────────────────────────────────
+  const PrecioInput = ({ keyId, valorActual, onGuardar }) => (
+    <div className="precio-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#1e293b', padding: '5px 10px', borderRadius: '8px' }}>
+      <span style={{ color: '#64748b', fontSize: '11px' }}>$</span>
+      <input
+        type="number"
+        className="precio-input-admin"
+        defaultValue={valorActual}
+        min="0"
+        step="100"
+        onChange={(e) => setPreciosEditados(prev => ({ ...prev, [keyId]: Number(e.target.value) }))}
+        style={{ width: '70px', background: 'transparent', border: 'none', color: MONO_NARANJA, fontWeight: 'bold', fontSize: '13px', outline: 'none' }}
+      />
+      <button
+        className="guardar-btn"
+        onClick={() => {
+          const nuevo = preciosEditados[keyId];
+          if (nuevo === undefined) return;
+          onGuardar(nuevo);
+          setNotificacion('Precio actualizado ✓');
+          setTimeout(() => setNotificacion(''), 2000);
+        }}
+        style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '3px 8px', borderRadius: '6px', fontWeight: 'bold', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+      >
+        ✓
+      </button>
+    </div>
+  );
 
   // ==========================================
   // 🖼️ RENDER
@@ -384,14 +402,25 @@ export default function App() {
               </div>
             </div>
 
-            {/* EXTRAS ARROZ */}
+            {/* ── EXTRAS ARROZ ── */}
             <div style={{ marginBottom: '30px' }}>
               <h3 style={{ color: '#94a3b8', marginBottom: '15px' }}>Extras Arroz</h3>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {extrasMostrar.map(ex => (
                   <div key={ex.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#334155', padding: '10px 15px', borderRadius: '12px' }}>
-                    <span>{ex.nombre}</span>
-                    <MiniSwitch activo={ex.disponible} onClick={() => guardarCambio("extrasArroz", ex.id, { disponible: !ex.disponible })} />
+                    <span style={{ fontSize: '14px' }}>{ex.nombre}</span>
+                    <MiniSwitch
+                      activo={ex.disponible}
+                      onClick={() => guardarCambio("extrasArroz", ex.id, { disponible: !ex.disponible })}
+                    />
+                    {/* Input de precio solo para extras con precio > 0 */}
+                    {(ex.id === 'huevo' || ex.id === 'queso') && (
+                      <PrecioInput
+                        keyId={`extra-${ex.id}`}
+                        valorActual={ex.precio}
+                        onGuardar={(nuevo) => guardarCambio("extrasArroz", ex.id, { precio: nuevo })}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -400,142 +429,211 @@ export default function App() {
             {/* PRODUCTOS */}
             <h3 style={{ color: '#94a3b8', marginBottom: '15px' }}>Productos</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '15px' }}>
-              {productosMostrar.map(p => (
-                <div key={p.id} style={{ background: '#334155', padding: '15px', borderRadius: '15px' }}>
+              {productosMostrar.map(p => {
+                // Productos con tamaños (jugos, coca-cola, malta) NO muestran el input de precio global
+                const tieneTamanos = p.tamanos && p.tamanos.length > 0;
+                // El arroz no muestra opciones propias, solo los extras
+                const esArroz = p.categoria === "Arroces";
 
-                  {/* ── Fila 1: nombre + switch disponible ── */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.nombre}</span>
-                    <MiniSwitch
-                      activo={p.disponible !== false}
-                      onClick={() => guardarCambio("productos", p.id, { disponible: !(p.disponible !== false) })}
-                    />
-                  </div>
+                return (
+                  <div key={p.id} style={{ background: '#334155', padding: '15px', borderRadius: '15px' }}>
 
-                  {/* ── Fila 2: editor de precio ── */}
-                  <div className="precio-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#1e293b', padding: '8px 12px', borderRadius: '10px', marginBottom: '10px' }}>
-                    <span style={{ color: '#64748b', fontSize: '12px' }}>$</span>
-                    <input
-                      type="number"
-                      className="precio-input-admin"
-                      defaultValue={p.precio}
-                      min="0"
-                      step="100"
-                      onChange={(e) => setPreciosEditados(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
-                      style={{
-                        flex: 1,
-                        background: 'transparent',
-                        border: 'none',
-                        color: MONO_NARANJA,
-                        fontWeight: 'bold',
-                        fontSize: '15px',
-                        outline: 'none',
-                        minWidth: 0,
-                      }}
-                    />
-                    <button
-                      className="guardar-btn"
-                      onClick={() => {
-                        const nuevo = preciosEditados[p.id];
-                        if (nuevo === undefined) return;
-                        guardarCambio("productos", p.id, { precio: nuevo });
-                        setNotificacion(`Precio actualizado ✓`);
-                        setTimeout(() => setNotificacion(""), 2000);
-                      }}
-                      style={{
-                        background: MONO_VERDE,
-                        color: 'white',
-                        border: 'none',
-                        padding: '4px 10px',
-                        borderRadius: '7px',
-                        fontWeight: 'bold',
-                        fontSize: '12px',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      Guardar
-                    </button>
-                  </div>
-
-                  {/* ── Fila 3: switches por opción/sabor ── */}
-                  {(p.opciones || p.sabores) && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Opciones
-                      </span>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                        {(p.opciones || p.sabores).map((opt, idx) => (
-                          <div
-                            key={`opt-${idx}`}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              background: opt.disponible !== false ? '#1a3a2a' : '#1e293b',
-                              padding: '5px 10px',
-                              borderRadius: '10px',
-                              border: `1px solid ${opt.disponible !== false ? '#16a34a55' : '#334155'}`,
-                              transition: 'all 0.2s',
-                            }}
-                          >
-                            <small style={{ color: opt.disponible !== false ? '#86efac' : '#64748b', fontWeight: 'bold' }}>
-                              {opt.nombre}
-                            </small>
-                            <MiniSwitch
-                              activo={opt.disponible !== false}
-                              onClick={() => {
-                                const arr = [...(p.opciones || p.sabores)];
-                                arr[idx] = { ...arr[idx], disponible: !(arr[idx].disponible !== false) };
-                                guardarCambio("productos", p.id, p.opciones ? { opciones: arr } : { sabores: arr });
-                              }}
-                            />
-                          </div>
-                        ))}
-                      </div>
+                    {/* ── Fila 1: nombre + switch disponible ── */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{p.nombre}</span>
+                      <MiniSwitch
+                        activo={p.disponible !== false}
+                        onClick={() => guardarCambio("productos", p.id, { disponible: !(p.disponible !== false) })}
+                      />
                     </div>
-                  )}
 
-                  {/* ── Fila 4: switches por tamaño ── */}
-                  {p.tamanos && (
-                    <div>
-                      <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Tamaños
-                      </span>
-                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                        {p.tamanos.map((t, idx) => (
-                          <div
-                            key={`tam-${idx}`}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              background: t.disponible ? '#1a3a2a' : '#1e293b',
-                              padding: '5px 10px',
-                              borderRadius: '10px',
-                              border: `1px solid ${t.disponible ? '#16a34a55' : '#334155'}`,
-                              transition: 'all 0.2s',
-                            }}
-                          >
-                            <small style={{ color: t.disponible ? '#86efac' : '#64748b', fontWeight: 'bold' }}>
-                              {t.nombre} ${t.precio.toLocaleString()}
-                            </small>
-                            <MiniSwitch
-                              activo={t.disponible}
-                              onClick={() => {
-                                const arr = [...p.tamanos];
-                                arr[idx] = { ...arr[idx], disponible: !arr[idx].disponible };
-                                guardarCambio("productos", p.id, { tamanos: arr });
-                              }}
-                            />
-                          </div>
-                        ))}
+                    {/* ── Precio global: solo si NO tiene tamaños y NO es arroz ── */}
+                    {!tieneTamanos && !esArroz && (
+                      <div className="precio-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#1e293b', padding: '8px 12px', borderRadius: '10px', marginBottom: '10px' }}>
+                        <span style={{ color: '#64748b', fontSize: '12px' }}>$</span>
+                        <input
+                          type="number"
+                          className="precio-input-admin"
+                          defaultValue={p.precio}
+                          min="0"
+                          step="100"
+                          onChange={(e) => setPreciosEditados(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
+                          style={{ flex: 1, background: 'transparent', border: 'none', color: MONO_NARANJA, fontWeight: 'bold', fontSize: '15px', outline: 'none', minWidth: 0 }}
+                        />
+                        <button
+                          className="guardar-btn"
+                          onClick={() => {
+                            const nuevo = preciosEditados[p.id];
+                            if (nuevo === undefined) return;
+                            guardarCambio("productos", p.id, { precio: nuevo });
+                            setNotificacion('Precio actualizado ✓');
+                            setTimeout(() => setNotificacion(''), 2000);
+                          }}
+                          style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '4px 10px', borderRadius: '7px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >
+                          Guardar
+                        </button>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                </div>
-              ))}
+                    {/* ── Arroz: muestra los extras arroz en lugar de switches propios ── */}
+                    {esArroz && (
+                      <div>
+                        {/* Precio del arroz sí se puede editar */}
+                        <div className="precio-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#1e293b', padding: '8px 12px', borderRadius: '10px', marginBottom: '12px' }}>
+                          <span style={{ color: '#64748b', fontSize: '12px' }}>$</span>
+                          <input
+                            type="number"
+                            className="precio-input-admin"
+                            defaultValue={p.precio}
+                            min="0"
+                            step="100"
+                            onChange={(e) => setPreciosEditados(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
+                            style={{ flex: 1, background: 'transparent', border: 'none', color: MONO_NARANJA, fontWeight: 'bold', fontSize: '15px', outline: 'none', minWidth: 0 }}
+                          />
+                          <button
+                            className="guardar-btn"
+                            onClick={() => {
+                              const nuevo = preciosEditados[p.id];
+                              if (nuevo === undefined) return;
+                              guardarCambio("productos", p.id, { precio: nuevo });
+                              setNotificacion('Precio actualizado ✓');
+                              setTimeout(() => setNotificacion(''), 2000);
+                            }}
+                            style={{ background: MONO_VERDE, color: 'white', border: 'none', padding: '4px 10px', borderRadius: '7px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                          >
+                            Guardar
+                          </button>
+                        </div>
+
+                        <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Extras disponibles
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
+                          {extrasMostrar.map(ex => (
+                            <div
+                              key={ex.id}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: ex.disponible !== false ? '#1a3a2a' : '#1e293b',
+                                padding: '7px 10px',
+                                borderRadius: '10px',
+                                border: `1px solid ${ex.disponible !== false ? '#16a34a55' : '#334155'}`,
+                              }}
+                            >
+                              <small style={{ color: ex.disponible !== false ? '#86efac' : '#64748b', fontWeight: 'bold', flex: 1 }}>
+                                {ex.nombre}
+                              </small>
+                              <MiniSwitch
+                                activo={ex.disponible !== false}
+                                onClick={() => guardarCambio("extrasArroz", ex.id, { disponible: !(ex.disponible !== false) })}
+                              />
+                              {/* Input de precio para Huevo Extra y Tajada de Queso */}
+                              {(ex.id === 'huevo' || ex.id === 'queso') && (
+                                <PrecioInput
+                                  keyId={`arroz-extra-${ex.id}`}
+                                  valorActual={ex.precio}
+                                  onGuardar={(nuevo) => guardarCambio("extrasArroz", ex.id, { precio: nuevo })}
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── Opciones / sabores (para fritos y jugos con sabores) ── */}
+                    {(p.opciones || p.sabores) && !p.config && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Opciones
+                        </span>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                          {(p.opciones || p.sabores).map((opt, idx) => (
+                            <div
+                              key={`opt-${idx}`}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: opt.disponible !== false ? '#1a3a2a' : '#1e293b',
+                                padding: '5px 10px',
+                                borderRadius: '10px',
+                                border: `1px solid ${opt.disponible !== false ? '#16a34a55' : '#334155'}`,
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              <small style={{ color: opt.disponible !== false ? '#86efac' : '#64748b', fontWeight: 'bold' }}>
+                                {opt.nombre}
+                              </small>
+                              <MiniSwitch
+                                activo={opt.disponible !== false}
+                                onClick={() => {
+                                  const arr = [...(p.opciones || p.sabores)];
+                                  arr[idx] = { ...arr[idx], disponible: !(arr[idx].disponible !== false) };
+                                  guardarCambio("productos", p.id, p.opciones ? { opciones: arr } : { sabores: arr });
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── Tamaños con input de precio editable ── */}
+                    {p.tamanos && (
+                      <div>
+                        <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Tamaños
+                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+                          {p.tamanos.map((t, idx) => (
+                            <div
+                              key={`tam-${idx}`}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: t.disponible ? '#1a3a2a' : '#1e293b',
+                                padding: '7px 10px',
+                                borderRadius: '10px',
+                                border: `1px solid ${t.disponible ? '#16a34a55' : '#334155'}`,
+                              }}
+                            >
+                              {/* Nombre del tamaño */}
+                              <small style={{ color: t.disponible ? '#86efac' : '#64748b', fontWeight: 'bold', minWidth: '80px' }}>
+                                {t.nombre}
+                              </small>
+                              {/* Switch disponible */}
+                              <MiniSwitch
+                                activo={t.disponible}
+                                onClick={() => {
+                                  const arr = [...p.tamanos];
+                                  arr[idx] = { ...arr[idx], disponible: !arr[idx].disponible };
+                                  guardarCambio("productos", p.id, { tamanos: arr });
+                                }}
+                              />
+                              {/* Input de precio por tamaño */}
+                              <PrecioInput
+                                keyId={`${p.id}-tam-${idx}`}
+                                valorActual={t.precio}
+                                onGuardar={(nuevo) => {
+                                  const arr = [...p.tamanos];
+                                  arr[idx] = { ...arr[idx], precio: nuevo };
+                                  guardarCambio("productos", p.id, { tamanos: arr });
+                                }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
