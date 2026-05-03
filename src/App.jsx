@@ -23,6 +23,7 @@ const productosBase = [
   { id: "d1", nombre: "Desayuno Tradicional", precio: 8000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.jpg", config: { acompanamiento: ["Patacón", "Arepa"], huevos: ["Revueltos", "Pericos"], jugos: ["Avena", "Maracuyá"] } },
   { id: "d2", nombre: "Desayuno Especial Con Carne", precio: 12000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.jpg", config: { acompanamiento: ["Patacón", "Arepa"], jugos: ["Avena", "Maracuyá"] } },
   { id: "d3", nombre: "Desayuno Especial Con Pollo", precio: 10000, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.jpg", config: { acompanamiento: ["Patacón", "Arepa"], jugos: ["Avena", "Maracuyá"] } },
+  { id: "sw1", nombre: "Sandwich de la Casa", precio: 0, categoria: "Desayunos", disponible: true, imagen: "/desayuno-carne.jpg", descripcion: "Con tomate, lechuga y tajada de queso", tamanos: [{ nombre: "Con Mortadela", precio: 5000, disponible: true }, { nombre: "Con Jamón", precio: 6000, disponible: true }] },
   { id: "MMuffStcgfJe5ow5X4qV", nombre: "Jugo Natural Helado", precio: 0, categoria: "Bebidas", disponible: true, imagen: "/jugo-natural.jpg", sabores: [{ nombre: "Avena", disponible: true }, { nombre: "Maracuyá", disponible: true }], tamanos: [{ nombre: "Pequeño", precio: 1000, disponible: true }, { nombre: "Mediano", precio: 1500, disponible: true }, { nombre: "Grande", precio: 2000, disponible: true }] },
   { id: "b4", nombre: "Tinto Tradicional", precio: 1000, categoria: "Bebidas", disponible: true, imagen: "/tinto.jpg", config: { azucar: ["Con Azúcar", "Sin Azúcar"] } },
   { id: "b5", nombre: "Café con Leche", precio: 1500, categoria: "Bebidas", disponible: true, imagen: "/cafe-leche.jpg", config: { leche: ["Con Leche", "Sin Leche"], azucar: ["Con Azúcar", "Sin Azúcar"] } },
@@ -128,7 +129,14 @@ export default function App() {
   const fusionar = (base, fb) => {
     const mapa = {};
     base.forEach(p => { mapa[p.id] = { ...p }; });
-    fb.forEach(p => { if (mapa[p.id]) mapa[p.id] = { ...mapa[p.id], ...p }; });
+    fb.forEach(p => {
+      if (mapa[p.id]) {
+        // Si el producto base tiene config, no permitir que Firebase lo sobreescriba
+        const configBase = mapa[p.id].config;
+        mapa[p.id] = { ...mapa[p.id], ...p };
+        if (configBase) mapa[p.id].config = configBase;
+      }
+    });
     return Object.values(mapa);
   };
 
@@ -171,7 +179,10 @@ export default function App() {
       return alert("Por favor, elige el sabor (Carne, Pollo, etc.)");
     }
     if (p.categoria === "Desayunos") {
-      if (!sel.acompanamiento || !sel.jugo) {
+      if (p.tamanos && p.tamanos.length > 0 && !sel.tamano) {
+        return alert("Elige el relleno del sandwich");
+      }
+      if (!p.tamanos && (!sel.acompanamiento || !sel.jugo)) {
         return alert("Completa tu desayuno: falta el acompañamiento o el jugo");
       }
     }
@@ -193,7 +204,7 @@ export default function App() {
     const subtotal = (precioBase + costoExtras + (sel.agrandar ? 1000 : 0)) * cant;
 
     let detalle = "";
-    if (p.categoria === "Desayunos") {
+    if (p.categoria === "Desayunos" && p.config) {
       const prote = sel.huevos || "";
       detalle = `(${sel.acompanamiento}${prote ? ', ' + prote : ''}, ${sel.jugo}${sel.agrandar ? ' Gr' : ''})`;
     } else {
@@ -402,30 +413,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* ── EXTRAS ARROZ ── */}
-            <div style={{ marginBottom: '30px' }}>
-              <h3 style={{ color: '#94a3b8', marginBottom: '15px' }}>Extras Arroz</h3>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                {extrasMostrar.map(ex => (
-                  <div key={ex.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#334155', padding: '10px 15px', borderRadius: '12px' }}>
-                    <span style={{ fontSize: '14px' }}>{ex.nombre}</span>
-                    <MiniSwitch
-                      activo={ex.disponible}
-                      onClick={() => guardarCambio("extrasArroz", ex.id, { disponible: !ex.disponible })}
-                    />
-                    {/* Input de precio solo para extras con precio > 0 */}
-                    {(ex.id === 'huevo' || ex.id === 'queso') && (
-                      <PrecioInput
-                        keyId={`extra-${ex.id}`}
-                        valorActual={ex.precio}
-                        onGuardar={(nuevo) => guardarCambio("extrasArroz", ex.id, { precio: nuevo })}
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* PRODUCTOS */}
             <h3 style={{ color: '#94a3b8', marginBottom: '15px' }}>Productos</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '15px' }}>
@@ -545,7 +532,7 @@ export default function App() {
                     )}
 
                     {/* ── Opciones / sabores (para fritos y jugos con sabores) ── */}
-                    {(p.opciones || p.sabores) && !p.config && (
+                    {(p.opciones || p.sabores) && !p.config && !esArroz && (
                       <div style={{ marginBottom: '8px' }}>
                         <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           Opciones
@@ -583,7 +570,7 @@ export default function App() {
                     )}
 
                     {/* ── Tamaños con input de precio editable ── */}
-                    {p.tamanos && (
+                    {p.tamanos && p.tamanos.length > 0 && (
                       <div>
                         <span style={{ color: '#64748b', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                           Tamaños
@@ -679,6 +666,9 @@ export default function App() {
             <div key={p.id} className="card-mono" style={{ background: 'white', borderRadius: '40px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 20px rgba(0,0,0,0.02)', border: '1px solid #f1f5f9', opacity: p.disponible === false ? 0.6 : 1 }}>
               <img src={p.imagen} alt={p.nombre} style={{ width: '100%', height: '180px', borderRadius: '25px', objectFit: 'cover' }} />
               <h3 style={{ margin: '15px 0 5px 0', fontWeight: '800', fontSize: '18px', minHeight: '44px', display: 'flex', alignItems: 'center' }}>{p.nombre}</h3>
+              {p.descripcion && (
+                <p style={{ color: '#888', fontSize: '13px', margin: '0 0 8px 0' }}>{p.descripcion}</p>
+              )}
               <p style={{ color: MONO_NARANJA, fontWeight: '900', fontSize: '26px', margin: '0 0 15px 0' }}>${total.toLocaleString()}</p>
 
               {/* TAMAÑOS */}
